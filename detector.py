@@ -17,10 +17,9 @@ fgbg = cv2.createBackgroundSubtractorMOG2(detectShadows=True)
 # inicializando o HOG descriptor/detector pre-treinado de pessoas
 hog = cv2.HOGDescriptor()
 pessoas = [] #Pessoas atualmente na imagem
-candidatos = [] #Candidatos a pessoas
 idBase = 0 #id da pessoa
-tempoMaximo = conf["tempoMaximoDeVida"] #tempo de duracao (em frames) de uma pessoa na tela
-tempoMinimo = conf["tempoMinimoDeVida"] #Tempo minimo (em frames) para ser considerado no contador
+tempoMaximo = conf["tempoMaximoDeVida"] #tempo para delecao de uma pessoa do vetor
+tempoDeConfirmacao = conf["tempoDeConfirmacao"] #Tempo minimo (em frames) para ser considerado, como pessoa, no contador
 nPessoasFrameAnterior = 0
 
 while (True):
@@ -29,27 +28,21 @@ while (True):
     if (originalFrame == None):
         break
 
-    if nPessoasFrameAnterior != len(pessoas):
-        nPessoasFrameAnterior = len(pessoas)
+    #Le o numero de pessoas ativas e exibe
+    nPessoasNovo = 0
+    for p in pessoas:
+        if p.confirmado:
+            nPessoasNovo+=1
+    if nPessoasNovo != nPessoasFrameAnterior:
         print "numero de pessoas:",nPessoasFrameAnterior
+        nPessoasFrameAnterior = nPessoasNovo
 
-    #Verificando a idade dos candidatos
-    for c in candidatos:
-        c.envelhece()
-        if not c.vivo:
-            indice = candidatos.index(c)
-            candidatos.pop(indice)
-
-    #Verificando a idade das pessoas
+    #Verificando/incrementando a idade as pessoas
     for p in pessoas:
         p.envelhece()
         if not p.vivo:
             indice = pessoas.index(p)
             pessoas.pop(indice)
-
-
-    #Essas razoes sao multiplicadas nas coordenadas para que os
-    #quadrados fiquem no lugar certo no frame
 
     #mascara do backgroundsubtractor
     fgmask = fgbg.apply(originalFrame)
@@ -57,20 +50,11 @@ while (True):
     #Aplicando um threshold para limitar aos movimentos mais importantes
     ret,thresh = cv2.threshold(fgmask,conf["deltaThreshold"],255,cv2.THRESH_BINARY)
 
-    #Removo um pouco do noise criado pelo MOG2
+    #Removo um pouco do "noise" criado pelo MOG2
     kernelOp = np.ones((3,3),np.uint8)#Kernel opening
     kernelCl = np.ones((11,11),np.uint8)#Kernel closing
     thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernelOp)
     thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernelCl)
-
-    #Depois de remover tudo o que poderia ser falso
-    #Dilato o que pode ser verdadeiro para facilitar a deteccao
-
-    #Dilato os brancos para serem melhor detectados
-    #thresh = cv2.dilate(thresh, None, iterations=1)
-
-    #Aplico um blur na imagem
-    #thresh = cv2.bilateralFilter(thresh,11,17,17)#rever os parametros
 
     #Usar o contorno para achar os multiplos "borroes"
     #e guardar em contours
@@ -89,42 +73,21 @@ while (True):
             cy = int(M['m01']/M['m00'])
             (x, y, w, h) = cv2.boundingRect(c)
             novo = True
-            existe = False #se ele pode sair dos candidatos
-            candidatoPromovido = None #O candidato que passou para a lista de pessoas
             cv2.circle(originalFrame,(cx,cy), 5, (0,0,255), -1) #Desenha o centro de massa
 
-            #Checando se a nova coordenada faz parte de algum candidato
-            for i in candidatos:
-                if (abs(x-i.x)<=w and abs(y-i.y)<=h):
-                    novo = False #Esta muito perto de um quadrado anterior
-                    i.atualiza(cx,cy)#Atualizo a posicao desse quadrado e saio
-                    if i.confirmado: #Se ele foi confirmado e esta nos candidatos, eu vejo se ele ja existe nas pessoas
-                        for p in pessoas:
-                            if (abs(x-p.x)<=w and abs(y-p.y)<=h):
-                                p.atualiza(cx,cy)#Se ele existe em pessoas eu atualizo a respectiva pessoa
-                                indice = candidatos.index(i)
-                                candidatos.pop(indice) #e deleto ele dos candidatos
-                            else:
-                                existe = True
-                                candidatoPromovido = i
-                    break
             #Checando se a nova coordenada faz parte das pessoas
             for p in pessoas:
+                #Se ele ja existe
                 if (abs(x-p.x)<=w and abs(y-p.y)<=h):
                     novo = False
-                    p.atualiza(cx,cy)
+                    p.atualiza(cx,cy) #tambem atualiza o numero de frames que a pessoa apareceu
+                    break
 
-            #Se eh novo, entao eu crio um novo candidato
+            #Se eh novo, entao eu crio uma nova pessoa
             if novo == True:
-                p = Pessoa(idBase,cx,cy,tempoMinimo,tempoMaximo)
-                candidatos.append(p)
+                p = Pessoa(idBase,cx,cy,tempoDeConfirmacao,tempoMaximo)
+                pessoas.append(p)
                 idBase+=1
-            #Se ele foi confirmado E nao existia no vetor de pessoas    
-            else: 
-                if existe:
-                    indice = candidatos.index(candidatoPromovido)
-                    candidatos.pop(indice)#tiro ele dos candidatos
-                    pessoas.append(candidatoPromovido)#e promovo ele para pessoas
                     
             caixas.append([x,y,w+x,h+y])
 
@@ -136,7 +99,6 @@ while (True):
     caixas = mytools.non_max_supression(caixas,0.3)
 
     #Desenhando os quadrados
-    #print "Objetos em movimento = ",len(caixas)
     for (startX, startY, endX, endY) in caixas:
             pXA = int(startX)
             pYA = int(startY)

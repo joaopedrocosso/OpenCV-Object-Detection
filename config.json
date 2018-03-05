@@ -7,6 +7,6 @@
 	"deltaThreshold":127,
 	"areaMinimaDeteccao":500,
 	"espessuraDosQuadrados":2,
-	"tempoMinimoDeVida":3,
+	"tempoDeConfirmacao":3,
 	"tempoMaximoDeVida":15
 }
