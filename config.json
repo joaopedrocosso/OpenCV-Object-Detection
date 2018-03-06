@@ -8,5 +8,7 @@
 	"areaMinimaDeteccao":500,
 	"espessuraDosQuadrados":2,
 	"tempoDeConfirmacao":3,
-	"tempoMaximoDeVida":15
+	"tempoMaximoDeVida":15,
+	"duracaoAnaliseSegundos":60,
+	"intervaloDescansoSegundos":30
 }
