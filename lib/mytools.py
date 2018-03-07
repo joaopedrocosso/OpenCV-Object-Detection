@@ -1,5 +1,25 @@
 import cv2
 import numpy as np
+import json
+import base64 #para conversao da imagem em uma string de 64 bits
+
+#Cria o arquivo .json
+def criarJSON(somatorio,nMudancas,tempoDeAnalise,frameCapturado):
+    retval,buffer = cv2.imencode('.jpg', frameCapturado)
+    frameString = base64.b64encode(buffer)
+    media = 0
+    if nMudancas != 0:
+        media = somatorio/nMudancas
+    dados = {
+        "NumeroAproxPessoas": media,
+        "tempoDeAnalise":tempoDeAnalise,
+        "imagemDaSala": frameString
+    }
+    with open("dados.json","w") as f:
+        json.dump(dados,f)
+    #Para converter de volta usar:
+    #j = json.load(open("dados.json"))
+    #imagem = base64.b64decode(j["imagemDaSala"])
 
 
 #Altera o tamanho da imagem

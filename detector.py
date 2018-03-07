@@ -27,15 +27,15 @@ tempoInicio = time.time() #Tempo de inicio do programa
 #Calculo do numero de pessoas
 somatorioDaAnalise = 0 #A cada vez que o numero de pessoas muda, ele recebe o tempoDePessoa*NumeroDePessoas
 contadorDeMudancas = 0 #Conta quantas vezes o contador de pessoas mudou
-
+frameEscolhido = None
 
 print("Iniciando:")
 while (True):
 
     #se o tempo atingiu o tempo maximo da analise do video, pausar
     if (time.time() - tempoInicio >= conf["duracaoAnaliseSegundos"]):
-        #FAZER MEDIA DAS INFORMACOES E GUARDAR NUM JSON
-        print("Numero aproximado de pessoas em: ",conf["duracaoAnaliseSegundos"],"segundos","=",somatorioDaAnalise/contadorDeMudancas)
+        mytools.criarJSON(somatorioDaAnalise,contadorDeMudancas,conf["duracaoAnaliseSegundos"],frameEscolhido)
+        print("JSON criado")
         print("Dormindo...")
         cv2.destroyAllWindows()
         time.sleep(conf["intervaloDescansoSegundos"]) #espera, em segundos, e recomeca
@@ -58,6 +58,7 @@ while (True):
 
         somatorioDaAnalise+=nPessoasNovo #atualizando o somatorio
         contadorDeMudancas+=1
+        frameEscolhido = originalFrame #Atualizando o frame escolhido para o envio
 
     #Verificando/incrementando a idade as pessoas
     for p in pessoas:
@@ -142,5 +143,7 @@ while (True):
 
 cv2.destroyAllWindows()
 vs.stop() #para o stream
+
+
 
 
