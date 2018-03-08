@@ -1,0 +1,6 @@
+{
+	"address":"127.0.0.1",
+	"port":5052,
+	"listenQ":5,
+	"bufferSize":200000
+}
