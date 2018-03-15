@@ -81,7 +81,7 @@ while (True):
 
     #Usar o contorno para achar os multiplos "borroes"
     #e guardar em contours
-    img,contours,hie = cv2.findContours(thresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+    img,contours,hie = cv2.findContours(thresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
 
     #Verificar o tamanho das areas, se for menor ignorar.

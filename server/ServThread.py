@@ -14,15 +14,18 @@ class Operator(Thread):
 				msg = self.socket.recv(self.buff)
 				if not msg:break
 				print "recebido:",msg
-				mensagem = self.convertJSON()
-				self.socket.sendall(mensagem)
+				mensagem = self.convertJsonToString()
+				string_tamanho =str(len(mensagem))+"#" #tamanho do arquivo
+				print "enviando mensagem de tamanho:", string_tamanho
+				payload = string_tamanho+mensagem
+				self.socket.sendall(payload)
 			except:
 				print "Conexao encerrada de forma inesperada"
 				break
 		self.socket.close() #Importante sempre fechar o socket ativo!
 		print "Finalizada conexao com o cliente ",self.address
 
-	def convertJSON(self):
+	def convertJsonToString(self):
 		j = json.load(open("../dados.json"))
 		jsonString = json.dumps(j) #converte o JSON em uma string
 		return(jsonString)

@@ -12,7 +12,19 @@ clientsocket.connect((host,port))
 print "Enviando mensagem ao servidor"
 clientsocket.sendall("me manda o json!")
 print "Aguardando resposta do servidor"
-data = clientsocket.recv(bufferSize)
+payload_string = clientsocket.recv(bufferSize)
+payload = payload_string.split("#",1) #Separando a string em 2 tamanho e json (o pedaco que veio)
+tamanhoQueFalta =(int)(payload[0]) - len(payload[1]) #tamanho total dos pacotes que faltam
+data = payload[1] #Data eh o json que vai ser preenchido no loop
+print "Total:",(int)(payload[0])
+print "recebido:",len(payload[1])
+
+while tamanhoQueFalta>0:
+	temp=clientsocket.recv(bufferSize)
+	tamanhoQueFalta-=len(temp)
+	print "recebido+:",len(temp)
+	data+=temp
+print "Finalizado com :",tamanhoQueFalta,"pacotes restantes"
 clientsocket.close()
 #Recebendo o JSON
 json_string = data.decode("utf-8")#Convertendo payload em string utf-8
