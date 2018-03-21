@@ -13,6 +13,7 @@ class Pessoa:
 		self.framesCount = 0 #Numero de frames em que a pessoa APARECEU
 		
 	def atualiza(self,x,y):
+		#reseta a idade,incrementa o numero de frames em que apareceu e adiciona a nova posicao
 		self.idade = 0
 		self.framesCount+=1 #Se passar do framesMin ele passa a ser considerado
 		self.tracks.append([self.x,self.y])#Guardando as coordenadas antigas
@@ -22,9 +23,11 @@ class Pessoa:
 			self.confirmado = True #ele existe
 
 	def getTracks(self):
+    	#Retorna a lista de coordenadas em que essa pessoa apareceu
 		return self.tracks
 
 	def envelhece(self):
+    	#Incrementa a idade e checa se ela ja morreu
 		self.idade+=1
 		if self.idade > self.idadeMax:
 			self.vivo = False

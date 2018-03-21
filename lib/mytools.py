@@ -4,14 +4,16 @@ import json
 import base64 #para conversao da imagem em uma string de 64 bits
 
 #Cria o arquivo .json
-def criarJSON(somatorio,nMudancas,tempoDeAnalise,frameCapturado):
-    retval,buffer = cv2.imencode('.jpg', frameCapturado)
-    frameString = base64.b64encode(buffer)
+def criarJSON(somatorio,nMudancas,frameCapturado,tempoDeAnalise):
+    buffer = "imagem"
+    if frameCapturado != None:
+    	retval,buffer = cv2.imencode('.jpg', frameCapturado)
+	frameString = base64.b64encode(buffer)
     media = 0
     if nMudancas != 0:
         media = somatorio/nMudancas
     dados = {
-        "NumeroAproxPessoas": media,
+        "numeroAproxPessoas": media,
         "tempoDeAnalise":tempoDeAnalise,
         "imagemDaSala": frameString
     }
@@ -20,16 +22,6 @@ def criarJSON(somatorio,nMudancas,tempoDeAnalise,frameCapturado):
     #Para converter de volta usar:
     #j = json.load(open("dados.json"))
     #imagem = base64.b64decode(j["imagemDaSala"])
-
-
-#Altera o tamanho da imagem
-def resize(image,width):
-	r = float(width)/image.shape[1] #aspect ratio
-	dim = (width,int(image.shape[0]*r))
-
-	resized = cv2.resize(image,dim,interpolation = cv2.INTER_AREA )
-	return(resized)
-
 
 
 #Metodo de Felzenszwalb et al

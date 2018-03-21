@@ -14,6 +14,14 @@ class Operator(Thread):
 				msg = self.socket.recv(self.buff)
 				if not msg:break
 				print "recebido:",msg
+				#ver as opcoes e deletar o indesejado (JSON)
+				#1-Ta funcionando?
+				#2-Quantas pessoas?
+				#3-Qual o tempo atual de analise?
+				#4-Enviar JSON todo
+
+
+
 				mensagem = self.convertJsonToString()
 				string_tamanho =str(len(mensagem))+"#" #tamanho do arquivo
 				print "enviando mensagem de tamanho:", string_tamanho
@@ -29,3 +37,6 @@ class Operator(Thread):
 		j = json.load(open("../dados.json"))
 		jsonString = json.dumps(j) #converte o JSON em uma string
 		return(jsonString)
+
+	def gerarJSONFinal(self):
+

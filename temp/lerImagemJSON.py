@@ -8,7 +8,7 @@ import base64
 j = json.load(open("dados.json"))
 imagem = base64.b64decode(j["imagemDaSala"])
 print "Tempo de analise:",j["tempoDeAnalise"],"segundos"
-print "Numero de pessoas:",j["NumeroAproxPessoas"]
+print "Numero de pessoas:",j["numeroAproxPessoas"]
 #salvando
 with open('imagem.jpg', 'wb') as f:
     f.write(imagem)
