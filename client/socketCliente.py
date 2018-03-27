@@ -9,8 +9,11 @@ bufferSize = j["bufferSize"]
 
 clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #Criando o socket
 clientsocket.connect((host,port))
+print "# 1-Quero\n","# 0-Nao quero\n","\n#[[0]imagem][[1]numero de pessoas][[2]Tempo de analise]"
+print "Exemplo: 010"
+codigo = raw_input("Digite a mensagem:")
 print "Enviando mensagem ao servidor"
-clientsocket.sendall("me manda o json!")
+clientsocket.sendall(codigo)
 print "Aguardando resposta do servidor"
 payload_string = clientsocket.recv(bufferSize)
 payload = payload_string.split("#",1) #Separando a string em 2 tamanho e json (o pedaco que veio)
