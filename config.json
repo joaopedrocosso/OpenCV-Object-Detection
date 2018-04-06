@@ -1,6 +1,6 @@
 {
-	"piCamera":true,
-	"idWebcam":"nvcamerasrc ! video/x-raw(memory:NVMM), width=(int)1280, height=(int)720,format=(string)I420, framerate=(fraction)30/1 ! nvvidconv flip-method=0 ! video/x-raw, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink",
+	"piCamera":false,
+	"idWebcam":0,
 	"taxaDeQuadros": 36,
 	"resolucao":[640,480],
 	"tempoDeInicializacao":1.0,

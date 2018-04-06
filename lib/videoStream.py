@@ -14,7 +14,7 @@ class VideoStream:
 	def update(self):
 		self.stream.update()
 
-	def read(Self):
+	def read(self):
 		return self.stream.read()
 
 	def stop(self):

@@ -1,3 +1,7 @@
+#Dados e outros arquivos gerados pelo programa
+dados.json
+client/dadosRecebidos.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

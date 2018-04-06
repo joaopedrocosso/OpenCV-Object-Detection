@@ -6,7 +6,7 @@ import base64 #para conversao da imagem em uma string de 64 bits
 #Cria o arquivo .json
 def criarJSON(somatorio,nMudancas,frameCapturado,tempoDeAnalise):
     buffer = "imagem"
-    if frameCapturado != None:
+    if frameCapturado is not None:
     	retval,buffer = cv2.imencode('.jpg', frameCapturado)
 	frameString = base64.b64encode(buffer)
     media = 0
@@ -26,7 +26,7 @@ def criarJSON(somatorio,nMudancas,frameCapturado,tempoDeAnalise):
 
 #Metodo de Felzenszwalb et al
 #Junta os quadrados que se sobrepoem em um e retorna a lista
-def non_max_supression(boxes,overlapThresh):
+def non_max_suppression(boxes,overlapThresh=0.3):
 	# se nao tem quadrados, retorna lista vazia
 	if len(boxes) == 0:
 		return []

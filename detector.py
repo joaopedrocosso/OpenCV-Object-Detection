@@ -47,7 +47,6 @@ def atualizaContadoresEnvelhecePessoas(listaPessoas,analise,oFrame):
         if not p.isVivo():
             indice = listaPessoas.index(p)
             listaPessoas.pop(indice)
-
     analiseNova = {
         "nPessoasFrameAnterior": numeroAnteriorPessoas,
         "somatorioDaAnalise": somatorio ,
@@ -60,10 +59,8 @@ def atualizaContadoresEnvelhecePessoas(listaPessoas,analise,oFrame):
 def filtrarImagem(frame,backgroundSub,jsonObj):
     #mascara do backgroundsubtractor
     fgmask = backgroundSub.apply(frame)
-
     #Aplicando um threshold para limitar aos movimentos mais importantes
     ret,thresh = cv2.threshold(fgmask,jsonObj["deltaThreshold"],255,cv2.THRESH_BINARY)
-
     #Removo um pouco do "noise" criado pelo MOG2
     kernelOp = np.ones((3,3),np.uint8)#Kernel opening
     kernelCl = np.ones((11,11),np.uint8)#Kernel closing
@@ -74,8 +71,6 @@ def filtrarImagem(frame,backgroundSub,jsonObj):
 
 def selecionandoContornos(listaPessoas,listaContornos,jsonObj,chaves):
     #Atualiza a lista de pessoas (acrescentando ou renovando)
-
-    #Verificar o tamanho das areas, se for menor ignorar.
     caixas = []
     for c in listaContornos:
             # ignora os contornos menores que a area minima
@@ -83,13 +78,10 @@ def selecionandoContornos(listaPessoas,listaContornos,jsonObj,chaves):
             if areaQuadrado > jsonObj["areaMinimaDeteccao"]:
                 (x, y, w, h) = cv2.boundingRect(c)              
                 caixas.append([x,y,w+x,h+y])
-
     #Transformo em um array do numpy para funcionar na non_max_supression
     caixas = np.array(caixas)
-
     #nonMaxSupression dos objetos (juntando caixas proximas)
-    caixas = mytools.non_max_supression(caixas,0.3)
-
+    caixas = mytools.non_max_suppression(caixas,0.3)
     #Adaptando as coordenadas do array para guarda-lo no objeto pessoa
     #para cada objeto detectado em caixas:
     for (x,y,endX,endY) in caixas:
@@ -98,7 +90,6 @@ def selecionandoContornos(listaPessoas,listaContornos,jsonObj,chaves):
         cy = endY-(endY-y)/2#centro y
         w = endX-x#Largura
         h = endY-y#altura
-
         #Checando se o novo objeto ja existe ou esta proximo de uma pessoa
         for p in listaPessoas:
             #Se esta muito perto, ele nao eh novo. Ele eh uma pessoa que andou
@@ -108,7 +99,6 @@ def selecionandoContornos(listaPessoas,listaContornos,jsonObj,chaves):
                 #numero de frames que apareceu e reseta a idade
                 p.atualiza(cx,cy)
                 break
-
         #Se eh novo, entao criar nova pessoa
         #e atualizar o contador de chaves(IDs)
         if novo == True:
@@ -125,70 +115,73 @@ def selecionandoContornos(listaPessoas,listaContornos,jsonObj,chaves):
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
 conf = json.load(open("config.json"))
+cameraEncontrada = True
+try:
+    vs = VideoStream(conf["idWebcam"],conf["piCamera"],conf["resolucao"],conf["taxaDeQuadros"]).start()
+except ImportError as e:
+    print "Erro: ",e.message
+    print "#Se estiver usando uma webcam nao esqueca de alterar a opcao piCamera para false"
+    cameraEncontrada = False
 
-vs = VideoStream(conf["idWebcam"],conf["piCamera"],conf["resolucao"],conf["taxaDeQuadros"]).start()
+if cameraEncontrada:
+    time.sleep(conf["tempoDeInicializacao"])
 
-time.sleep(conf["tempoDeInicializacao"])
+    #Ferramentas de deteccao e configuracoes
+    bsMog = cv2.createBackgroundSubtractorMOG2(detectShadows=True)
+    pessoas = [] #Pessoas atualmente na imagem
+    idBase = 0 #id da pessoa
+    tempoMaximo = conf["tempoMaximoDeVida"] #tempo para delecao de uma pessoa do vetor
+    tempoDeConfirmacao = conf["tempoDeConfirmacao"] #Tempo minimo (em frames) para ser considerado, como pessoa, no contador
+    tempoInicio = time.time() #Tempo de inicio do programa
 
-#Ferramentas de deteccao e configuracoes
-bsMog = cv2.createBackgroundSubtractorMOG2(detectShadows=True)
-pessoas = [] #Pessoas atualmente na imagem
-idBase = 0 #id da pessoa
-tempoMaximo = conf["tempoMaximoDeVida"] #tempo para delecao de uma pessoa do vetor
-tempoDeConfirmacao = conf["tempoDeConfirmacao"] #Tempo minimo (em frames) para ser considerado, como pessoa, no contador
-tempoInicio = time.time() #Tempo de inicio do programa
+    #Calculo do numero de pessoas
+    variaveisDeAnalise = {
+        "nPessoasFrameAnterior":0,#numero de pessoas confirmadas no frame anterior
+        "somatorioDaAnalise": 0,#A cada vez que o numero de pessoas muda, ele recebe o tempoDePessoa*NumeroDePessoas
+        "contadorDeMudancas": 0,#Conta quantas vezes o contador de pessoas mudou
+        "frameEscolhido": None #Frame escolhido para ser enviado
+    }
 
-#Calculo do numero de pessoas
-variaveisDeAnalise = {
-    "nPessoasFrameAnterior":0,#numero de pessoas confirmadas no frame anterior
-    "somatorioDaAnalise": 0,#A cada vez que o numero de pessoas muda, ele recebe o tempoDePessoa*NumeroDePessoas
-    "contadorDeMudancas": 0,#Conta quantas vezes o contador de pessoas mudou
-    "frameEscolhido": None #Frame escolhido para ser enviado
-}
-#nPessoasFrameAnterior = 0 #numero de pessoas confirmadas no frame anterior
-#somatorioDaAnalise = 0 #A cada vez que o numero de pessoas muda, ele recebe o tempoDePessoa*NumeroDePessoas
-#contadorDeMudancas = 0 #Conta quantas vezes o contador de pessoas mudou
-#frameEscolhido = None
+    print("Iniciando:")
+    #Loop principal, leitura do stream de video
+    while (True):
+        
+        #se o tempo atingiu o tempo maximo da analise do video, pausar
+        tempoInicio = confereTempo(tempoInicio,conf,variaveisDeAnalise)
 
-print("Iniciando:")
-while (True):
-    
-    #se o tempo atingiu o tempo maximo da analise do video, pausar
-    tempoInicio = confereTempo(tempoInicio,conf,variaveisDeAnalise)
-
-    originalFrame = vs.read() #recebe o frame
-    if (originalFrame == None):
-        break
-
-    #Atualiza os contadores e envelhece as pessoas da lista
-    variaveisDeAnalise = atualizaContadoresEnvelhecePessoas(pessoas,variaveisDeAnalise,originalFrame)
-
-    #Utilizando diversas funcoes para filtrar a imagem
-    imagemFiltrada = filtrarImagem(originalFrame,bsMog,conf) 
-
-    #Usar o contorno para achar os multiplos "borroes" e guardar em uma lista de contornos
-    img,contornos,hie = cv2.findContours(imagemFiltrada,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-
-    #Verifica se os objetos selecionados pela funcao findContours ja existem ou sao novos
-    caixas,idBase = selecionandoContornos(pessoas,contornos,conf,idBase)
-    
-    #Desenhando os quadrados
-    for (startX, startY, endX, endY) in caixas:
-            pXA = int(startX)
-            pYA = int(startY)
-            pXB = int(endX)
-            pYB = int(endY)
-            cv2.rectangle(originalFrame, (pXA, pYA), (pXB, pYB), (0, 0, 255), conf["espessuraDosQuadrados"])
-
-    #Exibir imagem
-    cv2.imshow('frame',originalFrame)
-
-    # apertar "q" sai do loop
-    key = cv2.waitKey(1) & 0xFF
-    if key == ord("q"):
+        originalFrame = vs.read() #recebe o frame
+        if originalFrame is None:
             break
 
-cv2.destroyAllWindows()
-vs.stop() #para o stream
+        #Atualiza os contadores e envelhece as pessoas da lista
+        variaveisDeAnalise = atualizaContadoresEnvelhecePessoas(pessoas,variaveisDeAnalise,originalFrame)
+
+        #Utilizando diversas funcoes para filtrar a imagem
+        imagemFiltrada = filtrarImagem(originalFrame,bsMog,conf) 
+
+        #Usar o contorno para achar os multiplos "borroes" e guardar em uma lista de contornos
+        img,contornos,hie = cv2.findContours(imagemFiltrada,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+
+        #Verifica se os objetos selecionados pela funcao findContours ja existem ou sao novos
+        caixas,idBase = selecionandoContornos(pessoas,contornos,conf,idBase)
+        
+        #Desenhando os quadrados
+        for (startX, startY, endX, endY) in caixas:
+                pXA = int(startX)
+                pYA = int(startY)
+                pXB = int(endX)
+                pYB = int(endY)
+                cv2.rectangle(originalFrame, (pXA, pYA), (pXB, pYB), (0, 0, 255), conf["espessuraDosQuadrados"])
+
+        #Exibir imagem
+        cv2.imshow('frame',originalFrame)
+
+        # apertar "q" sai do loop
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord("q"):
+                break
+
+    cv2.destroyAllWindows()
+    vs.stop() #para o stream
 
 
