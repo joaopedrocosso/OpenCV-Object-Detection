@@ -1,3 +1,6 @@
+#Coisas do visual studio
+.vscode
+
 #Dados e outros arquivos gerados pelo programa
 dados.json
 client/dadosRecebidos.json

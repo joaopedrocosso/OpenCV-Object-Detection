@@ -114,7 +114,10 @@ def selecionandoContornos(listaPessoas,listaContornos,jsonObj,chaves):
 #----------------------------------------------------------------------Programa principal
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
+#Carregando o json num dicionario
 conf = json.load(open("config.json"))
+
+#Verificando se o programa conseguiu acesso a camera
 cameraEncontrada = True
 try:
     vs = VideoStream(conf["idWebcam"],conf["piCamera"],conf["resolucao"],conf["taxaDeQuadros"]).start()
@@ -142,8 +145,7 @@ if cameraEncontrada:
         "frameEscolhido": None #Frame escolhido para ser enviado
     }
 
-    print("Iniciando:")
-    #Loop principal, leitura do stream de video
+    print("Iniciando:")#Loop principal, leitura do stream de video
     while (True):
         
         #se o tempo atingiu o tempo maximo da analise do video, pausar

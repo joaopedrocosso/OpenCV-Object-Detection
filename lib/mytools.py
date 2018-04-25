@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import json
 import base64 #para conversao da imagem em uma string de 64 bits
+from datetime import datetime
 
 #Cria o arquivo .json
 def criarJSON(somatorio,nMudancas,frameCapturado,tempoDeAnalise):
@@ -12,10 +13,13 @@ def criarJSON(somatorio,nMudancas,frameCapturado,tempoDeAnalise):
     media = 0
     if nMudancas != 0:
         media = somatorio/nMudancas
+	horarioDaAnalise = str(datetime.now())
+	
     dados = {
         "numeroAproxPessoas": media,
-        "tempoDeAnalise":tempoDeAnalise,
-        "imagemDaSala": frameString
+        "duracaoDaAnalise":tempoDeAnalise,
+        "imagemDaSala": frameString,
+		"analiseFeitaEm": horarioDaAnalise
     }
     with open("dados.json","w") as f:
         json.dump(dados,f)
