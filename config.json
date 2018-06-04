@@ -1,6 +1,9 @@
 {
-	"piCamera":false,
-	"idWebcam":0,
+	"cameraType":"ipcamera",
+	"idCam":0,
+	"cameraURL":"http://10.1.23.71/img/snapshot.cgi?img=vga",
+	"login":"pedro",
+	"password":"camelab192747",
 	"taxaDeQuadros": 36,
 	"resolucao":[640,480],
 	"tempoDeInicializacao":1.0,

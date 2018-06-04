@@ -120,7 +120,7 @@ conf = json.load(open("config.json"))
 #Verificando se o programa conseguiu acesso a camera
 cameraEncontrada = True
 try:
-    vs = VideoStream(conf["idWebcam"],conf["piCamera"],conf["resolucao"],conf["taxaDeQuadros"]).start()
+    vs = VideoStream(conf["idCam"],conf["cameraType"],conf["resolucao"],conf["taxaDeQuadros"],conf["cameraURL"],conf["login"],conf["password"]).start()
 except ImportError as e:
     print "Erro: ",e.message
     print "#Se estiver usando uma webcam nao esqueca de alterar a opcao piCamera para false"
