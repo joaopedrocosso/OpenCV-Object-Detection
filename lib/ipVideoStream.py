@@ -19,14 +19,20 @@ class IPVideoStream:
         Thread(target=self.update,args=()).start()
         return self
     def update(self):
+        bytes = ''
+        #A url da camera IP envia o fluxo de video .mjpeg
+        ipStream = urllib2.urlopen(self.req)
         while True:
             if self.stopped:
-                return 
-            return self.frame
+                return
+            bytes+=ipStream.read(1024)
+            a = bytes.find('\xff\xd8')
+            b = bytes.find('\xff\xd9')
+            if a!=-1 and b!=-1:
+                jpg = bytes[a:b+2]
+                bytes= bytes[b+2:]
+                self.frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8),cv2.IMREAD_COLOR)
     def read(self):
-        response = urllib2.urlopen(self.req)
-        img_array = np.asarray(bytearray(response.read()), dtype=np.uint8)
-        self.frame = cv2.imdecode(img_array, 1)
         return self.frame
     def stop(self):
         self.stopped = True
