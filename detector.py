@@ -10,10 +10,10 @@ from lib.videoStream import VideoStream
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
 
-def confereTempo(tempoInicio,jsonOb,analise):
+def confereTempo(tempoInicio,jsonOb,analise,ultimoFrame):
     #Se ja esta na hora de dormir
     if (time.time() - tempoInicio >= jsonOb["duracaoAnaliseSegundos"]):
-        mytools.criarJSON(analise["somatorioDaAnalise"],analise["contadorDeMudancas"],analise["frameEscolhido"],jsonOb["duracaoAnaliseSegundos"])
+        mytools.criarJSON(analise["somatorioDaAnalise"],analise["contadorDeMudancas"],ultimoFrame,jsonOb["duracaoAnaliseSegundos"])
         print("JSON criado")
         print("Dormindo...")
         cv2.destroyAllWindows()
@@ -24,13 +24,12 @@ def confereTempo(tempoInicio,jsonOb,analise):
     return tempoInicio
 
 
-def atualizaContadoresEnvelhecePessoas(listaPessoas,analise,oFrame):
+def atualizaContadoresEnvelhecePessoas(listaPessoas,analise):
     #Atualizando o numero atual de pessoas na tela
     #OBS as declaracoes abaixo sao para melhorar a leitura do codigo
     numeroAnteriorPessoas = analise["nPessoasFrameAnterior"]
     somatorio = analise["somatorioDaAnalise"]
     nMudancas = analise["contadorDeMudancas"]
-    frameEscolhido = analise["frameEscolhido"]
     nPessoasNovo = 0
     for p in listaPessoas:
         if p.isConfirmado():
@@ -40,7 +39,6 @@ def atualizaContadoresEnvelhecePessoas(listaPessoas,analise,oFrame):
         numeroAnteriorPessoas = nPessoasNovo
         somatorio+=nPessoasNovo #atualizando o somatorio
         nMudancas+=1
-        frameEscolhido = oFrame #Atualizando o frame escolhido para o envio (TEMPORARIO!!!!)
     #Verificando/incrementando a idade as pessoas
     for p in listaPessoas:
         p.envelhece()
@@ -50,8 +48,7 @@ def atualizaContadoresEnvelhecePessoas(listaPessoas,analise,oFrame):
     analiseNova = {
         "nPessoasFrameAnterior": numeroAnteriorPessoas,
         "somatorioDaAnalise": somatorio ,
-        "contadorDeMudancas": nMudancas,
-        "frameEscolhido": frameEscolhido
+        "contadorDeMudancas": nMudancas
     }
     return analiseNova
 
@@ -142,46 +139,57 @@ if cameraEncontrada:
         "nPessoasFrameAnterior":0,#numero de pessoas confirmadas no frame anterior
         "somatorioDaAnalise": 0,#A cada vez que o numero de pessoas muda, ele recebe o tempoDePessoa*NumeroDePessoas
         "contadorDeMudancas": 0,#Conta quantas vezes o contador de pessoas mudou
-        "frameEscolhido": None #Frame escolhido para ser enviado
     }
 
     print("Iniciando:")#Loop principal, leitura do stream de video
     while (True):
-        
-        #se o tempo atingiu o tempo maximo da analise do video, pausar
-        tempoInicio = confereTempo(tempoInicio,conf,variaveisDeAnalise)
+        try:
+            originalFrame = vs.read() #recebe o frame
+            if originalFrame is None:
+                break
 
-        originalFrame = vs.read() #recebe o frame
-        if originalFrame is None:
+            #se o tempo atingiu o tempo maximo da analise do video, pausar
+            tempoInicio = confereTempo(tempoInicio,conf,variaveisDeAnalise,originalFrame)
+
+            #Atualiza os contadores e envelhece as pessoas da lista
+            variaveisDeAnalise = atualizaContadoresEnvelhecePessoas(pessoas,variaveisDeAnalise)
+
+            #Utilizando diversas funcoes para filtrar a imagem
+            imagemFiltrada = filtrarImagem(originalFrame,bsMog,conf) 
+
+            #Usar o contorno para achar os multiplos "borroes" e guardar em uma lista de contornos
+            img,contornos,hie = cv2.findContours(imagemFiltrada,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+
+            #Verifica se os objetos selecionados pela funcao findContours ja existem ou sao novos
+            caixas,idBase = selecionandoContornos(pessoas,contornos,conf,idBase)
+            
+            #Desenhando os quadrados
+            for (startX, startY, endX, endY) in caixas:
+                    pXA = int(startX)
+                    pYA = int(startY)
+                    pXB = int(endX)
+                    pYB = int(endY)
+                    cv2.rectangle(originalFrame, (pXA, pYA), (pXB, pYB), (0, 0, 255), conf["espessuraDosQuadrados"])
+
+            #Exibir imagem
+            #cv2.imshow('frame',originalFrame)
+
+            # apertar "q" sai do loop
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("q"):
+                    break
+        except TypeError as e:
+            print "Erro: ",e.message
+            print "Imagem invalida ou corrompida, encerrando o programa"
+            break
+        except KeyboardInterrupt as e:
+            print "Erro: ",e.message
+            print "Tecla de saida detectada, encerrando"
+            break
+        except:
+            print "Erro: ",e.message
             break
 
-        #Atualiza os contadores e envelhece as pessoas da lista
-        variaveisDeAnalise = atualizaContadoresEnvelhecePessoas(pessoas,variaveisDeAnalise,originalFrame)
-
-        #Utilizando diversas funcoes para filtrar a imagem
-        imagemFiltrada = filtrarImagem(originalFrame,bsMog,conf) 
-
-        #Usar o contorno para achar os multiplos "borroes" e guardar em uma lista de contornos
-        img,contornos,hie = cv2.findContours(imagemFiltrada,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-
-        #Verifica se os objetos selecionados pela funcao findContours ja existem ou sao novos
-        caixas,idBase = selecionandoContornos(pessoas,contornos,conf,idBase)
-        
-        #Desenhando os quadrados
-        for (startX, startY, endX, endY) in caixas:
-                pXA = int(startX)
-                pYA = int(startY)
-                pXB = int(endX)
-                pYB = int(endY)
-                cv2.rectangle(originalFrame, (pXA, pYA), (pXB, pYB), (0, 0, 255), conf["espessuraDosQuadrados"])
-
-        #Exibir imagem
-        cv2.imshow('frame',originalFrame)
-
-        # apertar "q" sai do loop
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord("q"):
-                break
 
     cv2.destroyAllWindows()
     vs.stop() #para o stream

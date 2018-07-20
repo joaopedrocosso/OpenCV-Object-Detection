@@ -1,8 +1,8 @@
 {
 	"cameraType":"ipcamera",
 	"idCam":0,
-	"cameraURL":"http://10.1.23.71/img/video.mjpeg",
-	"login":"pedro",
+	"cameraURL":"http://10.1.23.52/img/video.mjpeg",
+	"login":"aplicativo",
 	"password":"camelab192747",
 	"taxaDeQuadros": 36,
 	"resolucao":[640,480],

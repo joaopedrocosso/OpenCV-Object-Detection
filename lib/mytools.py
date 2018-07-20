@@ -6,26 +6,24 @@ from datetime import datetime
 
 #Cria o arquivo .json
 def criarJSON(somatorio,nMudancas,frameCapturado,tempoDeAnalise):
-    buffer = "imagem"
-    if frameCapturado is not None:
-    	retval,buffer = cv2.imencode('.jpg', frameCapturado)
-	frameString = base64.b64encode(buffer)
-    media = 0
-    if nMudancas != 0:
-        media = somatorio/nMudancas
+	buffer = "imagem"
+	framestring = ""
 	horarioDaAnalise = str(datetime.now())
+	if frameCapturado is not None:
+		retval,buffer = cv2.imencode('.jpg', frameCapturado)
+		frameString = base64.b64encode(buffer)
+	media = 0
+	if nMudancas != 0:
+		media = somatorio/nMudancas
 	
-    dados = {
-        "numeroAproxPessoas": media,
-        "duracaoDaAnalise":tempoDeAnalise,
-        "imagemDaSala": frameString,
+	dados = {
+		"numeroAproxPessoas": media,
+		"duracaoDaAnalise":tempoDeAnalise,
+		"imagemDaSala": frameString,
 		"analiseFeitaEm": horarioDaAnalise
-    }
-    with open("dados.json","w") as f:
-        json.dump(dados,f)
-    #Para converter de volta usar:
-    #j = json.load(open("dados.json"))
-    #imagem = base64.b64decode(j["imagemDaSala"])
+	}
+	with open("dados.json","w") as f:
+		json.dump(dados,f)
 
 
 #Metodo de Felzenszwalb et al
