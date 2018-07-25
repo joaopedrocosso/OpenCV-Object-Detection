@@ -6,6 +6,7 @@ from lib import mytools
 from lib.pessoa import Pessoa
 from lib.videoStream import VideoStream
 
+
 #----------------------------------------------------------------------Funcoes
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
@@ -35,7 +36,7 @@ def atualizaContadoresEnvelhecePessoas(listaPessoas,analise):
         if p.isConfirmado():
             nPessoasNovo+=1
     if nPessoasNovo != numeroAnteriorPessoas:
-        print "numero de pessoas:",numeroAnteriorPessoas
+        #print "numero de pessoas:",numeroAnteriorPessoas
         numeroAnteriorPessoas = nPessoasNovo
         somatorio+=nPessoasNovo #atualizando o somatorio
         nMudancas+=1
@@ -104,9 +105,25 @@ def selecionandoContornos(listaPessoas,listaContornos,jsonObj,chaves):
             chaves+=1
     return caixas,chaves
 
+def verificarMudancaFundo(frameAnterior,frameAtual,tempoUltimoMovimento,matchesAntigos):
+    sift = cv2.xfeatures2d.SIFT_create()
+    #Encontrando keypoints de cada frame
+    kp1, des1 = sift.detectAndCompute(frameAnterior,None)
+    kp2, des2 = sift.detectAndCompute(frameAtual,None)
 
+    #Parametros do detector FLANN
+    FLANN_INDEX_KDTREE = 0
+    index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+    search_params = dict(checks=50) #checks = numero de matchs
 
+    flann = cv2.FlannBasedMatcher(index_params,search_params)
+    matches = flann.knnMatch(des1,des2,k=2)
 
+    diff = abs(len(matches) - matchesAntigos)
+    if diff>100: #se mudou, atualiza o tempo de analise ativa
+        return len(matches),time.time() 
+    else:
+        return len(matches),tempoUltimoMovimento
 
 #----------------------------------------------------------------------Programa principal
 #----------------------------------------------------------------------
@@ -124,15 +141,19 @@ except ImportError as e:
     cameraEncontrada = False
 
 if cameraEncontrada:
-    time.sleep(conf["tempoDeInicializacao"])
+    time.sleep(conf["warmUpCamera"])
 
     #Ferramentas de deteccao e configuracoes
     bsMog = cv2.createBackgroundSubtractorMOG2(detectShadows=True)
     pessoas = [] #Pessoas atualmente na imagem
     idBase = 0 #id da pessoa
-    tempoMaximo = conf["tempoMaximoDeVida"] #tempo para delecao de uma pessoa do vetor
-    tempoDeConfirmacao = conf["tempoDeConfirmacao"] #Tempo minimo (em frames) para ser considerado, como pessoa, no contador
+    tempoMaximo = conf["tempoMaximoDeVidaPessoa"] #tempo para delecao de uma pessoa do vetor
+    tempoDeConfirmacao = conf["tempoParaConfirmarPessoa"] #Tempo minimo (em frames) para ser considerado, como pessoa, no contador
+    tempoAposDifDetect = conf["tempoAnaliseAposDiferencaDetectada"]
     tempoInicio = time.time() #Tempo de inicio do programa
+    tempoDoUltimoMovimento = time.time()-tempoAposDifDetect*10
+    oldFrame = None
+    oldMatches = 0
 
     #Calculo do numero de pessoas
     variaveisDeAnalise = {
@@ -141,36 +162,48 @@ if cameraEncontrada:
         "contadorDeMudancas": 0,#Conta quantas vezes o contador de pessoas mudou
     }
 
+
     print("Iniciando:")#Loop principal, leitura do stream de video
+    
     while (True):
         try:
             originalFrame = vs.read() #recebe o frame
             if originalFrame is None:
                 break
-
+            if oldFrame is None:
+                oldFrame = originalFrame.copy()
+    
+            
+            
             #se o tempo atingiu o tempo maximo da analise do video, pausar
             tempoInicio = confereTempo(tempoInicio,conf,variaveisDeAnalise,originalFrame)
 
             #Atualiza os contadores e envelhece as pessoas da lista
             variaveisDeAnalise = atualizaContadoresEnvelhecePessoas(pessoas,variaveisDeAnalise)
 
-            #Utilizando diversas funcoes para filtrar a imagem
-            imagemFiltrada = filtrarImagem(originalFrame,bsMog,conf) 
+            if (time.time() - tempoDoUltimoMovimento < tempoAposDifDetect):
+                
+                #Utilizando diversas funcoes para filtrar a imagem
+                imagemFiltrada = filtrarImagem(originalFrame,bsMog,conf) 
 
-            #Usar o contorno para achar os multiplos "borroes" e guardar em uma lista de contornos
-            img,contornos,hie = cv2.findContours(imagemFiltrada,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+                #Usar o contorno para achar os multiplos "borroes" e guardar em uma lista de contornos
+                img,contornos,hie = cv2.findContours(imagemFiltrada,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
-            #Verifica se os objetos selecionados pela funcao findContours ja existem ou sao novos
-            caixas,idBase = selecionandoContornos(pessoas,contornos,conf,idBase)
-            
-            #Desenhando os quadrados
-            for (startX, startY, endX, endY) in caixas:
-                    pXA = int(startX)
-                    pYA = int(startY)
-                    pXB = int(endX)
-                    pYB = int(endY)
-                    cv2.rectangle(originalFrame, (pXA, pYA), (pXB, pYB), (0, 0, 255), conf["espessuraDosQuadrados"])
+                #Verifica se os objetos selecionados pela funcao findContours ja existem ou sao novos
+                caixas,idBase = selecionandoContornos(pessoas,contornos,conf,idBase)
+                
+                #Desenhando os quadrados
+                for (startX, startY, endX, endY) in caixas:
+                        pXA = int(startX)
+                        pYA = int(startY)
+                        pXB = int(endX)
+                        pYB = int(endY)
+                        cv2.rectangle(originalFrame, (pXA, pYA), (pXB, pYB), (0, 0, 255), conf["espessuraDosQuadrados"])
+            else:
+                #checa se houve alguma movimentacao recente
+                oldMatches,tempoDoUltimoMovimento = verificarMudancaFundo(oldFrame,originalFrame,tempoDoUltimoMovimento,oldMatches)
 
+            oldFrame = originalFrame.copy()
             #Exibir imagem
             #cv2.imshow('frame',originalFrame)
 

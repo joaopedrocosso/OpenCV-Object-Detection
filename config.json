@@ -6,12 +6,13 @@
 	"password":"camelab192747",
 	"taxaDeQuadros": 36,
 	"resolucao":[640,480],
-	"tempoDeInicializacao":1.0,
 	"deltaThreshold":127,
 	"areaMinimaDeteccao":500,
 	"espessuraDosQuadrados":2,
-	"tempoDeConfirmacao":3,
-	"tempoMaximoDeVida":15,
-	"duracaoAnaliseSegundos":30,
+	"warmUpCamera":1.0,
+	"tempoParaConfirmarPessoa":3,
+	"tempoMaximoDeVidaPessoa":15,
+	"tempoAnaliseAposDiferencaDetectada":5,
+	"duracaoAnaliseSegundos":60,
 	"intervaloDescansoSegundos":20
 }
