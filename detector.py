@@ -105,6 +105,36 @@ def selecionandoContornos(listaPessoas,listaContornos,jsonObj,chaves):
             chaves+=1
     return caixas,chaves
 
+
+
+def verificarMudancaFundo(frameAnterior,frameAtual,tempoUltimoMovimento,matchesAntigos):
+    orb = cv2.ORB_create()
+    kp1,des1 = orb.detectAndCompute(frameAnterior,None)
+    kp2,des2 = orb.detectAndCompute(frameAtual,None)
+    
+    # create BFMatcher object
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    # Match descriptors.
+    matches = bf.match(des1,des2)
+    #analisando mudanca
+    diff = abs(len(matches) - matchesAntigos)
+    ##TODO Checar precisao (100)
+    if diff>100: #se mudou, atualiza o tempo de analise ativa
+        return len(matches),time.time() 
+    else:
+        return len(matches),tempoUltimoMovimento
+
+def desenharQuadrados(quadrados,frame):
+    #Desenhando os quadrados
+    frameparaDesenho = frame.copy()
+    for (startX, startY, endX, endY) in quadrados:
+            pXA = int(startX)
+            pYA = int(startY)
+            pXB = int(endX)
+            pYB = int(endY)
+            cv2.rectangle(frameparaDesenho, (pXA, pYA), (pXB, pYB), (0, 0, 255), conf["espessuraDosQuadrados"])
+    return frameparaDesenho
+'''    
 def verificarMudancaFundo(frameAnterior,frameAtual,tempoUltimoMovimento,matchesAntigos):
     sift = cv2.xfeatures2d.SIFT_create()
     #Encontrando keypoints de cada frame
@@ -124,7 +154,7 @@ def verificarMudancaFundo(frameAnterior,frameAtual,tempoUltimoMovimento,matchesA
         return len(matches),time.time() 
     else:
         return len(matches),tempoUltimoMovimento
-
+'''
 #----------------------------------------------------------------------Programa principal
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
@@ -152,8 +182,9 @@ if cameraEncontrada:
     tempoAposDifDetect = conf["tempoAnaliseAposDiferencaDetectada"]
     tempoInicio = time.time() #Tempo de inicio do programa
     tempoDoUltimoMovimento = time.time()-tempoAposDifDetect*10
-    oldFrame = None
-    oldMatches = 0
+    oldFrame = None #Usado no feature matching
+    frameParaExibir = None #Usado para desenhar os quadrados de deteccao
+    oldMatches = 0 #Usado para comparar os features dos frames (numero de pontos que "bateram")
 
     #Calculo do numero de pessoas
     variaveisDeAnalise = {
@@ -191,21 +222,18 @@ if cameraEncontrada:
 
                 #Verifica se os objetos selecionados pela funcao findContours ja existem ou sao novos
                 caixas,idBase = selecionandoContornos(pessoas,contornos,conf,idBase)
-                
-                #Desenhando os quadrados
-                for (startX, startY, endX, endY) in caixas:
-                        pXA = int(startX)
-                        pYA = int(startY)
-                        pXB = int(endX)
-                        pYB = int(endY)
-                        cv2.rectangle(originalFrame, (pXA, pYA), (pXB, pYB), (0, 0, 255), conf["espessuraDosQuadrados"])
+
+                #Marca as posicoes
+                #frameParaExibir = desenharQuadrados(caixas,originalFrame)
+
             else:
                 #checa se houve alguma movimentacao recente
                 oldMatches,tempoDoUltimoMovimento = verificarMudancaFundo(oldFrame,originalFrame,tempoDoUltimoMovimento,oldMatches)
+                frameParaExibir = originalFrame.copy()
 
             oldFrame = originalFrame.copy()
             #Exibir imagem
-            #cv2.imshow('frame',originalFrame)
+            #cv2.imshow('frame',frameParaExibir)
 
             # apertar "q" sai do loop
             key = cv2.waitKey(1) & 0xFF
@@ -219,7 +247,7 @@ if cameraEncontrada:
             print "Erro: ",e.message
             print "Tecla de saida detectada, encerrando"
             break
-        except:
+        except Exception as e:
             print "Erro: ",e.message
             break
 
