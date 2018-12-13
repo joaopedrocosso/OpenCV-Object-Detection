@@ -1,5 +1,7 @@
 import json
 
+#Deleta algum conteúdo do JSON
+
 with open("dados.json") as j:
 	data = json.load(j)
 	del data["imagemDaSala"]

@@ -10,7 +10,7 @@ def criarJSON(somatorio,nMudancas,frameCapturado,tempoDeAnalise):
 	framestring = ""
 	horarioDaAnalise = str(datetime.now())
 	if frameCapturado is not None:
-		retval,buffer = cv2.imencode('.jpg', frameCapturado)
+		_,buffer = cv2.imencode('.jpg', frameCapturado)
 		frameString = base64.b64encode(buffer)
 	media = 0
 	if nMudancas != 0:
