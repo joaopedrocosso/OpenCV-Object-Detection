@@ -13,8 +13,8 @@ cameraEncontrada = True
 try:
     vs = VideoStream(config["idCam"],config["cameraType"],config["resolucao"],config["taxaDeQuadros"],config["cameraURL"],config["login"],config["password"]).start()
 except ImportError as e:
-    print "Erro: ",e.message
-    print "#Se estiver usando uma webcam nao esqueca de alterar a opcao piCamera para false"
+    print ("Erro: ",e.message)
+    print ("#Se estiver usando uma webcam nao esqueca de alterar a opcao piCamera para false")
     cameraEncontrada = False
 
 if cameraEncontrada:
@@ -67,16 +67,17 @@ if cameraEncontrada:
                     break
 
         except TypeError as e:
-            print "Erro: ",e.message
-            print "Imagem invalida ou corrompida, encerrando o programa"
+            print ("Erro: ",e.message)
+            print ("Imagem invalida ou corrompida, encerrando o programa")
             break
         except KeyboardInterrupt as e:
-            print "Erro: ",e.message
-            print "Tecla de saida detectada, encerrando"
+            print ("Erro: ",e.message)
+            print ("Tecla de saida detectada, encerrando")
             break
         except Exception as e:
-            print "Erro: ",e.message
+            print ("Erro: ",e.message)
             break
+
 
 
     cv2.destroyAllWindows()
