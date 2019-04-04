@@ -1,2 +1,0 @@
-python lerImagemJSON.py
-pause
