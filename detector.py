@@ -11,7 +11,7 @@ from imagelib.detector_movimento import DetectorMovimento
 from videolib.videoStream import VideoStream
 from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas
 from pessoas_lib.pessoas_historico import PessoasHistorico
-from pessoas_lib.pessoas import Pessoas
+from pessoas_lib.caixas_pessoas_lib import CaixasPessoas
 from exceptions.video_stream_exceptions import CannotOpenStreamError, StreamClosedError
 
 def main():
