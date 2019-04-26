@@ -4,30 +4,30 @@ from .pessoa import Pessoa
 
 class Pessoas:
 
-    def __init__(self, tempoConfirmarPessoa=1, tempoMaximoDeVidaPessoa=10, precisaoMinima=0.5):
+    def __init__(self, minFramesParaConfirmar=1, maxTempoDesaparecida=10, precisaoMinima=0.5):
 
         # self.pessoas, self.idContador, self.pessoasConfirmadas
         self.reiniciar()
     
         try:
             self.precisaoMinima = int(precisaoMinima)
-            self.tempoConfirmarPessoa = int(tempoConfirmarPessoa)
-            self.tempoMaximoDeVidaPessoa = float(tempoMaximoDeVidaPessoa)
+            self.minFramesParaConfirmar = int(minFramesParaConfirmar)
+            self.maxTempoDesaparecida = float(maxTempoDesaparecida)
         except ValueError:
             raise ValueError(
-                "'tempoConfirmarPessoa' e 'tempoMaximoDeVidaPessoa' devem ser numeros inteiros e"
+                "'minFramesParaConfirmar' e 'maxTempoDesaparecida' devem ser numeros inteiros e"
                 "'precisaoMinima' deve ser um numero real.")
             
         if (self.precisaoMinima < 0.0 or self.precisaoMinima > 1.0 or
-            not self.tempoMaximoDeVidaPessoa > self.tempoConfirmarPessoa > 0):
+            not self.maxTempoDesaparecida > self.minFramesParaConfirmar > 0):
                 raise ValueError(
-                    "Valores devem ser 'tempoMaximoDeVidaPessoa'"
-                    " > 'tempoConfirmarPessoa' > 0 e 0.0 <= 'precisaoMinima' <= 1.0.")
+                    "Valores devem ser 'maxTempoDesaparecida'"
+                    " > 'minFramesParaConfirmar' > 0 e 0.0 <= 'precisaoMinima' <= 1.0.")
 
 
     def reiniciar(self):
 
-        self.pessoas = []
+        self.pessoas = {}
         self.idContador = 0
         self.pessoasConfirmadas = 0
 
@@ -40,17 +40,71 @@ class Pessoas:
 
         '''Atualiza lista de pessoas.'''
 
-        self._verificarIdadeDasPessoas()
-        return self._processarCaixas(caixasComPeso)
+        self._atualizaPessoasDesaparecidas()
+
+        if len(caixasComPeso) == 0:
+            return self.getPessoas(pos='cima-esquerda')
+
+        if len(self.pessoas) == 0:
+            self.reiniciar()
+            for (x, y, w, h), peso in caixasComPeso:
+                cx = x - w//2
+                cy = y - h//2
+                self._registra_pessoa(cx, cy, w, h, peso)
+            return self.getPessoas(pos='cima-esquerda')
 
 
-    def _verificarIdadeDasPessoas(self):
 
-        '''Atualiza os contadores e envelhece as pessoas da lista.'''
 
-        # Verificando/incrementando a idade as pessoas
+
+    def getCaixasPessoas(self, pos='centro'):
+
+        '''Retorna as caixas equivalentes 'as pessoas, com peso.
+
+        Retorno e' uma lista de tuplas [((x, y, w, h), peso), ...]
+
+        Parametros:
+            pos: posicao que a coordenada (x, y) representa. Pode ser:
+                'centro', (padrao)
+                'cima',
+                'baixo',
+                'direita',
+                'esquerda',
+                'cima-esquerda'
+                'cima-direita',
+                'baixo-esquerda',
+                'baixo-direita'.
+         '''
+
+        pessoasRetorno = []
+        for pessoa in self.pessoas:
+
+            (x, y, w, h), peso = pessoa.getCaixaComPeso()
+
+            if pos in ['esquerda', 'cima-esquerda', 'baixo-esquerda']:
+                x -= w//2
+            elif pos in ['direita', 'cima-direita', 'baixo-direita']:
+                x += w//2
+
+            if pos_y in ['cima', 'cima-esquerda', 'cima-direita']:
+                y -= h//2
+            elif pos_y in ['baixo', 'baixo-esquerda', 'baixo-direita']:
+                y += h//2
+
+            pessoasRetorno.append( ((x, y, w, h), peso) )
+
+        return pessoasRetorno
+
+
+    def _atualizaPessoasDesaparecidas(self):
+
+        '''
+        Atualiza o numero de pessoas confirmadas e ha quanto
+        tempo cada pessoa esta desaparecida.
+        '''
+
         for p in self.pessoas:
-            p.envelhece()
+            p.aumentaTempoDesaparecida()
             if not p.isViva():
                 indice = self.pessoas.index(p)
                 self.pessoas.pop(indice)
@@ -63,10 +117,20 @@ class Pessoas:
 
         return self.pessoasConfirmadas
 
+    
+    def _registra_pessoa(self, x, y, w, h, peso):
 
-    def _processarCaixas(self, caixasComPeso):
+        self.pessoas[self.idContador] = Pessoa(
+            x, y, w, h, peso, self.minFramesParaConfirmar, self.maxTempoDesaparecida
+        )
+        self.idContador += 1
+
+
+
+
+    '''def _processarCaixas(self, caixasComPeso):
         
-        '''Verificar nas caixas encontradas, se alguma pessoa eh nova/velha e atualizar dados.'''
+        #Verificar nas caixas encontradas, se alguma pessoa eh nova/velha e atualizar dados.
 
         # Adaptando as coordenadas do array para guarda-lo no objeto pessoa
         # para cada objeto detectado em caixas:
@@ -95,12 +159,16 @@ class Pessoas:
                 self.pessoas.append(p)
                 self.idContador += 1
 
-        return [[(p.x - p.w//2, p.y - p.h//2, p.w, p.h), p.peso] for p in self.pessoas if p.isConfirmada()]
+        return [[(p.x - p.w//2, p.y - p.h//2, p.w, p.h), p.peso] for p in self.pessoas if p.isConfirmada()]'''
+
+
 
 
     def __str__(self):
 
         ret = ''
-        for p in self.pessoas:
-            ret += str(p) + '\n'
+
+        chave = self.pessoas.keys()
+        for chave in chaves:
+            ret += str(chave) + ': ' + str(self.pessoas[chave]) + '\n'
         return ret

@@ -1,12 +1,10 @@
 class Pessoa:
 	
-	def __init__(self, i, x, y, w, h, peso=None, minFramesParaConfirmar=5, maxTempoDesaparecida=20):
-		
-		self.id = i #ID da pessoa
+	def __init__(self, x, y, w, h, peso=None, minFramesParaConfirmar=5, maxTempoDesaparecida=20):
 
-		# Levantam ValueError
-		self.x, self.y, self.w, self.h = self._mudaCoordenadasDaCaixa(x, y, w, h)
-		self.peso = self._mudaPeso(peso)
+		# Levanta ValueError
+		self.x, self.y, self.w, self.h = self._checaCoordenadasCaixa(x, y, w, h)
+		self.peso = self._checaPeso(peso)
 
 		self.tracks = [] #lista de pontos que a pessoa esteve
 		
@@ -16,7 +14,7 @@ class Pessoa:
 			self.maxTempoDesaparecida = int(maxTempoDesaparecida)
 			self.minFramesParaConfirmar = int(minFramesParaConfirmar)
 
-			if minFramesParaConfirmar < 0 or  maxTempoDesaparecida < 0:
+			if minFramesParaConfirmar < 0 or maxTempoDesaparecida < 0:
 				raise ValueError()
 		except ValueError:
 			raise ValueError("'maxTempoDesaparecida' e 'minFramesParaConfirmar' devem ser inteiros positivos.")
@@ -31,15 +29,15 @@ class Pessoa:
 		xAntigo, yAntigo = self.x, self.y
 
 		# Levantam ValueError
-		self._mudaCoordenadasDaCaixa(x, y, w, h)
-		self._mudaPeso(peso)
-
-		#reseta a idade,incrementa o numero de frames em que apareceu e adiciona a nova posicao
+		self.x, self.y, self.w, self.h = self._checaCoordenadasCaixa(x, y, w, h)
+		self.peso = self._checaPeso(peso)
+	
+		#Guardando as coordenadas antigas
+		self.tracks.append((xAntigo, yAntigo))
+	
 		self.tempoDesaparecida = 0
-		self.framesCount+=1 #Se passar do framesMin ele passa a ser considerado
-	
-		self.tracks.append((self.x,self.y))#Guardando as coordenadas antigas
-	
+		self.framesCount += 1
+
 		if self.framesCount > self.minFramesParaConfirmar:
 			self.pessoaConfirmada = True #ela existe
 
@@ -48,10 +46,10 @@ class Pessoa:
     	#Retorna a lista de coordenadas em que essa pessoa apareceu
 		return self.tracks
 
-	def envelhece(self):
-    
-    	#Incrementa a idade e checa se ela ja morreu
-		self.tempoDesaparecida+=1
+
+	def aumentaTempoDesaparecida(self):
+
+		self.tempoDesaparecida += 1
 		if self.tempoDesaparecida > self.maxTempoDesaparecida:
 			self.viva = False
 
@@ -61,51 +59,47 @@ class Pessoa:
 	def isConfirmada(self):
 		return self.pessoaConfirmada
 
+	def getCoordenadas(self):
+		return (self.x, self.y)
+	def getCaixa(self):
+		return self.x, self.y, self.w, self.h
+	def getCaixaComPeso(self):
+		return getCaixa(), self.peso
+
 
 	def __str__(self):
 
-		return '#{}: (x={}, y={}), (w={}, h={}), peso={}, {} e {}'.format(
-			self.id, self.x, self.y, self.w, self.h, self.peso,
+		return '(x={}, y={}), (w={}, h={}), peso={}, {} e {}'.format(
+			self.x, self.y, self.w, self.h, self.peso,
 			'viva' if self.viva else 'morta',
 			'confirmada' if self.pessoaConfirmada else 'nao confirmada'
 		)
 
-	def _mudaPeso(self, peso):
+	def _checaPeso(self, peso):
 
 		if peso is not None:
 			try:
 				peso = float(peso)
 			except ValueError:
-				raise ValueError('Peso deve ser um numero real.')
+				raise ValueError('Peso deve ser um numero real, ou None.')
 
 			if peso < 0.0 or peso > 1.0:
 				raise ValueError('Peso deve ser um numero entre 0.0 e 1.0.')
 
-		self.peso = peso
 		return peso
 
-	def _mudaCoordenadasDaCaixa(self, x, y, w=None, h=None):
+	def _checaCoordenadasCaixa(self, x, y, w, h):
 		
 		try:
-			self.x = int(x)
-			self.y = int(y)
+			x = int(x)
+			y = int(y)
 		except ValueError:
-			raise ValueError('Posicao (x, y) deve ser composta de numeros (que possam ser convertidos para) inteiros.')
+			raise ValueError('Posicao (x, y) devem ser (ou poder ser convertidos para) inteiros.')
 
-		if w is not None and h is not None:
-			try:
-				self.w = int(w)
-				self.h = int(h)
-				if w <= 0 or h <= 0:
-					raise ValueError()
-			except ValueError:
-				raise ValueError('Largura e altura (w, h) devem ser numeros (que possam ser convertidos para) inteiros positivos.')
-		else:
-			try:
-				self.w
-				self.h
-			except AttributeError:
-				raise AttributeError('Valores de largura e altura devem ser fornecidos ao menos uma vez.')
-
+		try:
+			w = int(w)
+			h = int(h)
+		except ValueError:
+			raise ValueError('Largura e altura devem ser (ou poder ser convertidos para) inteiros positivos.')
 
 		return x, y, w, h
