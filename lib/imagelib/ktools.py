@@ -119,3 +119,4 @@ def non_maxima_suppression(caixas, precisoes, precisao_minima, supressao_caixas)
 	if not isinstance(idxs, np.ndarray):
 		idxs = np.array([])
 	return idxs.flatten()
+

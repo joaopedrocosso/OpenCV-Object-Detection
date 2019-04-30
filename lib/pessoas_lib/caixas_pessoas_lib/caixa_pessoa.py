@@ -2,7 +2,7 @@
 
 import collections
 
-from .caixa_com_peso import CaixaComPeso
+from imagelib.caixa_com_peso import CaixaComPeso
 
 class CaixaPessoa(CaixaComPeso):
     
@@ -22,16 +22,19 @@ class CaixaPessoa(CaixaComPeso):
             max_tempo_desaparecida: Número máximo de frames que a pessoa pode desaparecer antes de ser removida. Número inteiro não-negativo.
 
         Métodos:
-            atualiza: Atualiza a caixa e o peso da pessoa, além de informar que a pessoa está presente.
+            atualizar: Atualiza a caixa e o peso da pessoa, além de informar que a pessoa está presente.
             aumenta_tempo_desaparecida: Aumenta o tempo em que a pessoa desapareceu.
             is_viva: Checa se a pessoa não morreu.
-            is_confirmada: Checa se a pessoa foi confirmada como tal.
-            get_rastros: Retorna um iterador com os rastros da pessoa até um certo ponto.
+            esta_confirmada: Checa se a pessoa foi confirmada como tal.
+            pega_rastros: Retorna um iterador com os rastros da pessoa até um certo ponto.
 
-            get_coordenadas: Retorna as coordenadas (x, y).
-            get_caixa: Retorna caixa (x, y, w, h).
-            get_caixa_com_peso: Retorna caixa+peso ((x, y, w, h), peso).
-
+            pega_coordenadas: Retorna as coordenadas (x, y).
+            pega_caixa: Retorna caixa (x, y, w, h).
+            pega_caixa_com_peso: Retorna caixa+peso ((x, y, w, h), peso).
+    
+        built-ins:
+            __str__
+            __len__
 
         '''
 
@@ -60,7 +63,7 @@ class CaixaPessoa(CaixaComPeso):
         self.frames_desde_criacao = 0
         
     
-    def atualiza(self, x, y, w, h, peso=None):
+    def atualizar(self, x, y, w, h, peso=None):
 
         '''Atualiza as informações da pessoa.
 
@@ -75,14 +78,14 @@ class CaixaPessoa(CaixaComPeso):
         x_antigo, y_antigo = self.x, self.y
 
         # Levanta ValueError
-        super().atualiza(x, y, w, h, peso)
+        super().atualizar(x, y, w, h, peso)
     
         self.rastros.append((x_antigo, y_antigo))
     
         self.frames_desde_criacao += 1 + self.tempo_desaparecida
         self.tempo_desaparecida = 0
 
-        if self.frames_desde_criacao >= self.min_frames_para_confirmar:
+        if not self.pessoa_confirmada and self.frames_desde_criacao >= self.min_frames_para_confirmar:
             self.pessoa_confirmada = True
 
 
@@ -99,16 +102,16 @@ class CaixaPessoa(CaixaComPeso):
 
 
 
-    def is_viva(self):
+    def atingiu_limite_desaparecimento(self):
         return self.viva
-    def is_confirmada(self):
+    def esta_confirmada(self):
         return self.pessoa_confirmada
 
 
-    def get_rastros(self):
+    def pega_rastros(self):
 
         '''Retorna um iterador sobre os rastros da pessoa.'''
-        return iter(self.tracks)
+        return iter(self.rastros)
 
 
     def __str__(self):

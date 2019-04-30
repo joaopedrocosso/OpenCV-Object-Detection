@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import time
 import json
 import sys
@@ -6,13 +8,14 @@ import cv2 as cv
 import os
 import datetime
 
-from imagelib import ktools, ptools
+from imagelib import ktools
 from imagelib.detector_movimento import DetectorMovimento
 from videolib.videoStream import VideoStream
 from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas
 from pessoas_lib.pessoas_historico import PessoasHistorico
-from pessoas_lib.caixas_pessoas_lib import CaixasPessoas
+from pessoas_lib.caixas_pessoas_lib.caixas_pessoas import CaixasPessoas
 from exceptions.video_stream_exceptions import CannotOpenStreamError, StreamClosedError
+from toolslib import ptools
 
 def main():
 
@@ -32,7 +35,6 @@ def main():
 
     detector_movimento = DetectorMovimento()
 
-    # Carrega video da fonte escolhida.
     try:
         vs = VideoStream(**cam_args).start()
     except (ImportError, CannotOpenStreamError) as e:
@@ -42,26 +44,23 @@ def main():
     time.sleep(TEMPO_CARREGAR_CAMERA)
 
     pessoas_historico = PessoasHistorico()
-    pessoas_registradas = Pessoas(precisaoMinima=precisao_deteccao)
+    pessoas_registradas = CaixasPessoas()
 
     frames_desde_ultima_deteccao = 0
 
-    #  Le um frame da fonte, detecta e rastreia pessoas e salva os
-    # dados em um JSON.
     while True:
 
-        # Le frame.
         try:
             frame = vs.read()
         except (StreamClosedError, Exception) as e:
             print('Erro de leitura do video: ' + str(e))
             break
 
-        #  Redimensiona imagem para diminuir os gastos de deteccao de movimento e
-        # de deteccao de pessoas, se YOLO nao for usado.
+        #  Redimensiona imagem para diminuir os gastos de detecção de movimento e
+        # de detecção de pessoas, se YOLO não for usado.
         frame = ktools.resize(frame, min(MAX_LARGURA_FRAME, frame.shape[1]))
 
-        '''# Se houver mudanca no frame, tenta detecctar pessoas
+        '''# Se houver mudança no frame, tenta detecctar pessoas
         if detector_movimento.detectaMovimento(frame):
             detectar_flag = True
             frames_desde_ultima_deteccao = 0
@@ -87,16 +86,11 @@ def main():
                 print('Erro de deteccao:\n\t[{}]: {}'.format(type(e).__name__, str(e)))
                 break
 
-            #  Se o detector tiver demorado muito, o rastreamento de 
-            # objetos nao vai funcionar e, portanto, o rastreamento e
-            # zerado.
-            #  O rastreamento e usado para compensar pelo fato de que
-            # o detector nao reconhecera o mesmo objeto em todas as
-            # deteccoes.
+            # Se o detector demorar muito, o registro não será muito útil.
+            # Portanto, ele é zerado.
             if time.time()-old_time > TEMPO_MAXIMO_DETECCAO_COM_RASTREAMENTO:
                 pessoas_registradas.reiniciar()
-            caixas_com_peso = pessoas_registradas.atualizar(caixas_com_peso)
-
+            #caixas_com_peso = pessoas_registradas.atualizar(caixas_com_peso)
 
             new_frame = ktools.draw_rectangles(frame, rectangles_and_info=caixas_com_peso)
 
@@ -107,7 +101,7 @@ def main():
         #pessoas_historico.atualiza_pessoa(pessoas_registradas.pegaNumeroPessoas()) Soh quando o rastreador funcionar
         pessoas_historico.atualiza_pessoa(len(caixas_com_peso))
 
-        # Cria um novo arquivo JSON com dados referente ao historico.
+        # Cria um novo arquivo JSON com dados referentes ao histórico.
         if pessoas_historico.checa_tempo_decorrido(tempo_atualizacao_json):
             cria_json_pessoa(*pessoas_historico.finaliza_pessoa(), frame, destino_json)
 

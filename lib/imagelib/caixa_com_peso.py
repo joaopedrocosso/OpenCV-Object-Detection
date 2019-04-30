@@ -11,7 +11,16 @@ class CaixaComPeso:
         Parâmetros:
             x, y: Coordenadas do centro da caixa. Números inteiro positivo.
             w, h: Largura e altura da caixa. Números inteiro positivo.
-            peso: Percentual. Número real entre 0.0 e 1.0 incluso.
+            peso: Percentual. Número real entre 0.0 e 1.0 incluso. Opcional.
+
+        Métodos:
+            atualizar: Modifica x, y, w, h e peso (opcional).
+            pega_coordenadas: Retorna (x, y).
+            pega_caixa: Retorna (x, y, w, h).
+            pega_caixa_com_peso: Retorna ((x, y, w, h), peso).
+
+        built_ins:
+            __str__
         '''
 
         # Levantam ValueError
@@ -19,19 +28,19 @@ class CaixaComPeso:
         self.peso = self._checa_peso(peso)
         
     
-    def atualiza(self, x, y, w, h, peso=None):
+    def atualizar(self, x, y, w, h, peso=None):
         
         # Levantam ValueError
         self.x, self.y, self.w, self.h = self._checa_coordenadas_caixa(x, y, w, h)
         self.peso = self._checa_peso(peso)
 
 
-    def get_coordenadas(self):
+    def pega_coordenadas(self):
         return (self.x, self.y)
-    def get_caixa(self):
+    def pega_caixa(self):
         return self.x, self.y, self.w, self.h
-    def get_caixa_com_peso(self):
-        return self.get_caixa(), self.peso
+    def pega_caixa_com_peso(self):
+        return self.pega_caixa(), self.peso
 
 
     def __str__(self):
@@ -52,25 +61,25 @@ class CaixaComPeso:
                 raise ValueError('Peso deve ser um número real entre 0.0 e 1.0, inclusive.')
 
         return peso
-
+    
     def _checa_coordenadas_caixa(self, x, y, w, h):
-
-        '''Checa se as coordenadas da caixa fornecida e valida.
-
-            'x', 'y', 'w' e 'h' devem ser inteiros positivos ou objetos que possam ser convertidos para inteiros positivos.
-            além disso, 
-        '''
         
-        coordenada_invalida = False
+        '''Checa se as coordenadas da caixa fornecida é valida.
+
+        Checa se as coordenadas (x, y) são números inteiros não-negativos
+        e se 'w' e 'h' são inteiros positivos.
+
+        Levanta ValueError.
+        '''
+
         try:
             x = int(x)
             y = int(y)
             if x < 0 or y < 0:
                 raise ValueError
         except ValueError:
-            raise ValueError('Posicao (x, y) devem ser (ou poder ser convertidos para) inteiros.')
+            raise ValueError('Posicao (x, y) devem ser (ou poder ser convertidos para) inteiros positivos.')
 
-        dimensoes_invalidas = False
         try:
             w = int(w)
             h = int(h)
@@ -80,3 +89,4 @@ class CaixaComPeso:
             raise ValueError('Largura e altura devem ser (ou poder ser convertidos para) inteiros positivos.')
 
         return x, y, w, h
+        
