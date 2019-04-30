@@ -31,12 +31,11 @@ class DetectorPessoasYolo:
 		layer_outputs = self._analisa_imagem(img)
 
 		caixas, precisoes = self._seleciona_pessoas(img, layer_outputs)
-
-		nova_img = ktools.draw_rectangles(img, caixas, precisoes)
-
 		caixas_com_peso = list(zip(caixas, precisoes))
+
 		if desenha_retangulos:
-			return nova_img, caixas_com_peso
+			nova_img = nova_img = ktools.draw_rectangles(img, caixas_com_peso)
+			return nova_img , caixas_com_peso
 		else:
 			return img, caixas_com_peso
 

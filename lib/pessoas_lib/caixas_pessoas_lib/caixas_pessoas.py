@@ -37,16 +37,15 @@ class CaixasPessoas:
 
         self._atualiza_pessoas_desaparecidas()
 
-        # Só usa as caixas com precisão >= precisão mínima.
-        if self.precisao_minima > 0.0:
-            caixas_com_peso = [c for c in caixas_com_peso if c[1] >= self.precisao_minima]
+        # Paça a origem para o centro.
+        caixas_com_peso = [(caixa_tools.muda_origem_caixa(*c, pos_original=pos_original), p)
+                           for c, p in caixas_com_peso if c[1] >= self.precisao_minima]
 
         if len(caixas_com_peso) == 0:
             pass
-
         elif len(self.pessoas) == 0:
             self.reiniciar()
-            self._registra_pessoas(caixas_com_peso, pos_original=pos_original)
+            self._registra_pessoas(caixas_com_peso)
 
         else:
             pessoas_ids = list(self.pessoas.keys())
@@ -72,8 +71,7 @@ class CaixasPessoas:
 
             if len(caixas_com_peso) > len(self.pessoas):
                 self._registra_pessoas(
-                    [c for (i, c) in enumerate(caixas_com_peso) if i not in colunas_usadas],
-                    pos_original=pos_original
+                    [c for (i, c) in enumerate(caixas_com_peso) if i not in colunas_usadas]
                 )
 
         return self.pega_caixas_pessoas()
@@ -126,13 +124,12 @@ class CaixasPessoas:
         return self.pessoas_confirmadas
     
 
-    def _registra_pessoas(self, caixas_com_peso, pos_original='cima-esquerda'):
+    def _registra_pessoas(self, caixas_com_peso):
         for caixa, peso in caixas_com_peso:
-            self._registra_pessoa(*caixa, peso, pos_original=pos_original)
+            self._registra_pessoa(*caixa, peso)
 
-    def _registra_pessoa(self, x, y, w, h, peso, pos_original='cima-esquerda'):
+    def _registra_pessoa(self, x, y, w, h, peso):
 
-        caixa = caixa_tools.muda_origem_caixa(x, y, w, h, pos_original=pos_original, pos_final='centro')
         self.pessoas[self.id_contador] = CaixaPessoa(
             x, y, w, h, peso, self.min_frames_para_confirmar, self.max_tempo_desaparecida
         )

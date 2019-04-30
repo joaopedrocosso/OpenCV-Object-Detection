@@ -83,18 +83,9 @@ def resize(img, new_width=None, new_height=None):
 	return new_img
 
 
-def draw_rectangles(image, rectangles=None, info_list=None, rectangles_and_info=None, overwrite_original=False):
+def draw_rectangles(image, rectangles_and_info, overwrite_original=False, write_weight=True):
 
 	'''Draw rectangles on an image'''
-
-	if rectangles_and_info is not None:
-		pass
-	elif rectangles is not None and info_list is not None:
-		if len(rectangles) != len(info_list):
-			raise ValueError("'rectanges' list and 'info_list' must be the same size.")
-		rectangles_and_info = zip(rectangles, info_list)
-	else:
-		raise TypeError("Expected two arguments 'rectangles' and 'info_list' or 'rectangles_and_info'.")
 
 	if not overwrite_original:
 		image = image.copy()
@@ -108,8 +99,9 @@ def draw_rectangles(image, rectangles=None, info_list=None, rectangles_and_info=
  
 		# Draws rectangle and text.
 		cv.rectangle(image, (x, y), (x + w, y + h), (0, 0, 0xFF), 2)
-		text = "{:.4f}".format(info)
-		cv.putText(image, text, (x, y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0xFF, 0xFF, 0xFF), 2)
+		if write_weight:
+			text = "{:.4f}".format(info)
+			cv.putText(image, text, (x, y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0xFF, 0xFF, 0xFF), 2)
 
 	return image
 

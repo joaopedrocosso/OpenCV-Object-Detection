@@ -24,8 +24,8 @@ def main():
     MAX_LARGURA_FRAME = 700 # px
     TEMPO_MAXIMO_DETECCAO_COM_RASTREAMENTO = 1.0 # segundo
 
-    (cam_args, mostrar_video, precisao_deteccao, destino_json,
-        tempo_atualizacao_json, modelo_dir, modelo_tipo) = pega_argumentos()
+    (cam_args, precisao_deteccao, modelo_dir, modelo_tipo,
+     destino_json, tempo_atualizacao_json, mostrar_video, mostrar_precisao) = pega_argumentos()
 
     try:
         detectorPessoas = DetectorPessoas(modelo_dir, tipo_modelo=modelo_tipo, 
@@ -40,7 +40,7 @@ def main():
     except (ImportError, CannotOpenStreamError) as e:
         sys.exit('Erro: '+str(e))
 
-    # Para dar tempo de inicializar camera
+    # Para dar tempo de inicializar a câmera.
     time.sleep(TEMPO_CARREGAR_CAMERA)
 
     pessoas_historico = PessoasHistorico()
@@ -76,23 +76,21 @@ def main():
 
         if detectar_flag:
             
-            # Detecta pessoas
             old_time = time.time()
+            
             try:
-                #  Nao desenha os retangulos na imagem pois o
-                # rastreador pode ter mais caixas.
                 _, caixas_com_peso = detectorPessoas.detecta_pessoas(frame, desenha_retangulos=False)
             except Exception as e:
-                print('Erro de deteccao:\n\t[{}]: {}'.format(type(e).__name__, str(e)))
+                print('Erro de detecção:\n\t[{}]: {}'.format(type(e).__name__, str(e)))
                 break
 
             # Se o detector demorar muito, o registro não será muito útil.
             # Portanto, ele é zerado.
             if time.time()-old_time > TEMPO_MAXIMO_DETECCAO_COM_RASTREAMENTO:
                 pessoas_registradas.reiniciar()
-            #caixas_com_peso = pessoas_registradas.atualizar(caixas_com_peso)
-
-            new_frame = ktools.draw_rectangles(frame, rectangles_and_info=caixas_com_peso)
+            caixas_com_peso = pessoas_registradas.atualizar(caixas_com_peso)
+            
+            new_frame = ktools.draw_rectangles(frame, rectangles_and_info=caixas_com_peso, write_weight=mostrar_precisao)
 
         else:
             new_frame, caixas_com_peso = frame, []
@@ -185,8 +183,10 @@ def processa_argumentos(args):
         modelo_tipo = 'yolo'
     cam_args['tipo'] = tipo_camera
 
-    return (cam_args, args.mostrar_video, args.precisao_deteccao, args.destino_json,
-            args.atualizacao_json, modelo_dir, modelo_tipo)
+    return (cam_args,
+            args.precisao_deteccao, modelo_dir, modelo_tipo,
+            args.destino_json, args.atualizacao_json,
+            args.mostrar_video, args.mostrar_precisao)
 
 
 def checa_argumentos():
@@ -224,6 +224,8 @@ def checa_argumentos():
     #parser.add_argument('--output-video', help='Diretorio para salvar video.')
     parser.add_argument('--mostrar-video', action='store_true',
                         help='Mostrar video convertido enquanto roda programa')
+    parser.add_argument('--mostrar-precisao', action='store_true',
+                        help='Mostrar precisão acima do retângulo no vídeo.')
     parser.add_argument('--precisao-deteccao', type=float,
                         default=DetectorPessoas.DEFAULT_PRECISAO_DETECCAO,
                         help='Precisao da deteccao de pessoas [0.0, 1.0]')
