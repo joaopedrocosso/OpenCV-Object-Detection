@@ -37,6 +37,8 @@ class CaixaComPeso:
 
     def pega_coordenadas(self):
         return (self.x, self.y)
+    def pega_dimensoes(self):
+        return (self.w, self.h)
     def pega_caixa(self):
         return self.x, self.y, self.w, self.h
     def pega_caixa_com_peso(self):

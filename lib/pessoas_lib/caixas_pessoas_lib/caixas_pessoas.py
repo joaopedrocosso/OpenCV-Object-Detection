@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Referências:
+# https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
+# https://stackoverflow.com/questions/29734660/python-numpy-keep-a-list-of-indices-of-a-sorted-2d-array
+
+import numpy as np
 from scipy.spatial import distance
 
 from .caixa_pessoa import CaixaPessoa
@@ -7,12 +12,12 @@ from imagelib import caixa_tools
 
 class CaixasPessoas:
 
-    def __init__(self, min_frames_para_confirmar=1, max_tempo_desaparecida=10, precisao_minima=0.0):
+    def __init__(self, min_frames_para_confirmar=2, max_tempo_desaparecida=5, precisao_minima=0.0):
 
         # self.pessoas, self.id_contador, self.pessoas_confirmadas
         self.reiniciar()
     
-        # Levanta ValueError. Checa max_tempo_desaparecida e precisao_minima.
+        # Levanta ValueError. Checa max_tempo_desaparecida e min_frames_para_confirmar.
         CaixaPessoa(100, 100, 1, 1, None, min_frames_para_confirmar, max_tempo_desaparecida)
         self.min_frames_para_confirmar = int(min_frames_para_confirmar)
         self.max_tempo_desaparecida = int(max_tempo_desaparecida)
@@ -51,28 +56,38 @@ class CaixasPessoas:
             pessoas_ids = list(self.pessoas.keys())
             pessoas_centroides = [p.pega_coordenadas() for p in self.pessoas.values()]
 
+            # Cria matriz de distâncias pessoas x caixas.
             distancias = distance.cdist(pessoas_centroides, [c[:2] for c, p in caixas_com_peso])
-            
-            # linhas[k], colunas[k] = linha e coluna da k-ésima linha ordenada
-            # pela menor coluna de cada um, em ordem crescente
-            linhas = distancias.min(axis=1).argsort()
-            colunas = distancias.argmin(axis=1)[linhas]
 
-            colunas_usadas = set()
+            # Ordena as coordenadas da matriz de forma que os itens da matriz
+            # distancias fiquem crescentes.
+            # Para cada coordenada (p, c), p se refere à linha pessoa[p] e
+            # c se refere à coluna caixa[c].
+            dist_ordenadas_1d = distancias.argsort(axis=None, kind='mergesort')
+            coordenadas_distancia_crescente = np.vstack(np.unravel_index(dist_ordenadas_1d, distancias.shape)).T
 
-            for linha, coluna in zip(linhas, colunas):
+            pessoas_usadas = set()
+            caixas_usadas = set()
 
-                if coluna in colunas_usadas:
+            for p, c in coordenadas_distancia_crescente:
+
+                if p in pessoas_usadas or c in caixas_usadas:
                     continue
+                (x, y, w, h), peso = caixas_com_peso[c]
+                pessoa = self.pessoas[pessoas_ids[p]]
+                w_pessoa, h_pessoa = pessoa.pega_dimensoes()
 
-                pessoa = self.pessoas[pessoas_ids[linha]]
-                pessoa.atualizar(*caixas_com_peso[coluna][0], caixas_com_peso[coluna][1])
-                colunas_usadas.add(coluna)
+                # Se a distância for maior que a diagonal da maior caixa, ignorar.
+                if distancias[p, c] > 2*max((w**2+h**2)**0.5, (w_pessoa**2+h_pessoa**2)**0.5):
+                    continue
+                pessoa.atualizar(x, y, w, h, peso)
+                
+                pessoas_usadas.add(p)
+                caixas_usadas.add(c)
 
-            if len(caixas_com_peso) > len(self.pessoas):
-                self._registra_pessoas(
-                    [c for (i, c) in enumerate(caixas_com_peso) if i not in colunas_usadas]
-                )
+            if len(caixas_usadas) < len(caixas_com_peso):
+                caixas_nao_usadas = set(range(len(caixas_com_peso))).difference(caixas_usadas)
+                self._registra_pessoas([cp for i, cp in enumerate(caixas_com_peso) if i in caixas_nao_usadas])
 
         return self.pega_caixas_pessoas()
 
@@ -140,5 +155,4 @@ class CaixasPessoas:
         return len(self.pessoas)
 
     def __str__(self):
-
         return 'Pessoas: {}\n' 'Pessoas confirmadas: {}'.format(len(self), self.pessoas_confirmadas)
