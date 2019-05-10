@@ -1,138 +1,33 @@
-# -*- coding: utf-8 -*-
-
-import time
-import json
-import sys
 import argparse
-import cv2 as cv
-import os
-import datetime
 
-from imagelib import ktools
-from imagelib.detector_movimento import DetectorMovimento
-from videolib.videoStream import VideoStream
 from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas
-from pessoas_lib.pessoas_historico import PessoasHistorico
-from pessoas_lib.caixas_pessoas_lib.caixas_pessoas import CaixasPessoas
-from exceptions.video_stream_exceptions import CannotOpenStreamError, StreamClosedError
-from toolslib import ptools
+from pessoas_lib.detector_pessoas_video import DetectorPessoasVideo
 
 def main():
 
-    TEMPO_CARREGAR_CAMERA = 2.0 # segundos
-    FRAMES_SEM_DETECCAO = 30
-    MAX_LARGURA_FRAME = 700 # px
-    TEMPO_MAXIMO_DETECCAO_COM_RASTREAMENTO = 1.0 # segundo
+    cam_args, modelo_args, detector_init_args = pega_argumentos()
 
-    (cam_args, precisao_deteccao, modelo_dir, modelo_tipo,
-     destino_json, tempo_atualizacao_json, mostrar_video, mostrar_precisao) = pega_argumentos()
+    detector = (
+        DetectorPessoasVideo(**detector_init_args)
+        .configura_video(**cam_args)
+        .configura_detector(**modelo_args)
+        .start()
+    )
 
-    try:
-        detectorPessoas = DetectorPessoas(modelo_dir, tipo_modelo=modelo_tipo, 
-                                          precisao=precisao_deteccao)
-    except Exception as e:
-        sys.exit(str(e))
-
-    detector_movimento = DetectorMovimento()
-
-    try:
-        vs = VideoStream(**cam_args).start()
-    except (ImportError, CannotOpenStreamError) as e:
-        sys.exit('Erro: '+str(e))
-
-    # Para dar tempo de inicializar a câmera.
-    time.sleep(TEMPO_CARREGAR_CAMERA)
-
-    pessoas_historico = PessoasHistorico()
-    pessoas_registradas = CaixasPessoas()
-
-    frames_desde_ultima_deteccao = 0
+    print('\nExecutando reconhecimento de pessoas.')
 
     while True:
-
-        try:
-            frame = vs.read()
-        except (StreamClosedError, Exception) as e:
-            print('Erro de leitura do video: ' + str(e))
+        k = input('\n>> ')
+        if detector.stopped:
+            print('Detector parou de funcionar.')
             break
-
-        #  Redimensiona imagem para diminuir os gastos de detecção de movimento e
-        # de detecção de pessoas, se YOLO não for usado.
-        frame = ktools.resize(frame, min(MAX_LARGURA_FRAME, frame.shape[1]))
-
-        '''# Se houver mudança no frame, tenta detecctar pessoas
-        if detector_movimento.detectaMovimento(frame):
-            detectar_flag = True
-            frames_desde_ultima_deteccao = 0
-        # Continuar detectando pessoas por um periodo de tempo sem movimento.
-        elif frames_desde_ultima_deteccao < FRAMES_SEM_DETECCAO:
-            detectar_flag = True
-            frames_desde_ultima_deteccao += 1
-        # Depois desse periodo, parar de tentar detectar pessoas
-        else:
-            detectar_flag = False'''
-        
-        detectar_flag = True
-
-        if detectar_flag:
-            
-            old_time = time.time()
-            
-            try:
-                _, caixas_com_peso = detectorPessoas.detecta_pessoas(frame, desenha_retangulos=False)
-            except Exception as e:
-                print('Erro de detecção:\n\t[{}]: {}'.format(type(e).__name__, str(e)))
-                break
-
-            # Se o detector demorar muito, o registro não será muito útil.
-            # Portanto, ele é zerado.
-            if time.time()-old_time > TEMPO_MAXIMO_DETECCAO_COM_RASTREAMENTO:
-                pessoas_registradas.reiniciar()
-            caixas_com_peso = pessoas_registradas.atualizar(caixas_com_peso)
-            
-            new_frame = ktools.draw_rectangles(frame, rectangles_and_info=caixas_com_peso, write_weight=mostrar_precisao)
-
-        else:
-            new_frame, caixas_com_peso = frame, []
-
-        # Salva o numero de pessoas registradas neste ciclo.
-        #pessoas_historico.atualiza_pessoa(pessoas_registradas.pegaNumeroPessoas()) Soh quando o rastreador funcionar
-        pessoas_historico.atualiza_pessoa(len(caixas_com_peso))
-
-        # Cria um novo arquivo JSON com dados referentes ao histórico.
-        if pessoas_historico.checa_tempo_decorrido(tempo_atualizacao_json):
-            cria_json_pessoa(*pessoas_historico.finaliza_pessoa(), frame, destino_json)
-
-        if mostrar_video:
-            k = ktools.show_image(new_frame, title='Detection', wait_time=1,
-                                  close_window=False)
-            if k == ord('q'):
-                break
-
-    # Clean-up.
-    cv.destroyAllWindows()
-    vs.stop()
-
-
-def cria_json_pessoa(media_pessoas, max_pessoas, min_pessoas, tempo_total,
-                     frame, destino_json):
-
-    print('\ncriando JSON...')
-    texto_dict = {
-        'MediaPessoas':media_pessoas,
-        'MaximoPessoas':max_pessoas,
-        'MinimoPessoas':min_pessoas,
-        'TempoTotal':'{:.2f}'.format(tempo_total)
-    }
-
-    try:
-        ptools.criarJSON(texto_dict, frame, destino_json)
-    except Exception:
-        print('Nao foi possivel criar JSON.')
-    else:
-        print('JSON criado com sucesso. {}'.format(datetime.datetime.now().strftime('%c')))
-
-    print()
+        if k in ['q', 'quit', 'sair']:
+            detector.stop()
+            break
+        elif k in ['p', 'pessoas']:
+            print(detector.pega_pessoas())
+        elif k in ['h', 'histórico', 'historico']:
+            print(detector.pessoas_historico)
 
 
 def pega_argumentos():
@@ -151,10 +46,10 @@ def processa_argumentos(args):
         json_path = ''
         if args.ipcamera:
             json_path = JSON_IPCAMERA_PATH
-            tipo_camera = VideoStream.Tipo.IPCAMERA
+            tipo_camera = 'ipcamera'
         elif args.nvidia_cam:
             json_path = JSON_NVIDIA_CAM_PATH
-            tipo_camera = VideoStream.Tipo.WEBCAM
+            tipo_camera = 'nvidia'
         '''if args.picamera:
             json_path = JSON_PICAMERA_PATH
             tipo_camera = VideoStream.Tipo.PICAMERA'''
@@ -169,24 +64,28 @@ def processa_argumentos(args):
     # Checa outras fontes, caso contrario.
     if args.webcam is not None:
         cam_args = {'idCam': args.webcam}
-        tipo_camera = VideoStream.Tipo.WEBCAM
+        tipo_camera = 'webcam'
     elif args.arquivo_video is not None:
-        cam_args = {'idCam': args.arquivo_video}
-        tipo_camera = VideoStream.Tipo.ARQUIVO
+        cam_args = {'arquivo': args.arquivo_video}
+        tipo_camera = 'arquivo'
 
     # Checa o modelo do detector (padrao=YOLO)
     if args.modelo_ssd is not None:
-        modelo_dir = args.modelo_ssd
-        modelo_tipo = 'ssd'
+        dir_modelo = args.modelo_ssd
+        tipo_modelo = 'ssd'
     elif args.modelo_yolo is not None:
-        modelo_dir = args.modelo_yolo
-        modelo_tipo = 'yolo'
-    cam_args['tipo'] = tipo_camera
+        dir_modelo = args.modelo_yolo
+        tipo_modelo = 'yolo'
 
-    return (cam_args,
-            args.precisao_deteccao, modelo_dir, modelo_tipo,
-            args.destino_json, args.atualizacao_json,
-            args.mostrar_video, args.mostrar_precisao)
+    cam_args['tipo'] = tipo_camera
+    modelo_args = {'dir_modelo':dir_modelo, 'tipo_modelo':tipo_modelo,
+                   'precisao_deteccao':args.precisao_deteccao}
+    detector_init_args = {
+        'mostrar_video':args.mostrar_video, 'mostrar_precisao':args.mostrar_precisao,
+        'destino_json':args.destino_json, 'tempo_atualizacao_json':args.atualizacao_json
+    }
+
+    return cam_args, modelo_args, detector_init_args
 
 
 def checa_argumentos():
@@ -217,7 +116,7 @@ def checa_argumentos():
     # JSON
     parser.add_argument('--destino-json', default=JSON_DEST_PATH,
                         help='Onde o JSON contendo o output do programa sera guardado')
-    parser.add_argument('--atualizacao-json', default=TEMPO_ATUALIZACAO_JSON,
+    parser.add_argument('--atualizacao-json', default=TEMPO_ATUALIZACAO_JSON, type=int,
                         help='Tempo de atualizacao do JSON (em segundos)')
 
     # Video

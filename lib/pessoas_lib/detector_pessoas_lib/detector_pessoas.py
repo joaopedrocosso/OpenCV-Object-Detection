@@ -13,17 +13,17 @@ class DetectorPessoas:
 
 		'''Detecta pessoas usando um modelo de deep learning.
 
-		parametros:
+		parâmetros:
 
-			. path_modelo - Destino do modelo desejado.
-			. tipo_modelo - Tipo do modelo pode ser 'yolo' ou 'ssd'
-			. precisao - Quao precisa a deteccao deve ser. Deve estar entre 0.0 e 1.0.
-			. supressao - Quao proximas as deteccoes de pessoas devem estar para serem
-						consideradas as mesmas.
+			'path_modelo': Destino do modelo desejado.
+			'tipo_modelo': Tipo do modelo. Pode ser 'yolo' ou 'ssd'
+			'precisao': Quão precisa a detecção deve ser. Deve estar entre 0.0 e 1.0.
+			'supressao': Quão próximas as detecções de pessoas devem estar para serem
+				consideradas as mesmas.
 
 		Joga as excecoes:
-			. ValueError: se o tipo do modelo e' invalido.
-			. Excecoes relacionadas ao OpenCV.
+			'ValueError': se o tipo do modelo e' invalido.
+			Excecoes relacionadas ao OpenCV.
 		'''
 
 		if not os.path.isdir(path_modelo):

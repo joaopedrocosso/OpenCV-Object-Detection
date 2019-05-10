@@ -34,11 +34,11 @@ class FileVideoStream:
 	def read(self):
 
 		if self.stopped:
-			return
+			raise ValueError('O stream já foi fechado. Não há novos frames.')
+
 		ret, frame = self.stream.read()
 		if not ret:
 			self.stop()
-			raise StreamClosedError('Stream foi fechado.')
 
 		self.frame = frame
 		return self.frame

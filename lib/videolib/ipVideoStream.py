@@ -29,20 +29,23 @@ class IPVideoStream:
         return self
 
     def update(self):
-        
+
+        #Manter o loop indefinidamente ate a thread parar
         while self.stream.isOpened():
             if self.stopped:
+                self.stream.release()
                 break
             ret, frame = self.stream.read()
             if not ret:
                 self.stop()
-                raise StreamClosedError('Stream foi fechado.')
+                break
             self.frame = frame
 
-        self.stream.release()
-
-            
     def read(self):
+        
+        if self.stopped:
+            raise ValueError('O stream já foi fechado. Não há novos frames.')
         return self.frame
+        
     def stop(self):
         self.stopped = True
