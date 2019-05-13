@@ -1,53 +1,19 @@
-from threading import Thread 
-import cv2 as cv
+from .videoStreamCV import VideoStreamCV
 
-from imagelib import ktools
-from exceptions.video_stream_exceptions import CannotOpenStreamError, StreamClosedError
-
-class WebcamVideoStream:
+class WebcamVideoStream(VideoStreamCV):
 	
 	def __init__(self, src=0):
-		
-		# inicializa o streaming de video
-		self.stream = cv.VideoCapture(src)
-		if not self.stream.isOpened():
-			raise CannotOpenStreamError('Nao foi possivel abrir video da webcam.')
-		
-		# frame inicializado com uma imagem preta
-		self.frame = ktools.black_image(self.stream.get(cv.CAP_PROP_FRAME_HEIGHT),
-										self.stream.get(cv.CAP_PROP_FRAME_WIDTH))
+		'''Abre webcam ou outro dispositivo de vídeo desprotegido.
 
-		#Inicializando a variavel que indica a parada da thread
-		self.stopped = False
+		Função de conveniência para VideoStreamCV.
 
-	def start(self):
-		#comeca a thread para ler os frames
-		Thread(target=self.update, args=()).start()
-		return self
+		Parâmetros:
+			'src': De onde pegar o vídeo. Pode ser um número ou uma string.
+		Métodos:
+			'start': Começa uma thread onde os frames serão lidos, se atualiza_frames_auto=True.
+			'update': Lê frames da fonte até o stream ser fechado ou a leitura ser parada.
+			'read': Lê o frame mais recente.
+			'stop': Para a leitura.
+		'''
 
-	def update(self):
-
-		#Manter o loop indefinidamente ate a thread parar
-		while self.stream.isOpened():
-			if self.stopped:
-				self.stream.release()
-				break
-			ret, frame = self.stream.read()
-			if not ret:
-				self.stop()
-				break
-			self.frame = frame
-
-	def read(self):
-		
-		if self.stopped:
-			raise ValueError('O stream já foi fechado. Não há novos frames.')
-		return self.frame
-
-	def stop(self):
-		self.stopped = True
-
-
-
-#OBS: src pode variar entre int e string
-#sendo string o path pro video
+		super().__init__(src)

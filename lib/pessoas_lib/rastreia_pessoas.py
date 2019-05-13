@@ -11,6 +11,7 @@ OPENCV_OBJECT_TRACKERS = {
 }
 
 class RastreiaPessoas:
+	'''TODO'''
 
 	def __init__(self, tipo_rastreador='kcf'):
 

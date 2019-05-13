@@ -9,4 +9,7 @@ class CannotOpenStreamError(VideoStreamError):
 	pass
 
 class StreamClosedError(VideoStreamError):
+	pass
+
+class StreamStoppedError(VideoStreamError):
 	pass	

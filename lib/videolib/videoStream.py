@@ -7,6 +7,8 @@ class VideoStream:
 	def __init__(self, tipo, **keywords):
 
 		'''Lê um vídeo de uma fonte.
+
+		Interface entre os objetos de leitura de vídeo e o usuário.
 		
 		Parâmetros:
 			tipo: Tipo de entrada. Pode ser 'picamera', 'ipcamera', 'webcam' e 'arquivo'.
@@ -27,6 +29,9 @@ class VideoStream:
 			'start': Começa o stream. Retorna a si mesmo.
 			'read': Retorna o frame atual do vídeo.
 			'stop': Para o stream.
+
+		Levanta:
+			'CannotOpenStreamError': Se não for possível abrir o stream.
 		'''
 		
 		if tipo == 'picamera':
@@ -44,10 +49,13 @@ class VideoStream:
 			raise ValueError('Tipo de camera invalido.')
 
 	def start(self):
+		'''Pega o frame mais recente do stream.'''
 		return self.stream.start()
 
 	def read(self):
+		'''Atualiza o frame mais recente em uma thread separada.'''
 		return self.stream.read()
 
 	def stop(self):
+		'''Para de pegar frames do stream.'''
 		self.stream.stop()

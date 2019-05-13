@@ -15,6 +15,18 @@ class DetectorPessoasYolo:
 	def __init__(self, yolo_path, precisao_minima=DEFAULT_PRECISAO_DETECCAO,
 				 supressao_caixas=DEFAULT_SUPRESSAO_DETECCAO):
 
+		'''Detecta pessoas usando um modelo YOLO.
+
+		parâmetros:
+			'yolo_path': Destino do modelo desejado.
+			'precisao': Quão precisa a detecção deve ser. Deve estar entre 0.0 e 1.0.
+			'supressao': Quão próximas as detecções de pessoas devem estar para serem
+				consideradas as mesmas.
+
+		Joga as exceções:
+			Exceções relacionadas ao OpenCV.
+		'''
+
 		config_path = os.path.join(yolo_path, DetectorPessoasYolo._YOLO_ARQUIVO_CONFIG)
 		pesos_path = os.path.join(yolo_path, DetectorPessoasYolo._YOLO_ARQUIVO_PESOS)
 		self.net = cv.dnn.readNetFromDarknet(config_path, pesos_path)

@@ -21,9 +21,9 @@ class DetectorPessoas:
 			'supressao': Quão próximas as detecções de pessoas devem estar para serem
 				consideradas as mesmas.
 
-		Joga as excecoes:
+		Joga as exceções:
 			'ValueError': se o tipo do modelo e' invalido.
-			Excecoes relacionadas ao OpenCV.
+			Exceções relacionadas ao OpenCV.
 		'''
 
 		if not os.path.isdir(path_modelo):

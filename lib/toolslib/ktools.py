@@ -1,6 +1,11 @@
 import os
 
 def get_files(path=None):
+	'''Get all files from a path 'path'.
+
+	Parameters:
+		'path': (str) Path to files.
+	'''
 	
 	if path is None:
 		path = os.getcwd()

@@ -3,11 +3,18 @@ from collections import deque
 
 class PessoasHistorico:
 
-    _DEFAULT_MAX_HISTORICO = 20
-    def __init__(self, max_historico=_DEFAULT_MAX_HISTORICO):
+    def __init__(self, max_historico=20):
+        '''Grava estatísticas de pessoas em um período de tempo.
+        
+        Parâmetros:
+            'max_historico': (int) Máximo de iterações guardadas.
+
+        Levanta:
+            ValueError: Se max_historico não for 'int' ou for <= 0.
+        '''
 
         if not isinstance(max_historico, int) or max_historico <= 0:
-            max_historico = PessoasHistorico._DEFAULT_MAX_HISTORICO
+            raise ValueError("'max_historico' deve ser um inteiro não-negativo.")
 
         self.historico = deque(maxlen=max_historico)
         self.pessoa_atual = PessoasEmPeriodo()
@@ -15,13 +22,28 @@ class PessoasHistorico:
         self.max_todos = float('-inf')
 
     def atualiza_pessoa(self, valor):
+        '''Adiciona valores para a iteração atual.
+
+        Parâmetros:
+            'valor': (float) valor a ser adicionado.
+        '''
         self.pessoa_atual.atualiza(valor)
         return self
 
     def checa_tempo_decorrido(self, tempo_limite):
+        '''Checa se o tempo decorrido passou do limite.'''
         return self.pessoa_atual.tempo_decorrido >= tempo_limite
 
     def finaliza_pessoa(self):
+        '''Pega dados da iteração atual e inicia uma nova.
+        
+        Retorno:
+            1. Média ponderada dos valores com o intervalo de tempo.
+            2. Valor máximo recebido.
+            3. Valor mínimo recebido.
+            4. Tempo total decorrido.
+            (tudo somente da iteração atual.)
+        '''
 
         media, max_atual, min_atual, tempo_decorrido = self.pessoa_atual.pega_valor_final()
 
@@ -53,12 +75,18 @@ class PessoasHistorico:
 class PessoasEmPeriodo:
 
     def __init__(self):
+        '''Guarda o número de pessoas por período de tempo.'''
 
         self.pessoas = []
         self.tempo_decorrido = 0.0
         self.ultimo_tempo = time.time()
 
     def atualiza(self, valor):
+        '''Adiciona um novo valor com o tempo desde a últma atualização (ou criação).
+
+        Parâmetros:
+            'valor': (float) valor a ser adicionado.
+        '''
 
         tempo_desde_ultima_atualizacao = time.time()-self.ultimo_tempo
         self.pessoas.append((valor, tempo_desde_ultima_atualizacao))
@@ -67,8 +95,16 @@ class PessoasEmPeriodo:
         self.ultimo_tempo = time.time()
 
     def pega_valor_final(self):
+        '''Retorna valores relacionados aos valores registrados.
+        
+        Retorno:
+            1. Média ponderada dos valores com o intervalo de tempo.
+            2. Valor máximo recebido.
+            3. Valor mínimo recebido.
+            4. Tempo total decorrido.
+        '''
 
-        if self.tempo_decorrido <= 0:
+        if self.tempo_decorrido <= 0 or len(self.pessoas) == 0:
             return 0, 0, 0, 0
 
         media = sum(valor*tempo for valor, tempo in self.pessoas)/self.tempo_decorrido

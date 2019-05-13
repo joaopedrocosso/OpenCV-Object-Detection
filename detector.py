@@ -16,20 +16,6 @@ def main():
 
     print('\nExecutando reconhecimento de pessoas.')
 
-    while True:
-        k = input('\n>> ')
-        if detector.stopped:
-            print('Detector parou de funcionar.')
-            break
-        if k in ['q', 'quit', 'sair']:
-            detector.stop()
-            break
-        elif k in ['p', 'pessoas']:
-            print(detector.pega_pessoas())
-        elif k in ['h', 'histórico', 'historico']:
-            print(detector.pessoas_historico)
-
-
 def pega_argumentos():
 
     return processa_argumentos(checa_argumentos())

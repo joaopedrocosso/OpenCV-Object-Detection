@@ -10,12 +10,30 @@ from videolib.videoStream import VideoStream
 from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas
 from pessoas_lib.pessoas_historico import PessoasHistorico
 from pessoas_lib.caixas_pessoas_lib.caixas_pessoas import CaixasPessoas
-from exceptions.video_stream_exceptions import CannotOpenStreamError, StreamClosedError
+from videolib.exceptions import CannotOpenStreamError, StreamClosedError, StreamStoppedError
 from toolslib import ptools
 
 class DetectorPessoasVideo:
 
     def __init__(self, mostrar_video=False, mostrar_precisao=False, destino_json='json/dados.json', tempo_atualizacao_json=60):
+        '''Detecta pessoas em um vídeo em uma thread separada.
+
+        Deve-se configurar o objeto chamando os métodos configura_video() e configura_detector(),
+        para configurar a entrada de vídeo e o detector de pessoas.
+
+        Parâmetros:
+            'mostrar_video': (bool) Se o vídeo resultante com caixas em volta das pessoas deve ser mostrado em uma janela.
+            'mostrar_precisao': (bool) Se a precisão deve ser mostrada em cima da caixa.
+            'destino_json': (str) Onde o JSON com as estatísticas das pessoas deve ser guardado.
+            'tempo_atualizacao_json' (int) Tempo entre atualizações do JSON.
+
+        Métodos:
+            configura_video: Configura a entrada de vídeo.
+            configura_detector: Configura o detector de pessoas.
+            start: Executa o código principal em uma nova thread.
+            stop: Finaliza a thread.
+            pega_pessoas: Retorna o número de pessoas registradas no momento.
+        '''
 
         self.mostrar_video = mostrar_video
         self.mostrar_precisao = mostrar_precisao
@@ -47,11 +65,6 @@ class DetectorPessoasVideo:
                 'idCam' (padrão=0): Número da câmera.
             Se o tipo for 'arquivo':
                 'arquivo': Caminho ao arquivo.
-
-        Métodos:
-            'start': Começa o stream. Retorna a si mesmo.
-            'read': Retorna o frame atual do vídeo.
-            'stop': Para o stream.
         '''
 
         try:
@@ -87,16 +100,20 @@ class DetectorPessoasVideo:
         return self
 
     def start(self):
+        '''Executa o código principal em uma nova thread.'''
         Thread(target=self._rodar, args=()).start()
         return self
 
     def stop(self):
+        '''Finaliza a thread.'''
         self.stopped = True
 
     def pega_pessoas(self):
+        '''Retorna o número de pessoas registradas no momento.'''
         return len(self.pessoas_registradas)
 
     def _rodar(self):
+        '''Programa principal a ser rodado em uma thread.'''
 
         self.stream.start()
 
@@ -110,7 +127,7 @@ class DetectorPessoasVideo:
 
             try:
                 frame = self.stream.read()
-            except StreamClosedError as e:
+            except (StreamClosedError, StreamStoppedError) as e:
                 print(str(e))
                 break
 
@@ -172,6 +189,17 @@ class DetectorPessoasVideo:
 
     def _cria_json_pessoa(self, media_pessoas, max_pessoas, min_pessoas, tempo_total,
                          frame, destino_json):
+        '''Cria um JSON com os dados de pessoas.
+        
+        Parâmetros:
+            'media_pessoas': (int) Média de pessoas.
+            'max_pessoas': (int) Número máximo de pessoas registradas.
+            'min_pessoas': (int) Número mínimo de pessoas registradas.
+            'tempo_total': (float) Tempo total desde o registro da primeira pessoa na média.
+            'frame': (numpy.ndarray) Imagem do último frame lido.
+            'destino_json': (str) Onde guardar o JSON que será criado.
+            (Número de pessoas em um período de tempo)
+        '''
 
         #print('\ncriando JSON...')
         texto_dict = {
