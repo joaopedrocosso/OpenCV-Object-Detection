@@ -18,21 +18,22 @@ class DetectorPessoasVideo:
     def __init__(self, mostrar_video=False, mostrar_precisao=False, destino_json='json/dados.json', tempo_atualizacao_json=60):
         '''Detecta pessoas em um vídeo em uma thread separada.
 
-        Deve-se configurar o objeto chamando os métodos configura_video() e configura_detector(),
-        para configurar a entrada de vídeo e o detector de pessoas.
+        Deve-se configurar o objeto chamando os métodos
+        configura_video() e configura_detector(), para configurar a
+        entrada de vídeo e o detector de pessoas.
 
-        Parâmetros:
-            'mostrar_video': (bool) Se o vídeo resultante com caixas em volta das pessoas deve ser mostrado em uma janela.
-            'mostrar_precisao': (bool) Se a precisão deve ser mostrada em cima da caixa.
-            'destino_json': (str) Onde o JSON com as estatísticas das pessoas deve ser guardado.
-            'tempo_atualizacao_json' (int) Tempo entre atualizações do JSON.
-
-        Métodos:
-            configura_video: Configura a entrada de vídeo.
-            configura_detector: Configura o detector de pessoas.
-            start: Executa o código principal em uma nova thread.
-            stop: Finaliza a thread.
-            pega_pessoas: Retorna o número de pessoas registradas no momento.
+        Parâmetros
+        -----------
+        mostrar_video : bool
+            Se o vídeo resultante com caixas em volta das pessoas deve
+            ser mostrado em uma janela.
+        mostrar_precisao : bool
+            Se a precisão deve ser mostrada em cima da caixa.
+        destino_json : str
+            Onde o JSON com as estatísticas das pessoas deve ser
+            guardado.
+        tempo_atualizacao_json : int
+            Tempo entre atualizações do JSON.
         '''
 
         self.mostrar_video = mostrar_video
@@ -51,20 +52,34 @@ class DetectorPessoasVideo:
 
         '''Configura a entrada de vídeo.
 
-        Parâmetros:
-            tipo: Tipo de entrada. Pode ser 'picamera', 'ipcamera', 'webcam' e 'arquivo'.
+        Parâmetros
+        -----------
+        tipo : {'picamera', 'ipcamera', 'webcam', 'arquivo'}
+        resolucao : (int, int)
+            Se 'picamera' foi escolhido.
+            Tupla que representa a resolução do vídeo. Ex.: (320, 240).
+        fps : int
+            Se 'picamera' foi escolhido.
+            Frames por segundo.
+        cameraURL : str
+            Se 'ipcamera' foi escolhido.
+            Url da câmera.
+        login: str
+            Se 'ipcamera' foi escolhido.
+            Login da câmera.
+        senha: str
+            Se 'ipcamera' foi escolhido.
+            Senha da câmera.
+        idCam : str or int
+            Se 'webcam' foi escolhido.
+            Número da câmera. (padrão=0)
+        arquivo : str
+            Se 'arquivo' foi escolhido.
+            Caminho ao arquivo.
 
-            Se o tipo for 'picamera':
-                'resolucao': Tupla que representa a resolução do vídeo. Ex.: (320, 240).
-                'fps': Frames por segundo.
-            Se o tipo for 'ipcamera':
-                'cameraURL': Url da câmera.
-                'login': Login da câmera.
-                'senha': Senha da câmera.
-            Se o tipo for 'webcam':
-                'idCam' (padrão=0): Número da câmera.
-            Se o tipo for 'arquivo':
-                'arquivo': Caminho ao arquivo.
+        Retorna
+        -------
+        self
         '''
 
         try:

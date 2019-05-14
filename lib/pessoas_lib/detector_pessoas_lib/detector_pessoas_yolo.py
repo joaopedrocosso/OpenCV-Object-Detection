@@ -1,13 +1,14 @@
+# Referência:
+# 	https://www.pyimagesearch.com/2018/11/12/yolo-object-detection-with-opencv/
+# 	https://www.pyimagesearch.com/2017/09/11/object-detection-with-deep-learning-and-opencv/
+
 import os
 import cv2 as cv
 import numpy as np
 
-from imagelib import ktools
+from .detector_pessoas_base import BaseDetectorPessoas, DEFAULT_PRECISAO_DETECCAO, DEFAULT_SUPRESSAO_DETECCAO
 
-class DetectorPessoasYolo:
-
-	DEFAULT_PRECISAO_DETECCAO = 0.5
-	DEFAULT_SUPRESSAO_DETECCAO = 0.5
+class DetectorPessoasYolo(BaseDetectorPessoas):
 
 	_YOLO_ARQUIVO_PESOS = 'yolov3.weights'
 	_YOLO_ARQUIVO_CONFIG = 'yolov3.cfg'
@@ -17,15 +18,22 @@ class DetectorPessoasYolo:
 
 		'''Detecta pessoas usando um modelo YOLO.
 
-		parâmetros:
-			'yolo_path': Destino do modelo desejado.
-			'precisao': Quão precisa a detecção deve ser. Deve estar entre 0.0 e 1.0.
-			'supressao': Quão próximas as detecções de pessoas devem estar para serem
-				consideradas as mesmas.
+		Parâmetros
+		-----------
+		yolo_path : str
+			Destino do modelo desejado.
+		precisao_minima : float, optional
+			Quão precisa a detecção deve ser. Deve estar entre 0.0 e 1.0 incl.
+		supressao_caixas : float, optional
+			Quão próximas as detecções de pessoas devem estar para
+			serem consideradas as mesmas. Deve estar entre 0.0 e 1.0 incl.
 
-		Joga as exceções:
-			Exceções relacionadas ao OpenCV.
+		Levanta
+		--------
+		Exceções relacionadas ao OpenCV.
 		'''
+
+		super().__init__(precisao_minima, supressao_caixas)
 
 		config_path = os.path.join(yolo_path, DetectorPessoasYolo._YOLO_ARQUIVO_CONFIG)
 		pesos_path = os.path.join(yolo_path, DetectorPessoasYolo._YOLO_ARQUIVO_PESOS)
@@ -34,41 +42,52 @@ class DetectorPessoasYolo:
 		self.ln = self.net.getLayerNames()
 		self.ln = [self.ln[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
 
-		self.precisao_minima = precisao_minima
-		self.supressao_caixas = supressao_caixas
-
-
-	def detecta_pessoas(self, img, desenha_retangulos=True):
-
-		layer_outputs = self._analisa_imagem(img)
-
-		caixas, precisoes = self._seleciona_pessoas(img, layer_outputs)
-		caixas_com_peso = list(zip(caixas, precisoes))
-
-		if desenha_retangulos:
-			nova_img = nova_img = ktools.draw_rectangles(img, caixas_com_peso)
-			return nova_img , caixas_com_peso
-		else:
-			return img, caixas_com_peso
-
 
 	def _analisa_imagem(self, img):
+		'''Analiza uma imagem e retorna dados relevantes
+
+		Parâmetros
+		-----------
+		img: numpy.ndarray de dimensões (n, m, 3)
+			Imagem a ser analizada. (formato BGR)
+
+		Retorna
+		--------
+		dados_relevantes : [numpy.ndarray de floats, ...]
+			Dados de análise da imagem.
+		'''
 
 		blob = cv.dnn.blobFromImage(img, 1/255.0, (416, 416), swapRB=True, crop=False)
 		self.net.setInput(blob)
 		return self.net.forward(self.ln)
 
 
-	_ID_PESSOA = 0
+	def _seleciona_pessoas(self, img, dados_relevantes):
+		'''Seleciona as pessoas da imagem.
+		
+		Parâmetros
+		-----------
+		img : numpy.ndarray de dimensões (n, m, 3)
+			Imagem de onde serão selecionadas as pessoas. (formato BGR)
+		dados_relevantes
+			Dados relevantes para o selecionamento de pessoas.
 
-	def _seleciona_pessoas(self, img, layer_outputs):
+		Retorna
+		--------
+		caixas : [(int, int, int, int), ...]
+			Caixas que representam pessoas, na forma (x, y, w, h).
+		precisoes : [float, ...]
+			Precisões de cada caixa.
+		'''
+
+		ID_PESSOA = 0
 
 		img_h, img_w = img.shape[:2]
 
 		caixas = []
 		precisoes = []
 
-		for output in layer_outputs:
+		for output in dados_relevantes:
 			for detection in output:
 
 				scores = detection[5:]
@@ -76,7 +95,7 @@ class DetectorPessoasYolo:
 				precisao = scores[classID]
 
 				# Nao registra se nao for pessoa.
-				if classID != DetectorPessoasYolo._ID_PESSOA:
+				if classID != ID_PESSOA:
 					continue
 
 				# Nao registra se precisao for baixa.
@@ -92,10 +111,5 @@ class DetectorPessoasYolo:
 				caixas.append([x, y, int(w), int(h)])
 				precisoes.append(float(precisao))
 
-		#  Remove caixas com baixas probabilidades de serem pessoas e
-		# funde caixas muito proximas.
-		idxs = ktools.non_maxima_suppression(caixas, precisoes, self.precisao_minima, self.supressao_caixas)
-		caixas = [caixas[i] for i in idxs]
-		precisoes = [precisoes[i] for i in idxs]
-
+		caixas, precisoes = self._non_maxima_suppression(caixas, precisoes)
 		return caixas, precisoes
