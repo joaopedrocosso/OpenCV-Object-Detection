@@ -7,25 +7,27 @@ from . import auxiliares
 
 class VideoStreamCV:
 	
-	def __init__(self, src=0, login=None, senha=None, atualiza_frames_auto=True):
-		'''Pega frames de um dispositivo ou arquivo de vídeo.
+	'''Pega frames de um dispositivo ou arquivo de vídeo.
 
-		Parâmetros:
-			'src': De onde pegar o vídeo. Pode ser um número ou uma string.
-			'atualiza_frames_auto':
-				Se 'True', os frames serão lidos em uma thread separada, automaticamente.
-				Se 'False', a leitura é feita diretamente no método self.read().
-			'login' e 'senha': Se ambos não forem 'None', o endereço de src recebe esses valores.
-		
-		Métodos:
-			'start': Começa uma thread onde os frames serão lidos, se atualiza_frames_auto=True.
-			'update': Lê frames da fonte até o stream ser fechado ou a leitura ser parada.
-			'read': Lê o frame mais recente.
-			'stop': Para a leitura.
-		
-		Levanta:
-			'CannotOpenStreamError': Se não for possível abrir o stream.
-		'''
+	Parameters
+	----------
+	src : str or int, optional
+		De onde pegar o vídeo. (Padrão=0)
+	login, senha: str, optional
+		Se ambos forem disponibilizados, o endereço de src recebe
+		esses valores. (Padrão=None)
+	atualiza_frames_auto : bool, optional
+		Se 'True', os frames serão lidos em uma thread separada,
+		automaticamente. Se 'False', a leitura é feita diretamente
+		no método self.read(). (Padrão=True)
+	
+	Raises
+	-------
+	CannotOpenStreamError
+		Se não for possível abrir o stream.
+	'''
+
+	def __init__(self, src=0, login=None, senha=None, atualiza_frames_auto=True):
 		
 		if login is not None and senha is not None:
 			src = auxiliares.adiciona_autenticacao_url(src, login, senha)
@@ -41,7 +43,12 @@ class VideoStreamCV:
 		self.atualiza_frames_auto = atualiza_frames_auto
 
 	def start(self):
-		'''comeca a thread para ler os frames'''
+		'''Comeca a thread para ler os frames.
+
+		Returns
+		--------
+		self
+		'''
 		if self.atualiza_frames_auto:
 			Thread(target=self.update, args=()).start()
 		return self
@@ -59,6 +66,18 @@ class VideoStreamCV:
 
 		Se o valor for atualizado automaticamente por self.update(), pega do
 		self.frame(). Senão, pega direto da fonte.
+
+		Returns
+		-------
+		frame : numpy.ndarray
+			O último frame do stream.
+
+		Raises
+		------
+		StreamStoppedError
+			Se o stream já está parado.
+		StreamClosedError
+			Se o stream já está fechado.
 		'''
 		if self.stopped:
 			raise StreamStoppedError('Leitura já parada.')
@@ -80,11 +99,18 @@ class VideoStreamCV:
 	def _update_once(self):
 		'''Pega um frame do stream.
 		
-		Retorna o frame lido.
+		Returns
+		-------
+		frame : numpy.ndarray
+			O último frame do stream.
 
-		Levanta StreamClosedError se a fonte está inacessível ou se não foi possível ler um frame da fonte.
-		Levanta StreamStoppedError se a leitura já foi parada
-		Em qualquer um dos casos, a leitura para e a fonte é liberada.
+		Raises
+		------
+		StreamClosedError
+			Se a fonte está inacessível ou se não foi possível ler um
+			frame da fonte.
+		StreamStoppedError
+			Se a leitura já foi parada.
 		'''
 		if not self.stream.isOpened():
 			self.stop()

@@ -10,28 +10,30 @@ from .detector_pessoas_base import BaseDetectorPessoas, DEFAULT_PRECISAO_DETECCA
 
 class DetectorPessoasYolo(BaseDetectorPessoas):
 
+	'''Detecta pessoas usando um modelo YOLO.
+
+	Parameters
+	-----------
+	yolo_path : str
+		Destino do modelo desejado.
+	precisao_minima : float, optional
+		Quão precisa a detecção deve ser. Deve estar entre 0.0 e
+		1.0 incl. (Padrão=Mesmo que o DetectorPessoasBase)
+	supressao_caixas : float, optional
+		Quão próximas as detecções de pessoas devem estar para
+		serem consideradas as mesmas. Deve estar entre 0.0 e 1.0
+		incl. (Padrão=Mesmo que o DetectorPessoasBase)
+
+	Raises
+	--------
+	Exceções relacionadas ao OpenCV.
+	'''
+
 	_YOLO_ARQUIVO_PESOS = 'yolov3.weights'
 	_YOLO_ARQUIVO_CONFIG = 'yolov3.cfg'
 
 	def __init__(self, yolo_path, precisao_minima=DEFAULT_PRECISAO_DETECCAO,
 				 supressao_caixas=DEFAULT_SUPRESSAO_DETECCAO):
-
-		'''Detecta pessoas usando um modelo YOLO.
-
-		Parâmetros
-		-----------
-		yolo_path : str
-			Destino do modelo desejado.
-		precisao_minima : float, optional
-			Quão precisa a detecção deve ser. Deve estar entre 0.0 e 1.0 incl.
-		supressao_caixas : float, optional
-			Quão próximas as detecções de pessoas devem estar para
-			serem consideradas as mesmas. Deve estar entre 0.0 e 1.0 incl.
-
-		Levanta
-		--------
-		Exceções relacionadas ao OpenCV.
-		'''
 
 		super().__init__(precisao_minima, supressao_caixas)
 
@@ -46,12 +48,12 @@ class DetectorPessoasYolo(BaseDetectorPessoas):
 	def _analisa_imagem(self, img):
 		'''Analiza uma imagem e retorna dados relevantes
 
-		Parâmetros
+		Parameters
 		-----------
 		img: numpy.ndarray de dimensões (n, m, 3)
 			Imagem a ser analizada. (formato BGR)
 
-		Retorna
+		Returns
 		--------
 		dados_relevantes : [numpy.ndarray de floats, ...]
 			Dados de análise da imagem.
@@ -65,14 +67,14 @@ class DetectorPessoasYolo(BaseDetectorPessoas):
 	def _seleciona_pessoas(self, img, dados_relevantes):
 		'''Seleciona as pessoas da imagem.
 		
-		Parâmetros
+		Parameters
 		-----------
 		img : numpy.ndarray de dimensões (n, m, 3)
 			Imagem de onde serão selecionadas as pessoas. (formato BGR)
 		dados_relevantes
 			Dados relevantes para o selecionamento de pessoas.
 
-		Retorna
+		Returns
 		--------
 		caixas : [(int, int, int, int), ...]
 			Caixas que representam pessoas, na forma (x, y, w, h).

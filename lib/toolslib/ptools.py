@@ -1,16 +1,20 @@
 import cv2
-import numpy as np
 import json
-import base64 #para conversao da imagem em uma string de 64 bits
+import base64
+
 from datetime import datetime
 
 def criarJSON(dados, frame, path="dados.json"):
 	'''Cria um JSON com uma imagem.
 	
-	Parâmetros:
-		'dados': (dict) texto a colocar no JSON.
-		'frame': (numpy.ndarray) imagem a ser colocada no JSON.
-		'path': (str) diretório onde o JSON será salvo.
+	Parameters
+	-----------
+	dados : dict
+		Texto a colocar no JSON.
+	frame : numpy.ndarray
+		Imagem a ser colocada no JSON.
+	path : str, optional
+		Diretório onde o JSON será salvo.
 	'''
 
 	dados = dados.copy()
@@ -24,13 +28,18 @@ def criarJSON(dados, frame, path="dados.json"):
 	with open(path, "w") as f:
 		json.dump(dados,f)
 
+
 def criaFrameString(frame):
 	'''Transforma uma imagem em uma string base64.
 	
-	Parâmetros:
-		'frame': (numpy.ndarray) Imagem a ser convertida para string.
+	Parameters
+	-----------
+	frame : numpy.ndarray
+		Imagem a ser convertida para string.
 
-	Retorno:
+	Returns
+	--------
+	str
 		Imagem convertida em string base64.
 	'''
 

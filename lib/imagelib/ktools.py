@@ -3,10 +3,24 @@ import numpy as np
 
 def black_image(width, height, image_type='bgr'):
 
-	''' Returns a black image of dimensions (width x height) and of type 'image_type'.
+	'''Returns a black image.
 	
-	width, height: integers
-	image_type: string
+	Parameters
+	-----------
+	width, height: int
+		Width and height of the image.
+	image_type: {'bgr', 'rgb', 'hsv', 'grayscale'}, optional
+		Format of the image.
+
+	Returns
+	--------
+	numpy.ndarray
+		Multi-dimensional array of shape adequate for the type provided.
+
+	Raises
+	-------
+	ValueError
+		If 'image_type' is an invalid type.
 	'''
 	
 	try:
@@ -27,14 +41,42 @@ def black_image(width, height, image_type='bgr'):
 
 
 def show_image(img, title='title', wait_time=0, close_window=True):
+	'''Opens a window with the desired image.
 
-	''' Opens window with the desired image '''
+	Returns control after 'wait_time' seconds or after the user presses
+	a key on the keyboard.
+
+	Parameters
+	-----------
+	img : numpy.ndarray
+		Image to be shown on the window box.
+	title : str, optional
+		Title of the window. Default='title'.
+	wait_time : int, optional
+		Time to wait before returning control to the program.
+		If it equals 0, then it won't be closed. Default=0.
+	close_window : bool, optional
+		If True, the window will be closed after control is returned.
+
+	Returns
+	--------
+	int
+		Key pressed on the window.
+
+	Raises
+	-------
+	TypeError
+		If any arguments have the wrong type.
+	'''
 
 	if (not isinstance(img, np.ndarray) or not isinstance(title, str)
 		or not isinstance(wait_time, int) or not isinstance(close_window, bool)):
-
-		raise TypeError("'img' must be of type 'numpy.ndarray'; 'title', of type 'str';"+
-						"'wait_time' of type 'int' and; 'close_window' of type 'bool'")
+		#
+		raise TypeError(
+			"'img' must be of type 'numpy.ndarray';\n"
+			"'title', of type 'str';\n"
+			"'wait_time' of type 'int';\n"
+			"'close_window' of type 'bool'.")
 
 	cv.imshow(title, img)
 	k = cv.waitKey(wait_time) & 0xFF
@@ -44,9 +86,30 @@ def show_image(img, title='title', wait_time=0, close_window=True):
 
 
 def resize(img, new_width=None, new_height=None):
+	'''Resizes image to the desired size.
 
-	''' Resizes image to the desired size. If only one of the dimensions
-	is specified, the image is resized proportionally.'''
+	If only one of the dimensions is specified, the image is resized 
+	proportionally. 
+
+	Parameters
+	-----------
+	img : numpy.ndarray
+		The image to be resized.
+	new_width : int, optional
+		The new width of the image. (> 0)
+	new_height : int, optional
+		The new height of the image. (> 0)
+	
+	Raises
+	------
+	ValueError
+		If no arguments are given.
+
+	Returns
+	--------
+	numpy.ndarray
+		The resized image.
+	'''
 
 	if new_width is None and new_height is None:
 		raise ValueError('At least one dimension must be provided.')
@@ -83,9 +146,29 @@ def resize(img, new_width=None, new_height=None):
 	return new_img
 
 
-def draw_rectangles(image, rectangles_and_info, overwrite_original=False, write_weight=True):
+def draw_rectangles(image, rectangles_and_info, overwrite_original=False,
+					write_weight=True):
+	'''Draw rectangles on an image
+	
+	Parameters
+	-----------
+	image : numpy.ndarray
+		The image on which the retangles will be drawn.
+	rectangles_and_info : [((int, int, int, int), float), ...]
+		The coordinates and dimensions of a rectangle, plus information
+		about it.
+	overwrite_original : bool, optional
+		If true, the rectangles are drawn on the original image.
+		Otherwise they are drawn on a copy.
+	write_weight : bool, optional
+		If true, the info in 'rectangles_and_info' is written on the
+		image.
 
-	'''Draw rectangles on an image'''
+	Returns
+	--------
+	numpy.ndarray
+		Image on which the rectangles were drawn.
+	'''
 
 	if not overwrite_original:
 		image = image.copy()
@@ -105,9 +188,32 @@ def draw_rectangles(image, rectangles_and_info, overwrite_original=False, write_
 
 	return image
 
-def non_maxima_suppression(caixas, precisoes, precisao_minima, supressao_caixas):
+def non_maxima_suppression(caixas, precisoes, precisao_minima=0.5,
+						   supressao_caixas=0.4):
+	'''Combina caixas muito próximas ou dentro de outras.
+
+	Parameters
+	-----------
+	caixas : [(int, int, int, int), ...]
+		Caixas com as coordenadas x, y e suas dimensões.
+	precisoes : list of float
+		Precisões de cada uma das caixas.
+	precisao_minima : float
+		Precisão mínima para a caixa ser aceita.
+		(0.0 <= 'precisao_minima' <= 1.0) e (Padrão=0.5)
+	supressao_caixas : float
+		Nível de supressão das caixas.
+		(0.0 <= 'supressao_caixas' <= 1.0) e Padrão=0.4)
+
+	Returns
+	--------
+	numpy.ndarray
+		Índices das caixas resultantes.
+	'''
 
 	idxs = cv.dnn.NMSBoxes(caixas, precisoes, precisao_minima, supressao_caixas)
+
+	# cv.dnn.NMSBoxes retorna uma tupla, se não houver caixas resultantes.
 	if not isinstance(idxs, np.ndarray):
 		idxs = np.array([])
 	return idxs.flatten()

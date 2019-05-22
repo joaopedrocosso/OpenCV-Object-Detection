@@ -9,28 +9,30 @@ from .detector_pessoas_base import BaseDetectorPessoas, DEFAULT_PRECISAO_DETECCA
 
 class DetectorPessoasSSD(BaseDetectorPessoas):
 
+	'''Detecta pessoas usando um modelo SSD.
+
+	Parameters
+	-----------
+	mobile_ssd_path : str
+		Destino do modelo desejado.
+	precisao_minima : float, optional
+		Quão precisa a detecção deve ser. Deve estar entre 0.0 e 1.0
+		incl. (Padrão=Mesmo que o DetectorPessoasBase)
+	supressao_caixas : float, optional
+		Quão próximas as detecções de pessoas devem estar para
+		serem consideradas as mesmas. Deve estar entre 0.0 e 1.0
+		incl. (Padrão=Mesmo que o DetectorPessoasBase)
+
+	Raises
+	--------
+	Exceções relacionadas ao OpenCV.
+	'''
+
 	_RESINA_NET_ARQUIVO_MODEL = 'MobileNetSSD_deploy.caffemodel'
 	_RESINA_NET_ARQUIVO_PROTOTXT = 'MobileNetSSD_deploy.prototxt'
 
 	def __init__(self, mobile_ssd_path, precisao_minima=DEFAULT_PRECISAO_DETECCAO,
 				 supressao_caixas=DEFAULT_SUPRESSAO_DETECCAO):
-
-		'''Detecta pessoas usando um modelo SSD.
-
-		Parâmetros
-		-----------
-		mobile_ssd_path : str
-			Destino do modelo desejado.
-		precisao_minima : float, optional
-			Quão precisa a detecção deve ser. Deve estar entre 0.0 e 1.0 incl.
-		supressao_caixas : float, optional
-			Quão próximas as detecções de pessoas devem estar para
-			serem consideradas as mesmas. Deve estar entre 0.0 e 1.0 incl.
-
-		Levanta
-		--------
-		Exceções relacionadas ao OpenCV.
-		'''
 
 		super().__init__(precisao_minima, supressao_caixas)
 
@@ -41,12 +43,12 @@ class DetectorPessoasSSD(BaseDetectorPessoas):
 	def _analisa_imagem(self, img):
 		'''Analiza uma imagem e retorna dados relevantes
 
-		Parâmetros
+		Parameters
 		-----------
 		img: numpy.ndarray de dimensões (n, m, 3)
 			Imagem a ser analizada. (formato BGR)
 
-		Retorna
+		Returns
 		--------
 		dados_relevantes : numpy.ndarray
 			Dados de análise da imagem.
@@ -60,14 +62,14 @@ class DetectorPessoasSSD(BaseDetectorPessoas):
 	def _seleciona_pessoas(self, img, dados_relevantes):
 		'''Seleciona as pessoas da imagem.
 		
-		Parâmetros
+		Parameters
 		-----------
 		img : numpy.ndarray de dimensões (n, m, 3)
 			Imagem de onde serão selecionadas as pessoas. (formato BGR)
 		dados_relevantes
 			Dados relevantes para o selecionamento de pessoas.
 
-		Retorna
+		Returns
 		--------
 		caixas : [(int, int, int, int), ...]
 			Caixas que representam pessoas, na forma (x, y, w, h).

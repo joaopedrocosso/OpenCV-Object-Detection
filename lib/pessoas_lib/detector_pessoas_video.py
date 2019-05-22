@@ -15,26 +15,29 @@ from toolslib import ptools
 
 class DetectorPessoasVideo:
 
-    def __init__(self, mostrar_video=False, mostrar_precisao=False, destino_json='json/dados.json', tempo_atualizacao_json=60):
-        '''Detecta pessoas em um vídeo em uma thread separada.
+    '''Detecta pessoas em um vídeo em uma thread separada.
 
-        Deve-se configurar o objeto chamando os métodos
-        configura_video() e configura_detector(), para configurar a
-        entrada de vídeo e o detector de pessoas.
+    Deve-se configurar o objeto chamando os métodos
+    configura_video() e configura_detector(), para configurar a
+    entrada de vídeo e o detector de pessoas.
 
-        Parâmetros
-        -----------
-        mostrar_video : bool
-            Se o vídeo resultante com caixas em volta das pessoas deve
-            ser mostrado em uma janela.
-        mostrar_precisao : bool
-            Se a precisão deve ser mostrada em cima da caixa.
-        destino_json : str
-            Onde o JSON com as estatísticas das pessoas deve ser
-            guardado.
-        tempo_atualizacao_json : int
-            Tempo entre atualizações do JSON.
-        '''
+    Parameters
+    -----------
+    mostrar_video : bool, optional.
+        Se o vídeo resultante com caixas em volta das pessoas deve
+        ser mostrado em uma janela. (Padrão=False)
+    mostrar_precisao : bool, optional.
+        Se a precisão deve ser mostrada em cima da caixa.
+        (Padrão=False)
+    destino_json : str, optional.
+        Onde o JSON com as estatísticas das pessoas deve ser
+        guardado. (Padrão='json/dados.json')
+    tempo_atualizacao_json : int, optional.
+        Tempo entre atualizações do JSON. (Padrão=60)
+    '''
+
+    def __init__(self, mostrar_video=False, mostrar_precisao=False,
+                 destino_json='json/dados.json', tempo_atualizacao_json=60):
 
         self.mostrar_video = mostrar_video
         self.mostrar_precisao = mostrar_precisao
@@ -52,7 +55,7 @@ class DetectorPessoasVideo:
 
         '''Configura a entrada de vídeo.
 
-        Parâmetros
+        Parameters
         -----------
         tipo : {'picamera', 'ipcamera', 'webcam', 'arquivo'}
         resolucao : (int, int)
@@ -77,9 +80,12 @@ class DetectorPessoasVideo:
             Se 'arquivo' foi escolhido.
             Caminho ao arquivo.
 
-        Retorna
+        Returns
         -------
         self
+
+        Raises
+        -------
         '''
 
         try:
@@ -96,14 +102,21 @@ class DetectorPessoasVideo:
 
         '''Detecta pessoas usando um modelo de deep learning.
 
-        parâmetros:
-            'dir_modelo': Destino do modelo desejado.
-            'tipo_modelo' (padrão='yolo'): Tipo do modelo. Pode ser 'yolo' ou 'ssd'
-            'precisao_deteccao' (padrão=0.4): Quão precisa a detecção deve ser. Deve estar entre 0.0 e 1.0.
-
-        Joga as exceções:
-            'ValueError': se o tipo do modelo for inválido.
-            Exceções relacionadas ao OpenCV.
+        Parameters
+        -----------
+        dir_modelo : str
+            Destino do modelo desejado.
+        tipo_modelo : {'yolo', 'sdd'}, optional
+            Tipo do modelo.
+        precisao_deteccao: float
+            Quão precisa a detecção deve ser. Deve estar entre
+            0.0 e 1.0 inclusive. (padrão=0.4)
+        
+        Raises
+        --------
+        ValueError
+            Se o tipo do modelo for inválido.
+        Exceções relacionadas ao OpenCV.
         '''
 
         try:
@@ -115,7 +128,12 @@ class DetectorPessoasVideo:
         return self
 
     def start(self):
-        '''Executa o código principal em uma nova thread.'''
+        '''Executa o código principal em uma nova thread.
+
+        Returns
+        --------
+        self
+        '''
         Thread(target=self._rodar, args=()).start()
         return self
 
@@ -124,7 +142,12 @@ class DetectorPessoasVideo:
         self.stopped = True
 
     def pega_pessoas(self):
-        '''Retorna o número de pessoas registradas no momento.'''
+        '''Retorna o número de pessoas registradas no momento.
+        
+        Returns
+        -------
+        int
+        '''
         return len(self.pessoas_registradas)
 
     def _rodar(self):
@@ -188,7 +211,7 @@ class DetectorPessoasVideo:
             self.pessoas_historico.atualiza_pessoa(len(caixas_com_peso))
 
             # Cria um novo arquivo JSON com dados referentes ao histórico.
-            if self.pessoas_historico.checa_tempo_decorrido(self.tempo_atualizacao_json):
+            if self.pessoas_historico.pega_tempo_decorrido() >= self.tempo_atualizacao_json:
                 self._cria_json_pessoa(*self.pessoas_historico.finaliza_pessoa(), frame, self.destino_json)
 
             if self.mostrar_video:
@@ -206,14 +229,20 @@ class DetectorPessoasVideo:
                          frame, destino_json):
         '''Cria um JSON com os dados de pessoas.
         
-        Parâmetros:
-            'media_pessoas': (int) Média de pessoas.
-            'max_pessoas': (int) Número máximo de pessoas registradas.
-            'min_pessoas': (int) Número mínimo de pessoas registradas.
-            'tempo_total': (float) Tempo total desde o registro da primeira pessoa na média.
-            'frame': (numpy.ndarray) Imagem do último frame lido.
-            'destino_json': (str) Onde guardar o JSON que será criado.
-            (Número de pessoas em um período de tempo)
+        Parameters
+        -----------
+        media_pessoas : int
+            Média de pessoas.
+        max_pessoas : int
+            Número máximo de pessoas registradas.
+        min_pessoas : int
+            Número mínimo de pessoas registradas.
+        tempo_total : float
+            Tempo total desde o registro da primeira pessoa na média.
+        frame : numpy.ndarray
+            Imagem do último frame lido.
+        destino_json : str
+            Onde guardar o JSON que será criado.
         '''
 
         #print('\ncriando JSON...')

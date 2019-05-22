@@ -4,9 +4,15 @@ def muda_origem_caixa(x0, y0, w, h, pos_original='centro', pos_final='centro'):
 
     '''Retorna a caixa com a origem em outra posição.
 
-    Parametros:
-        pos_original: posição da origem original (x0, y0).
-        pos_final: posição da origem modificada (xf, yf).
+    Parameters
+    -----------
+    x0, y0 : int
+        Origem original. (>= 0)
+    w, h : int
+        Largura e altura. (> 0)
+    pos_original, pos_final: : str
+        Posição da origem original (x0, y0) e posição da origem
+        modificada (xf, yf).
         Ambas podem ser:
             'centro', (padrao)
             'cima',
@@ -17,10 +23,17 @@ def muda_origem_caixa(x0, y0, w, h, pos_original='centro', pos_final='centro'):
             'cima-direita',
             'baixo-esquerda',
             'baixo-direita'.
-		x0, y0: origem original.
-		xf, yf: origem final.
 	
-	Retorna (xf, yf, w, h).
+	Returns
+    --------
+    int, int, int, int
+        Coordenadas da origem final x0 e y0, largura e altura.
+
+    Raises
+    ------
+    ValueError
+        Se ao menos um dos argumentos não estiver dentro dos limites
+        especificados.
     '''
 
     valor = {
@@ -34,6 +47,13 @@ def muda_origem_caixa(x0, y0, w, h, pos_original='centro', pos_final='centro'):
         'baixo':(0, 1),
         'baixo-direita':(1, 1)
     }
+
+    if x0 < 0 or y0 < 0 or w <= 0 or h <= 0:
+        raise ValueError("Coordenadas ou dimensões da caixa inválidas.")
+
+    valores_chave = valor.keys()
+    if pos_original not in valores_chave or pos_final not in valores_chave:
+        raise ValueError("'pos_original' e 'pos_final' inválidos.")
 
     x0_mod = valor[pos_original][0]
     y0_mod = valor[pos_original][1]

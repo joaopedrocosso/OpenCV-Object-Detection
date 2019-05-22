@@ -10,7 +10,7 @@ class DetectorPessoas:
 
 	'''Detecta pessoas usando um modelo de deep learning.
 
-	Parâmetros
+	Parameters
 	-----------
 	path_modelo : str
 		Destino do modelo desejado.
@@ -22,7 +22,7 @@ class DetectorPessoas:
 		Quão próximas as detecções de pessoas devem estar para
 		serem consideradas as mesmas. Deve estar entre 0.0 e 1.0 incl.
 
-	Levanta
+	Raises
 	-------
 	ValueError
 		Se o tipo do modelo for invalido.
@@ -47,7 +47,7 @@ class DetectorPessoas:
 	def detecta_pessoas(self, input_image, desenha_retangulos=True):
 		'''Detecta pessoas em uma imagem.
 
-		Parâmetros
+		Parameters
 		-----------
 		img : numpy.ndarray de dimensões (n, m, 3)
 			Imagem a ser analizada. (formato BGR)
@@ -55,7 +55,7 @@ class DetectorPessoas:
 			Se deve retornar uma imagem com as pessoas enquadradas.
 			(padrão=True)
 		
-		Retorna
+		Returns
 		--------
 		img : numpy.ndarray
 			Imagem com as pessoas enquadradas, se desenha_retangulos=True.

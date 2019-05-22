@@ -3,29 +3,64 @@ import numpy as np
 
 class DetectorMovimento:
 
+    '''Dececta movimento em um vídeo.
+    
+    Parameters
+    -----------
+    detectaSombras : bool, optional
+        Se verdadeiro, ele marca sombras.
+    '''
+
     def __init__(self, detectaSombras=True):
 
-        self.subtractor = cv.createBackgroundSubtractorMOG2(detectShadows=detectaSombras)
+        self.subtractor = cv.createBackgroundSubtractorMOG2(
+            detectShadows=detectaSombras)
         self.frame = None
 
-
-    # TODO: Detectar mudanca maxima.
     def detectaMovimento(self, frame, mudancaMinima=0.015):
 
-        porcentagemMudanca = self.aplicarMascaraNew(frame)
+        '''Checa se houve movimento no vídeo.
+
+        Parameters
+        -----------
+        frame : numpy.ndarray
+            Novo frame do vídeo.
+        mudancaMinima : float, optional
+            Valor mínimo para que um movimento tenha ocorrido.
+            (0.0 <= 'mudancaMinima' <= 1.0) (Padrão=#####TODO)
+
+        Returns
+        --------
+        bool
+            Verdadeiro, se houve mudança, e falso, caso contrário.
+        '''
+
+        porcentagemMudanca = self._aplicarMascaraNew(frame)
         #print('>> {} || {}'.format(porcentagemMudanca, mudancaMinima))
         return (porcentagemMudanca >= mudancaMinima)
 
-    def aplicarMascaraNew(self, novo_frame):
+    def _aplicarMascaraNew(self, novo_frame):
+        '''Retorna a taxa de mudança no vídeo.
 
-        # limpa pequenas mudancas da propria camera
+        Parameters
+        -----------
+        novo_frame : numpy.ndarray
+            Novo frame do vídeo
+
+        Returns
+        --------
+        float
+            Taxa de mudança entre 0.0 e 1.0, incl.
+        '''
+        
         novo_frame = cv.GaussianBlur(novo_frame, (21, 21), 0)
         if self.frame is None:
             self.frame = novo_frame
             return 0
 
         if novo_frame.shape != self.frame.shape:
-            raise ValueError('Novo frame deve ter tamanho identico aos frames anteriores.')
+            raise ValueError(
+                'Novo frame deve ter tamanho identico aos frames anteriores.')
 
         diff = cv.absdiff(self.frame, novo_frame)
 
@@ -36,7 +71,19 @@ class DetectorMovimento:
 
 
 
-    def aplicarMascara(self, frame):
+    def _aplicarMascara(self, frame):
+        '''Retorna a taxa de mudança no vídeo.
+
+        Parameters
+        -----------
+        novo_frame : numpy.ndarray
+            Novo frame do vídeo
+
+        Returns
+        --------
+        float
+            Taxa de mudança entre 0.0 e 1.0, incl.
+        '''
         
         # limpa pequenas mudancas da propria camera
         frame = cv.GaussianBlur(frame, (21, 21), 0)

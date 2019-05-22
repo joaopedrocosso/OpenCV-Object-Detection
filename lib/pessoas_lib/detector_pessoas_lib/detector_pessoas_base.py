@@ -14,13 +14,15 @@ class BaseDetectorPessoas(ABC):
 
 	'''Detecta pessoas usando um modelo de deep learning.
 
-	Parâmetros
+	Parameters
 	-----------
 	precisao_minima : float, optional
-		Quão precisa a detecção deve ser. Deve estar entre 0.0 e 1.0 incl.
+		Quão precisa a detecção deve ser. Deve estar entre 0.0 e 1.0
+		incl. (Padrão=0.5)
 	supressao_caixas : float, optional
 		Quão próximas as detecções de pessoas devem estar para
 		serem consideradas as mesmas. Deve estar entre 0.0 e 1.0 incl.
+		(Padrão=0.5)
 	'''
 
 	def __init__(self, precisao_minima=DEFAULT_PRECISAO_DETECCAO,
@@ -33,15 +35,15 @@ class BaseDetectorPessoas(ABC):
 	def detecta_pessoas(self, img, desenha_retangulos=True):
 		'''Detecta pessoas em uma imagem.
 
-		Parâmetros
+		Parameters
 		-----------
 		img : numpy.ndarray
 			Imagem a ser analizada.
 		desenha_retangulos : bool, optional
 			Se deve retornar uma imagem com as pessoas enquadradas.
-			(padrão=True)
+			(Padrão=True)
 		
-		Retorna
+		Returns
 		--------
 		img : numpy.ndarray
 			Imagem com as pessoas enquadradas, se desenha_retangulos=True.
@@ -67,12 +69,12 @@ class BaseDetectorPessoas(ABC):
 	def _analisa_imagem(self, img):
 		'''Analiza uma imagem e retorna dados relevantes
 
-		Parâmetros
+		Parameters
 		-----------
 		img: numpy.ndarray de dimensões (n, m, 3)
 			Imagem a ser analizada. (formato BGR)
 
-		Retorna
+		Returns
 		--------
 		dados_relevantes
 			Dados de análise da imagem.
@@ -83,14 +85,14 @@ class BaseDetectorPessoas(ABC):
 	def _seleciona_pessoas(self, img, dados_relevantes):
 		'''Seleciona as pessoas da imagem.
 		
-		Parâmetros
+		Parameters
 		-----------
 		img : numpy.ndarray de dimensões (n, m, 3)
 			Imagem de onde serão selecionadas as pessoas. (formato BGR)
 		dados_relevantes
 			Dados relevantes para o selecionamento de pessoas.
 
-		Retorna
+		Returns
 		--------
 		caixas : [(int, int, int, int), ...]
 			Caixas que representam pessoas, na forma (x, y, w, h).
@@ -102,14 +104,14 @@ class BaseDetectorPessoas(ABC):
 	def _non_maxima_suppression(self, caixas, precisoes):
 		'''Remove caixas com baixa probabilidade de serem pessoas e funde caixas muito próximas.
 		
-		Parâmetros
+		Parameters
 		-----------
 		caixas : [(int, int, int, int), ...]
 			Caixas que representam pessoas, na forma (x, y, w, h).
 		precisoes : [float, ...]
 			Precisões de cada caixa.
 		
-		Retorna
+		Returns
 		--------
 		caixas : [(int, int, int, int), ...]
 			Caixas resultantes.

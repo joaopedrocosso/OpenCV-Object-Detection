@@ -10,28 +10,40 @@ class VideoStream:
 
 		Interface entre os objetos de leitura de vídeo e o usuário.
 		
-		Parâmetros:
-			tipo: Tipo de entrada. Pode ser 'picamera', 'ipcamera', 'webcam' e 'arquivo'.
+		Parameters
+		-----------
+		tipo : {'picamera', 'ipcamera', 'webcam' e 'arquivo'}
+			Tipo de leitor de vídeo. Dependo do tipo escolhido, certos
+			argumentos são obrigatórios.
 
-			Se o tipo for 'picamera':
-				'resolucao': Tupla que representa a resolução do vídeo. Ex.: (320, 240).
-				'fps': Frames por segundo.
-			Se o tipo for 'ipcamera':
-				'cameraURL': Url da câmera.
-				'login': Login da câmera.
-				'senha': Senha da câmera.
-			Se o tipo for 'webcam':
-				'idCam' (padrão=0): Número da câmera.
-			Se o tipo for 'arquivo':
-				'arquivo': Caminho ao arquivo.
+			Se for 'picamera', os atributos 'resolucao' e 'fps' devem
+			ser fornecidos.
 
-		Métodos:
-			'start': Começa o stream. Retorna a si mesmo.
-			'read': Retorna o frame atual do vídeo.
-			'stop': Para o stream.
+			Se for 'ipcamera', os atributos 'cameaURL', 'login' e
+			'senha' devem ser fornecidos.
 
-		Levanta:
-			'CannotOpenStreamError': Se não for possível abrir o stream.
+			Se for 'webcam', o atributo 'idCam' deve ser fornecido.
+			Se for 'arquivo', o atributo 'arquivo' deve ser fornecido.
+
+		resolucao : 'tuple' ['int'], optional
+			2-upla que representa a resolução do vídeo.
+		fps : int, optional
+			Frames por segundo.
+		cameraURL : str, optional
+			Url ou IP da câmera.
+		login : str, optional
+			Login da câmera.
+		senha : str, optional
+			Senha da câmera.
+		idCam : int, optional
+			Número da câmera. (padrão=0)
+		arquivo : str
+			Caminho ao arquivo.
+
+		Raises
+		-------
+		CannotOpenStreamError
+			Se não for possível abrir o stream.
 		'''
 		
 		if tipo == 'picamera':
@@ -49,11 +61,21 @@ class VideoStream:
 			raise ValueError('Tipo de camera invalido.')
 
 	def start(self):
-		'''Pega o frame mais recente do stream.'''
+		'''Pega o frame mais recente do stream.
+
+		Returns
+		--------
+		self
+		'''
 		return self.stream.start()
 
 	def read(self):
-		'''Atualiza o frame mais recente em uma thread separada.'''
+		'''Atualiza o frame mais recente em uma thread separada.
+
+		Returns
+		--------
+		self
+		'''
 		return self.stream.read()
 
 	def stop(self):
