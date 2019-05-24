@@ -1,8 +1,9 @@
 from .ipVideoStream import IPVideoStream
 from .webcamVideoStream import WebcamVideoStream
 from .fileVideoStream import FileVideoStream
+from .abstractVideoStream import AbstractVideoStream
 
-class VideoStream:
+class VideoStream(AbstractVideoStream):
 
 	def __init__(self, tipo, **keywords):
 

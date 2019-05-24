@@ -1,11 +1,12 @@
 from threading import Thread 
 import cv2 as cv
 
-from imagelib import ktools
-from .exceptions import CannotOpenStreamError, StreamClosedError, StreamStoppedError
 from . import auxiliares
+from .abstractVideoStream import AbstractVideoStream
+from .exceptions import CannotOpenStreamError, StreamClosedError, StreamStoppedError
+from imagelib import ktools
 
-class VideoStreamCV:
+class VideoStreamCV(AbstractVideoStream, Thread):
 	
 	'''Pega frames de um dispositivo ou arquivo de vídeo.
 
@@ -28,6 +29,8 @@ class VideoStreamCV:
 	'''
 
 	def __init__(self, src=0, login=None, senha=None, atualiza_frames_auto=True):
+
+		super().__init__()
 		
 		if login is not None and senha is not None:
 			src = auxiliares.adiciona_autenticacao_url(src, login, senha)
@@ -43,17 +46,19 @@ class VideoStreamCV:
 		self.atualiza_frames_auto = atualiza_frames_auto
 
 	def start(self):
-		'''Comeca a thread para ler os frames.
+		'''
+		Começa a thread para ler os frames, se 'atualiza_frames_auto'
+		for verdadeiro.
 
 		Returns
 		--------
 		self
 		'''
 		if self.atualiza_frames_auto:
-			Thread(target=self.update, args=()).start()
+			super().start()
 		return self
 
-	def update(self):
+	def run(self):
 		'''Atualiza o frame mais recente em uma thread separada.'''
 		while True:
 			try:

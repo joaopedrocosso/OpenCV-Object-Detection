@@ -15,7 +15,7 @@ class CaixaComPeso:
     ----------
     x, y: int
         Coordenadas do centro da caixa onde a pessoa está.
-        ('x', 'y' >= 0)
+        ('x', 'y' >= -'w', -'h')
     w, h : int
         Largura e altura da caixa. ('w', 'h' > 0)
     peso : float, optional
@@ -40,7 +40,7 @@ class CaixaComPeso:
         Parameters
         -----------
         x, y : int
-            Coordenadas novas da caixa. (>= 0)
+            Coordenadas novas da caixa. (>= -'w', -'h')
         w, h : int
             Largura e altura novas da caixa. (> 0)
         peso : float, optional
@@ -84,6 +84,13 @@ class CaixaComPeso:
             Coordenadas x e y, largura e altura.
         '''
         return self.x, self.y, self.w, self.h
+    def pega_peso(self):
+        '''Pega peso da caixa.
+        Returns
+        --------
+        float
+        '''
+        return self.peso
     def pega_caixa_com_peso(self):
         '''Pega coordenadas, dimensões da caixa e um peso.
         Returns
@@ -92,7 +99,7 @@ class CaixaComPeso:
             Coordenadas x e y, largura, altura, em uma tupla, mais um
             peso.
         '''
-        return self.pega_caixa(), self.peso
+        return self.pega_caixa(), self.pega_peso()
 
 
     def __str__(self):
@@ -154,18 +161,8 @@ class CaixaComPeso:
         Raises
         -------
         ValueError
-            Se x, y < 0 ou w, h <= 0.
+            Se x, y < (-w, -h) ou w, h <= 0.
         '''
-
-        try:
-            x = int(x)
-            y = int(y)
-            if x < 0 or y < 0:
-                raise ValueError
-        except ValueError:
-            raise ValueError(
-                'Posicao (x, y) devem ser (ou poder ser convertidos para) '
-                'inteiros positivos.')
 
         try:
             w = int(w)
@@ -176,6 +173,17 @@ class CaixaComPeso:
             raise ValueError(
                 'Largura e altura devem ser (ou poder ser convertidos para) '
                 'inteiros positivos.')
+
+        try:
+            x = int(x)
+            y = int(y)
+            if x < -w or y < -h:
+                raise ValueError
+        except ValueError:
+            raise ValueError(
+                'Posicao (x, y) devem ser (ou poder ser convertidos para) '
+                'valores que, somados à largura e altura, respectivamente, '
+                'devem ser >= 0.')
 
         return x, y, w, h
         

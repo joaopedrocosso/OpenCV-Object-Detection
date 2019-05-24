@@ -1,33 +1,107 @@
+import time
 import cv2 as cv
 import numpy as np
+from threading import Thread
 
-class DetectorMovimento:
+from videolib.abstractVideoStream import AbstractVideoStream
+from videolib.exceptions import StreamClosedError, StreamStoppedError
+from imagelib import ktools
 
-    '''Dececta movimento em um vídeo.
+class DetectorMovimento(Thread):
+
+    '''Detecta movimento em um vídeo.
+
+    Deve-se chamar o método 'recebe_video' antes de rodar a thread.
     
     Parameters
     -----------
-    detectaSombras : bool, optional
+    detecta_sombras : bool, optional
         Se verdadeiro, ele marca sombras.
+    mudanca_minima : float, optional
+        Valor mínimo para que um movimento tenha ocorrido.
+        (0.0 <= 'mudanca_minima' <= 1.0) (Padrão=0.001)
+    periodo_minimo : float, optional
+        Período mínimo por deteccção de movimento. (> 0.0) (Padrão=0.5)
     '''
 
-    def __init__(self, detectaSombras=True):
+    def __init__(self, detecta_sombras=True, mudanca_minima=0.001,
+                 periodo_minimo=0.0, max_largura_frame=700):
+
+        super().__init__()
 
         self.subtractor = cv.createBackgroundSubtractorMOG2(
-            detectShadows=detectaSombras)
+            detectShadows=detecta_sombras)
         self.frame = None
+        self.mudanca_minima = mudanca_minima
+        self.periodo_minimo = periodo_minimo
+        self.max_largura_frame = max_largura_frame
+        
+        self._houve_mudanca = False
+        self.stopped = False
+        self.stream = None
 
-    def detectaMovimento(self, frame, mudancaMinima=0.015):
+    def recebe_video(self, stream):
+        if not isinstance(stream, AbstractVideoStream):
+            raise TypeError("Stream deve herdar de 'AbstractVideoStream'.")
+        self.stream = stream
+        return self
 
+    def start(self):
+        '''Começa a thread.
+        
+        Returns
+        --------
+        self
+        '''
+        super().start()
+        return self
+
+    def run(self):
+        '''Detecta movimento uma vez a cada período.'''
+
+        if self.stream is None:
+            print('Erro: stream deve ser fornecido.')
+
+        while not self.stopped:
+            tempo_comeco_iteracao = time.time()
+
+            try:
+                frame = self.stream.read()
+            except (StreamClosedError, StreamStoppedError) as e:
+                print(str(e))
+                break
+
+            if frame.shape[1] > self.max_largura_frame:
+                frame = ktools.resize(frame, self.max_largura_frame)
+
+            self._houve_mudanca = self.detecta_movimento(frame)
+            
+            tempo_iteracao = time.time()-tempo_comeco_iteracao
+            if tempo_iteracao < self.periodo_minimo:
+                time.sleep(self.periodo_minimo-tempo_iteracao)
+
+        self.stop()
+
+    def stop(self):
+        '''Para a thread.'''
+        self.stopped = True
+
+    def houve_mudanca(self):
+        '''Retorna se houve algura mudança no vídeo.
+
+        Returns
+        --------
+        bool
+        '''
+        return self._houve_mudanca
+
+    def detecta_movimento(self, frame):
         '''Checa se houve movimento no vídeo.
 
         Parameters
         -----------
         frame : numpy.ndarray
             Novo frame do vídeo.
-        mudancaMinima : float, optional
-            Valor mínimo para que um movimento tenha ocorrido.
-            (0.0 <= 'mudancaMinima' <= 1.0) (Padrão=#####TODO)
 
         Returns
         --------
@@ -35,43 +109,11 @@ class DetectorMovimento:
             Verdadeiro, se houve mudança, e falso, caso contrário.
         '''
 
-        porcentagemMudanca = self._aplicarMascaraNew(frame)
-        #print('>> {} || {}'.format(porcentagemMudanca, mudancaMinima))
-        return (porcentagemMudanca >= mudancaMinima)
+        porcentagem_mudanca = self._aplicar_mascara(frame)
+        #print('>> {} || {}'.format(porcentagem_mudanca, mudanca_minima))
+        return (porcentagem_mudanca >= self.mudanca_minima)
 
-    def _aplicarMascaraNew(self, novo_frame):
-        '''Retorna a taxa de mudança no vídeo.
-
-        Parameters
-        -----------
-        novo_frame : numpy.ndarray
-            Novo frame do vídeo
-
-        Returns
-        --------
-        float
-            Taxa de mudança entre 0.0 e 1.0, incl.
-        '''
-        
-        novo_frame = cv.GaussianBlur(novo_frame, (21, 21), 0)
-        if self.frame is None:
-            self.frame = novo_frame
-            return 0
-
-        if novo_frame.shape != self.frame.shape:
-            raise ValueError(
-                'Novo frame deve ter tamanho identico aos frames anteriores.')
-
-        diff = cv.absdiff(self.frame, novo_frame)
-
-        self.frame = novo_frame
-
-        return diff.sum()/(255*diff.shape[0]*diff.shape[1])
-
-
-
-
-    def _aplicarMascara(self, frame):
+    def _aplicar_mascara(self, frame):
         '''Retorna a taxa de mudança no vídeo.
 
         Parameters
@@ -91,16 +133,16 @@ class DetectorMovimento:
         fgmask = self.subtractor.apply(frame)
 
         # Aplicando um threshold para limitar aos movimentos mais importantes
-        _, frameAlterado = cv.threshold(fgmask, 127, 255, cv.THRESH_BINARY)
+        _, frame_alterado = cv.threshold(fgmask, 127, 255, cv.THRESH_BINARY)
         
         # Removo um pouco do "noise" criado pelo MOG2
-        kernelOp = np.ones((3,3),np.uint8)# Kernel opening
-        kernelCl = np.ones((11,11),np.uint8)# Kernel closing
-        frameAlterado = cv.morphologyEx(frameAlterado, cv.MORPH_OPEN, kernelOp)
-        frameAlterado = cv.morphologyEx(frameAlterado, cv.MORPH_CLOSE, kernelCl)
+        kernel_op = np.ones((3,3),np.uint8)# Kernel opening
+        kernel_cl = np.ones((11,11),np.uint8)# Kernel closing
+        frame_alterado = cv.morphologyEx(frame_alterado, cv.MORPH_OPEN, kernel_op)
+        frame_alterado = cv.morphologyEx(frame_alterado, cv.MORPH_CLOSE, kernel_cl)
 
         # Checa quantos pixels foram modificados
-        flatFrame = frameAlterado.flatten()
-        porcentagemMudanca = (flatFrame.sum()/255) / flatFrame.shape[0]
+        flat_frame = frame_alterado.flatten()
+        porcentagem_mudanca = (flat_frame.sum()/255) / flat_frame.shape[0]
 
-        return porcentagemMudanca
+        return porcentagem_mudanca

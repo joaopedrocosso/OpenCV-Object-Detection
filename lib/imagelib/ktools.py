@@ -84,6 +84,10 @@ def show_image(img, title='title', wait_time=0, close_window=True):
 		cv.destroyWindow(title)
 	return k
 
+def destroyAllWindows():
+	'''Destroys all windows created using opencv.'''
+	cv.destroyAllWindows()
+
 
 def resize(img, new_width=None, new_height=None):
 	'''Resizes image to the desired size.

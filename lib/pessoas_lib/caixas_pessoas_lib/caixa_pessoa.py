@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import collections
 
 from imagelib.caixa_com_peso import CaixaComPeso
@@ -19,7 +17,7 @@ class CaixaPessoa(CaixaComPeso):
     -----------
     x, y: int
         Coordenadas do centro da caixa onde a pessoa está.
-        ('x', 'y' >= 0)
+        ('x', 'y' >= -'w', -'h')
     w, h : int
         Largura e altura da caixa. ('w', 'h' > 0)
     peso : float, optional
@@ -74,7 +72,7 @@ class CaixaPessoa(CaixaComPeso):
         Parameters
         -----------
         x, y : int
-            Coordenadas novas da caixa. (>= 0)
+            Coordenadas novas da caixa. (>= -'w', -'h')
         w, h : int
             Largura e altura novas da caixa. (> 0)
         peso : float, optional
@@ -125,7 +123,7 @@ class CaixaPessoa(CaixaComPeso):
         -------
         bool
         '''
-        return self.viva
+        return not self.viva
 
     def esta_confirmada(self):
         '''Retorna se a caixa já foi confirmada como pessoa.
@@ -135,6 +133,15 @@ class CaixaPessoa(CaixaComPeso):
         bool
         '''
         return self.pessoa_confirmada
+
+    def esta_desaparecida(self):
+        '''Retorna se a pessoa está desaparecida.
+
+        Returns
+        --------
+        bool
+        '''
+        return self.tempo_desaparecida > 0
 
 
     def pega_rastros(self):

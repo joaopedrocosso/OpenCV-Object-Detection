@@ -7,7 +7,7 @@ def muda_origem_caixa(x0, y0, w, h, pos_original='centro', pos_final='centro'):
     Parameters
     -----------
     x0, y0 : int
-        Origem original. (>= 0)
+        Origem original. (>= -w, -h)
     w, h : int
         Largura e altura. (> 0)
     pos_original, pos_final: : str
@@ -47,8 +47,8 @@ def muda_origem_caixa(x0, y0, w, h, pos_original='centro', pos_final='centro'):
         'baixo':(0, 1),
         'baixo-direita':(1, 1)
     }
-
-    if x0 < 0 or y0 < 0 or w <= 0 or h <= 0:
+    
+    if x0+w < 0 or y0+h < 0 or w <= 0 or h <= 0:
         raise ValueError("Coordenadas ou dimensões da caixa inválidas.")
 
     valores_chave = valor.keys()

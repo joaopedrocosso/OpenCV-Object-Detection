@@ -10,16 +10,17 @@ from videolib.videoStream import VideoStream
 from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas
 from pessoas_lib.pessoas_historico import PessoasHistorico
 from pessoas_lib.caixas_pessoas_lib.caixas_pessoas import CaixasPessoas
+from videolib.abstractVideoStream import AbstractVideoStream
 from videolib.exceptions import CannotOpenStreamError, StreamClosedError, StreamStoppedError
 from toolslib import ptools
 
-class DetectorPessoasVideo:
+class DetectorPessoasVideo(Thread):
 
     '''Detecta pessoas em um vídeo em uma thread separada.
 
-    Deve-se configurar o objeto chamando os métodos
-    configura_video() e configura_detector(), para configurar a
-    entrada de vídeo e o detector de pessoas.
+    Deve-se configurar o objeto chamando os métodos 'configura_video'
+    ou 'recebe_video', para haver uma entrada de vídeo, e
+    'configura_detector', para configurar o detector de pessoas.
 
     Parameters
     -----------
@@ -34,26 +35,32 @@ class DetectorPessoasVideo:
         guardado. (Padrão='json/dados.json')
     tempo_atualizacao_json : int, optional.
         Tempo entre atualizações do JSON. (Padrão=60)
+
+    See Also
+    ---------
     '''
 
     def __init__(self, mostrar_video=False, mostrar_precisao=False,
                  destino_json='json/dados.json', tempo_atualizacao_json=60):
+
+        super().__init__()
 
         self.mostrar_video = mostrar_video
         self.mostrar_precisao = mostrar_precisao
         self.destino_json = destino_json
         self.tempo_atualizacao_json = tempo_atualizacao_json
 
-        self.detector_movimento = DetectorMovimento()
-
         self.pessoas_historico = PessoasHistorico()
         self.pessoas_registradas = CaixasPessoas()
 
         self.stopped = False
+        self.stream = None
+        self.detectorPessoas = None
+        self.stream_externo = False
 
     def configura_video(self, tipo, **keywords):
 
-        '''Configura a entrada de vídeo.
+        '''Configura a entrada de vídeo internamente.
 
         Parameters
         -----------
@@ -86,19 +93,41 @@ class DetectorPessoasVideo:
 
         Raises
         -------
+        CannotOpenStreamError
+            Se não foi possível abrir o stream.
+
+        See Also
+        ---------
+        usa_video_externo : Para receber um leitor de vídeo de fora.
         '''
 
         try:
             self.stream = VideoStream(tipo, **keywords)
         except (ImportError, CannotOpenStreamError) as e:
             raise
+        self.stream_externo = False
 
         # Para dar tempo de inicializar a câmera.
         time.sleep(2.0)
 
         return self
 
-    def configura_detector(self, dir_modelo, tipo_modelo='yolo', precisao_deteccao=0.4):
+    def recebe_video(self, stream):
+        '''Configura a entrada de vídeo com um objeto externo.
+
+        Parameters
+        -----------
+        stream : AbstractVideoStream
+            Objeto de entrada de vídeo que herda de AbstractVideoStream.
+        '''
+        if not isinstance(stream, AbstractVideoStream):
+            raise TypeError("Stream deve herdar de 'AbstractVideoStream'.")
+        self.stream = stream
+        self.stream_externo = True
+        return self
+
+    def configura_detector(self, dir_modelo, tipo_modelo='yolo',
+                           precisao_deteccao=0.4):
 
         '''Detecta pessoas usando um modelo de deep learning.
 
@@ -134,7 +163,7 @@ class DetectorPessoasVideo:
         --------
         self
         '''
-        Thread(target=self._rodar, args=()).start()
+        super().start()
         return self
 
     def stop(self):
@@ -150,18 +179,30 @@ class DetectorPessoasVideo:
         '''
         return len(self.pessoas_registradas)
 
-    def _rodar(self):
-        '''Programa principal a ser rodado em uma thread.'''
+    def run(self):
+        '''Detecta pessoas em um vídeo.'''
 
-        self.stream.start()
-
-        FRAMES_SEM_DETECCAO = 30
+        TEMPO_SEM_DETECCAO = 60 # segundos
         MAX_LARGURA_FRAME = 700 # px
         TEMPO_MAXIMO_DETECCAO_COM_RASTREAMENTO = 1.0 # segundo
+        PERIODO_MINIMO = 0.7
 
-        frames_desde_ultima_deteccao = 0
+        if self.stream is None or self.detectorPessoas is None:
+            print('Erro: stream ou detector de pessoas não configurado.')
+            return
+        self.stream.start()
+        
+        detector_movimento = (
+            DetectorMovimento(periodo_minimo=PERIODO_MINIMO)
+            .recebe_video(self.stream)
+            .start()
+        )
+
+        tempo_ultima_deteccao = time.time()-TEMPO_SEM_DETECCAO
 
         while not self.stopped:
+
+            tempo_comeco_iteracao = time.time()
 
             try:
                 frame = self.stream.read()
@@ -169,64 +210,70 @@ class DetectorPessoasVideo:
                 print(str(e))
                 break
 
-            #  Redimensiona imagem para diminuir os gastos de detecção de movimento.
+            # Redimensiona imagem para diminuir os gastos de detecção de 
+            # movimento.
             frame = ktools.resize(frame, min(MAX_LARGURA_FRAME, frame.shape[1]))
 
-            '''# Se houver mudança no frame, tenta detecctar pessoas
-            if self.detector_movimento.detectaMovimento(frame):
+            # Se houver mudança no frame ou já passou do tempo limite
+            # sem detecção, detectar pessoas.
+            if (detector_movimento.detecta_movimento(frame)
+                or time.time()-tempo_ultima_deteccao > TEMPO_SEM_DETECCAO):
                 detectar_flag = True
-                frames_desde_ultima_deteccao = 0
-            # Continuar detectando pessoas por um periodo de tempo sem movimento.
-            elif frames_desde_ultima_deteccao < FRAMES_SEM_DETECCAO:
-                detectar_flag = True
-                frames_desde_ultima_deteccao += 1
-            # Depois desse periodo, parar de tentar detectar pessoas
+                repetir_caixas = False
+                tempo_ultima_deteccao = time.time()
             else:
-                detectar_flag = False'''
-            
-            detectar_flag = True
+                detectar_flag = False
+                repetir_caixas = True
 
             if detectar_flag:
-                
-                old_time = time.time()
-                
                 try:
-                    _, caixas_com_peso = self.detectorPessoas.detecta_pessoas(frame, desenha_retangulos=False)
+                    _, caixas_com_peso = self.detectorPessoas.detecta_pessoas(
+                        frame, desenha_retangulos=False)
                 except Exception as e:
-                    print('Erro de detecção:\n\t[{}]: {}'.format(type(e).__name__, str(e)))
+                    print('Erro de detecção:\n\t[{}]: {}'
+                        .format(type(e).__name__, str(e)))
                     break
-
-                # Se o detector demorar muito, o registro não será muito útil.
-                # Portanto, ele é zerado.
-                if time.time()-old_time > TEMPO_MAXIMO_DETECCAO_COM_RASTREAMENTO:
-                    self.pessoas_registradas.reiniciar()
-                caixas_com_peso = self.pessoas_registradas.atualizar(caixas_com_peso)
-                
-                new_frame = ktools.draw_rectangles(frame, rectangles_and_info=caixas_com_peso, write_weight=self.mostrar_precisao)
-
             else:
                 new_frame, caixas_com_peso = frame, []
+                    
+            # Se a iteração for muito lenta, reiniciar o rastreio.
+            if time.time()-tempo_comeco_iteracao > TEMPO_MAXIMO_DETECCAO_COM_RASTREAMENTO:
+                self.pessoas_registradas.reiniciar()
+            caixas_com_peso = self.pessoas_registradas.atualizar(
+                caixas_com_peso, caixas_paradas=repetir_caixas)
+
+            new_frame = ktools.draw_rectangles(
+                frame, rectangles_and_info=caixas_com_peso,
+                write_weight=self.mostrar_precisao)
 
             # Salva o numero de pessoas registradas neste ciclo.
             self.pessoas_historico.atualiza_pessoa(len(caixas_com_peso))
 
             # Cria um novo arquivo JSON com dados referentes ao histórico.
-            if self.pessoas_historico.pega_tempo_decorrido() >= self.tempo_atualizacao_json:
-                self._cria_json_pessoa(*self.pessoas_historico.finaliza_pessoa(), frame, self.destino_json)
+            if (self.pessoas_historico.pega_tempo_decorrido()
+                >= self.tempo_atualizacao_json):
+                self._cria_json_pessoa(*self.pessoas_historico.finaliza_pessoa(),
+                                       frame, self.destino_json)
 
             if self.mostrar_video:
-                k = ktools.show_image(new_frame, title='Detecção', wait_time=1, close_window=False)
+                k = ktools.show_image(new_frame, title='Detecção', wait_time=1,
+                                      close_window=False)
                 if k == ord('q'):
                     break
 
+            tempo_iteracao = time.time() - tempo_comeco_iteracao
+            if tempo_iteracao <= PERIODO_MINIMO:
+                time.sleep(PERIODO_MINIMO-tempo_iteracao)
+
         # Clean-up.
         cv.destroyAllWindows()
-        self.stream.stop()
+        if not self.stream_externo:
+            self.stream.stop()
         self.stop()
 
 
-    def _cria_json_pessoa(self, media_pessoas, max_pessoas, min_pessoas, tempo_total,
-                         frame, destino_json):
+    def _cria_json_pessoa(self, media_pessoas, max_pessoas, min_pessoas,
+                          tempo_total, frame, destino_json):
         '''Cria um JSON com os dados de pessoas.
         
         Parameters
@@ -256,8 +303,11 @@ class DetectorPessoasVideo:
         try:
             ptools.criarJSON(texto_dict, frame, destino_json)
         except Exception:
-            pass#print('Nao foi possivel criar JSON.')
+            #print('Nao foi possivel criar JSON.')
+            pass
         else:
-            pass#print('JSON criado com sucesso. {}'.format(datetime.datetime.now().strftime('%c')))
+            #print('JSON criado com sucesso. {}'
+            #.format(datetime.datetime.now().strftime('%c')))
+            pass
 
         print()

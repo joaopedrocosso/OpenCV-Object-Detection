@@ -1,6 +1,6 @@
 import argparse
 
-from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas
+from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas, DEFAULT_PRECISAO_DETECCAO
 from pessoas_lib.detector_pessoas_video import DetectorPessoasVideo
 
 def main():
@@ -112,7 +112,7 @@ def checa_argumentos():
     parser.add_argument('--mostrar-precisao', action='store_true',
                         help='Mostrar precisão acima do retângulo no vídeo.')
     parser.add_argument('--precisao-deteccao', type=float,
-                        default=DetectorPessoas.DEFAULT_PRECISAO_DETECCAO,
+                        default=DEFAULT_PRECISAO_DETECCAO,
                         help='Precisao da deteccao de pessoas [0.0, 1.0]')
 
     args = parser.parse_args()
