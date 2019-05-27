@@ -1,4 +1,5 @@
 import argparse
+import time
 
 from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas, DEFAULT_PRECISAO_DETECCAO
 from pessoas_lib.detector_pessoas_video import DetectorPessoasVideo
@@ -25,6 +26,7 @@ def main():
                                   wait_time=1, close_window=False)
             if chr(k) == 'q':
                 break
+            time.sleep(0.5)
     detector.stop()
     ktools.destroy_all_windows()
 
