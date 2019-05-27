@@ -1,7 +1,5 @@
 import time
-import json
 import cv2 as cv
-import datetime
 from threading import Thread
 
 from imagelib import ktools
@@ -12,7 +10,6 @@ from pessoas_lib.pessoas_historico import PessoasHistorico
 from pessoas_lib.caixas_pessoas_lib.caixas_pessoas import CaixasPessoas
 from videolib.abstractVideoStream import AbstractVideoStream
 from videolib.exceptions import CannotOpenStreamError, StreamClosedError, StreamStoppedError
-from toolslib import ptools
 
 class DetectorPessoasVideo(Thread):
 
@@ -24,38 +21,50 @@ class DetectorPessoasVideo(Thread):
 
     Parameters
     -----------
-    mostrar_video : bool, optional.
-        Se o vídeo resultante com caixas em volta das pessoas deve
-        ser mostrado em uma janela. (Padrão=False)
-    mostrar_precisao : bool, optional.
-        Se a precisão deve ser mostrada em cima da caixa.
+    mostrar_caixas : bool, optional.
+        Se o frame guardado deve conter as caixas em volta das pessoas
         (Padrão=False)
-    destino_json : str, optional.
-        Onde o JSON com as estatísticas das pessoas deve ser
-        guardado. (Padrão='json/dados.json')
-    tempo_atualizacao_json : int, optional.
-        Tempo entre atualizações do JSON. (Padrão=60)
+    mostrar_precisao : bool, optional.
+        Se a precisão deve ser mostrada em cima da caixa. Se
+        'mostrar_caixas' for 'False', a precisão não é mostrada.
+        (Padrão=False)
+    max_tempo_sem_deteccao : int, optional
+        Tempo máximo que se pode identificar pessoas (ou sua ausência)
+        por métodos que não sejam uma detecção (detector de movimento,
+        rastreador, etc). Deve ser positivo ou zero. (Padrão=60)
+    max_largura_frame : int, optional
+        Se o frame do vídeo for maior que este valor, ele será
+        redimensionado. Deve ser positivo. (Padrão=700)
 
-    See Also
-    ---------
+    Raises
+    ------
+    ValueError
+        Se um dos argumentos não atender às especificações.
     '''
 
-    def __init__(self, mostrar_video=False, mostrar_precisao=False,
-                 destino_json='json/dados.json', tempo_atualizacao_json=60):
+    def __init__(self, mostrar_caixas=False, mostrar_precisao=False,
+                 max_tempo_sem_deteccao=60, max_largura_frame=700):
 
         super().__init__()
 
-        self.mostrar_video = mostrar_video
+        self.mostrar_caixas = mostrar_caixas
         self.mostrar_precisao = mostrar_precisao
-        self.destino_json = destino_json
-        self.tempo_atualizacao_json = tempo_atualizacao_json
+        if max_tempo_sem_deteccao < 0:
+            raise ValueError(
+                "'max_tempo_sem_deteccao' deve ser um número positivo.")
+        if max_largura_frame <= 0:
+            raise ValueError(
+                "'max_largura_frame' deve ser um número positivo ou zero.")
+        self.max_tempo_sem_deteccao = max_tempo_sem_deteccao
+        self.max_largura_frame = max_largura_frame
 
         self.pessoas_historico = PessoasHistorico()
         self.pessoas_registradas = CaixasPessoas()
 
-        self.stopped = False
+        self.frame = None
         self.stream = None
         self.detectorPessoas = None
+        self.stopped = False
         self.stream_externo = False
 
     def configura_video(self, tipo, **keywords):
@@ -170,22 +179,12 @@ class DetectorPessoasVideo(Thread):
         '''Finaliza a thread.'''
         self.stopped = True
 
-    def pega_pessoas(self):
-        '''Retorna o número de pessoas registradas no momento.
-        
-        Returns
-        -------
-        int
-        '''
-        return len(self.pessoas_registradas)
-
     def run(self):
         '''Detecta pessoas em um vídeo.'''
 
-        TEMPO_SEM_DETECCAO = 60 # segundos
-        MAX_LARGURA_FRAME = 700 # px
-        TEMPO_MAXIMO_DETECCAO_COM_RASTREAMENTO = 1.0 # segundo
-        PERIODO_MINIMO = 0.7
+        TEMPO_MAXIMO_PARA_RASTREAMENTO = 1.0 #segundo
+        PERIODO_MINIMO = 0.7 #segundo
+        MAX_FRAMES_PARADO = 5
 
         if self.stream is None or self.detectorPessoas is None:
             print('Erro: stream ou detector de pessoas não configurado.')
@@ -198,7 +197,8 @@ class DetectorPessoasVideo(Thread):
             .start()
         )
 
-        tempo_ultima_deteccao = time.time()-TEMPO_SEM_DETECCAO
+        tempo_ultima_deteccao = time.time()-self.max_tempo_sem_deteccao
+        frames_parado = 0
 
         while not self.stopped:
 
@@ -212,20 +212,22 @@ class DetectorPessoasVideo(Thread):
 
             # Redimensiona imagem para diminuir os gastos de detecção de 
             # movimento.
-            frame = ktools.resize(frame, min(MAX_LARGURA_FRAME, frame.shape[1]))
+            frame = ktools.resize(frame, min(self.max_largura_frame, frame.shape[1]))
 
             # Se houver mudança no frame ou já passou do tempo limite
             # sem detecção, detectar pessoas.
             if (detector_movimento.detecta_movimento(frame)
-                or time.time()-tempo_ultima_deteccao > TEMPO_SEM_DETECCAO):
-                detectar_flag = True
-                repetir_caixas = False
-                tempo_ultima_deteccao = time.time()
+                or time.time()-tempo_ultima_deteccao > self.max_tempo_sem_deteccao):
+                #
+                modo = 'detector'
+                frames_parado = 0
+            elif frames_parado < MAX_FRAMES_PARADO:
+                modo = 'detector parado'
+                frames_parado += 1
             else:
-                detectar_flag = False
-                repetir_caixas = True
+                modo = 'parado'
 
-            if detectar_flag:
+            if modo in ['detector', 'detector parado']:
                 try:
                     _, caixas_com_peso = self.detectorPessoas.detecta_pessoas(
                         frame, desenha_retangulos=False)
@@ -233,81 +235,77 @@ class DetectorPessoasVideo(Thread):
                     print('Erro de detecção:\n\t[{}]: {}'
                         .format(type(e).__name__, str(e)))
                     break
+                tempo_ultima_deteccao = time.time()
             else:
-                new_frame, caixas_com_peso = frame, []
+                caixas_com_peso = []
                     
-            # Se a iteração for muito lenta, reiniciar o rastreio.
-            if time.time()-tempo_comeco_iteracao > TEMPO_MAXIMO_DETECCAO_COM_RASTREAMENTO:
+            # Se a iteração for muito lenta, reiniciar o registro.
+            if time.time()-tempo_comeco_iteracao > TEMPO_MAXIMO_PARA_RASTREAMENTO:
                 self.pessoas_registradas.reiniciar()
-            caixas_com_peso = self.pessoas_registradas.atualizar(
-                caixas_com_peso, caixas_paradas=repetir_caixas)
 
-            new_frame = ktools.draw_rectangles(
-                frame, rectangles_and_info=caixas_com_peso,
-                write_weight=self.mostrar_precisao)
+            caixas_com_peso = self.pessoas_registradas.atualizar(
+                caixas_com_peso, caixas_paradas=(modo=='parado'))
 
             # Salva o numero de pessoas registradas neste ciclo.
-            self.pessoas_historico.atualiza_pessoa(len(caixas_com_peso))
+            self.pessoas_historico.atualiza_periodo(len(caixas_com_peso))
 
-            # Cria um novo arquivo JSON com dados referentes ao histórico.
-            if (self.pessoas_historico.pega_tempo_decorrido()
-                >= self.tempo_atualizacao_json):
-                self._cria_json_pessoa(*self.pessoas_historico.finaliza_pessoa(),
-                                       frame, self.destino_json)
 
-            if self.mostrar_video:
-                k = ktools.show_image(new_frame, title='Detecção', wait_time=1,
-                                      close_window=False)
-                if k == ord('q'):
-                    break
+            if not self.mostrar_caixas:
+                novo_frame = frame
+            else:
+                novo_frame = ktools.draw_rectangles(
+                frame, rectangles_and_info=caixas_com_peso,
+                write_weight=self.mostrar_precisao)
+            ktools.write(novo_frame, modo, x=10, y=novo_frame.shape[0]-10, outline=True)
+            self.frame = novo_frame
 
+            # Dormir de forma que o tempo do loop dê 'PERIODO_MINIMO'.
             tempo_iteracao = time.time() - tempo_comeco_iteracao
             if tempo_iteracao <= PERIODO_MINIMO:
                 time.sleep(PERIODO_MINIMO-tempo_iteracao)
 
-        # Clean-up.
-        cv.destroyAllWindows()
         if not self.stream_externo:
             self.stream.stop()
         self.stop()
 
 
-    def _cria_json_pessoa(self, media_pessoas, max_pessoas, min_pessoas,
-                          tempo_total, frame, destino_json):
-        '''Cria um JSON com os dados de pessoas.
+    def pega_pessoas(self):
+        '''Retorna o número de pessoas registradas no momento.
         
-        Parameters
-        -----------
-        media_pessoas : int
-            Média de pessoas.
-        max_pessoas : int
-            Número máximo de pessoas registradas.
-        min_pessoas : int
-            Número mínimo de pessoas registradas.
-        tempo_total : float
-            Tempo total desde o registro da primeira pessoa na média.
-        frame : numpy.ndarray
-            Imagem do último frame lido.
-        destino_json : str
-            Onde guardar o JSON que será criado.
+        Returns
+        -------
+        int
+        '''
+        return len(self.pessoas_registradas)
+
+    def pega_frame(self):
+        '''Retorna o último frame analizado.
+        
+        Returns
+        --------
+        numpy.ndarray
+            Frame a ser retornado. Antes de qualquer frame ser lido
+            da fonte, retorna uma imagem preta de mesmas dimensões do
+            vídeo.
         '''
 
-        #print('\ncriando JSON...')
-        texto_dict = {
-            'MediaPessoas':media_pessoas,
-            'MaximoPessoas':max_pessoas,
-            'MinimoPessoas':min_pessoas,
-            'TempoTotal':'{:.2f}'.format(tempo_total)
-        }
-
-        try:
-            ptools.criarJSON(texto_dict, frame, destino_json)
-        except Exception:
-            #print('Nao foi possivel criar JSON.')
-            pass
+        if self.frame is not None:
+            return self.frame
         else:
-            #print('JSON criado com sucesso. {}'
-            #.format(datetime.datetime.now().strftime('%c')))
-            pass
+            return ktools.black_image(*self.stream.pega_dimensoes())
 
-        print()
+    def pega_dados_periodo(self):
+        '''Retorna dados coletados desde a última chamada (ou início).
+
+        Returns
+        --------
+        media : float
+            Média ponderada dos valores com o intervalo de tempo.
+        max_valor : float
+            Valor máximo recebido.
+        min_valor : float
+            Valor mínimo recebido.
+        tempo_decorrido : float
+            Tempo total decorrido.
+        '''
+        return self.pessoas_historico.finaliza_periodo()

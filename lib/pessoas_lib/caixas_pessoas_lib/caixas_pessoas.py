@@ -148,7 +148,7 @@ class CaixasPessoas:
         ]
 
         if len(caixas_com_peso) == 0:
-            pass
+            self._aumentar_desaparecimento()
         elif len(self.pessoas) == 0:
             self.reiniciar()
             # Levanta ValueError.
@@ -192,7 +192,7 @@ class CaixasPessoas:
                 caixas_usadas.add(c)
 
                 if (len(pessoas_usadas) == len(pessoas_ids)
-                    or len(caixas_usada) == len(caixas_com_peso)):
+                    or len(caixas_usadas) == len(caixas_com_peso)):
                     #
                     break
 
@@ -203,22 +203,42 @@ class CaixasPessoas:
                 self._registra_pessoas([
                     cp for i, cp in enumerate(caixas_com_peso)
                     if i in caixas_nao_usadas])
+            
             if len(pessoas_usadas) < len(pessoas_ids):
-                pessoas_nao_usadas = (
-                    set(range(len(pessoas_ids))).difference(pessoas_usadas) )
-                for p in pessoas_nao_usadas:
-                    id_pessoa = pessoas_ids[p]
-                    self.pessoas[id_pessoa].aumenta_tempo_desaparecida()
-                    if pessoa.atingiu_limite_desaparecimento():
-                        self._retira_pessoa(id_pessoa)
+                pessoas_nao_usadas = (set(range(len(pessoas_ids)))
+                                      .difference(pessoas_usadas))
+                self._aumentar_desaparecimento(
+                    [pessoas_ids[p] for p in pessoas_nao_usadas])
 
 
     def _atualizar_repetir_iteracao(self):
         '''Repete o que foi feito na iteração anterior'''
+        pessoas_atualizadas = set()
         for chave, pessoa in list(self.pessoas.items()):
             if not pessoa.esta_desaparecida():
                 pessoa.atualizar(*pessoa.pega_caixa(), pessoa.pega_peso())
-                continue
+                pessoas_atualizadas.add(chave)
+
+        pessoas_desaparecidas = (set(range(len(self.pessoas)))
+                                 .difference(pessoas_atualizadas))
+        self._aumentar_desaparecimento(pessoas_desaparecidas)
+        
+
+    def _aumentar_desaparecimento(self, ids=None):
+        '''Aumenta o desaparecimento de pessoas.
+
+        Parameters
+        -----------
+        ids : iterable of int, optional
+            Chaves das pessoas que terão seus desaparecimentos
+            aumentados. Se não fornecido, todas as pessoas terão
+            seu desaparecimento aumentado.
+        '''
+
+        if ids is None:
+            ids = list(self.pessoas.keys())
+        for chave in ids:
+            pessoa = self.pessoas[chave]
             pessoa.aumenta_tempo_desaparecida()
             if pessoa.atingiu_limite_desaparecimento():
                 self._retira_pessoa(chave)

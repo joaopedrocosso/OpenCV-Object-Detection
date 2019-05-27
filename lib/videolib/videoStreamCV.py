@@ -37,10 +37,12 @@ class VideoStreamCV(AbstractVideoStream, Thread):
 		self.stream = cv.VideoCapture(src)
 		if not self.stream.isOpened():
 			raise CannotOpenStreamError('Não foi possível abrir vídeo da webcam.')
+
+		self.dimensoes_frame = (self.stream.get(cv.CAP_PROP_FRAME_HEIGHT),
+						  		self.stream.get(cv.CAP_PROP_FRAME_WIDTH))
 		
 		# frame inicializado com uma imagem preta
-		self.frame = ktools.black_image(self.stream.get(cv.CAP_PROP_FRAME_HEIGHT),
-										self.stream.get(cv.CAP_PROP_FRAME_WIDTH))
+		self.frame = ktools.black_image(*self.dimensoes_frame)
 		#Inicializando a variavel que indica a parada da thread
 		self.stopped = False
 		self.atualiza_frames_auto = atualiza_frames_auto
@@ -57,6 +59,14 @@ class VideoStreamCV(AbstractVideoStream, Thread):
 		if self.atualiza_frames_auto:
 			super().start()
 		return self
+
+	def pega_dimensoes(self):
+		'''Retorna as dimensões dos frames do vídeo
+		Returns
+		--------
+		(int, int)
+		'''
+		return self.dimensoes_frame
 
 	def run(self):
 		'''Atualiza o frame mais recente em uma thread separada.'''

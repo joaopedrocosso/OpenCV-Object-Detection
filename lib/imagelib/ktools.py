@@ -84,7 +84,7 @@ def show_image(img, title='title', wait_time=0, close_window=True):
 		cv.destroyWindow(title)
 	return k
 
-def destroyAllWindows():
+def destroy_all_windows():
 	'''Destroys all windows created using opencv.'''
 	cv.destroyAllWindows()
 
@@ -188,7 +188,7 @@ def draw_rectangles(image, rectangles_and_info, overwrite_original=False,
 		cv.rectangle(image, (x, y), (x + w, y + h), (0, 0, 0xFF), 2)
 		if write_weight:
 			text = "{:.4f}".format(info)
-			cv.putText(image, text, (x, y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0xFF, 0xFF, 0xFF), 2)
+			write(image, text, x=x, y=y-5, font_scale=0.5)
 
 	return image
 
@@ -222,3 +222,36 @@ def non_maxima_suppression(caixas, precisoes, precisao_minima=0.5,
 		idxs = np.array([])
 	return idxs.flatten()
 
+
+def write(image, text, x, y, font=cv.FONT_HERSHEY_SIMPLEX, font_scale=0.8,
+		  color=(0xFF, 0xFF, 0xFF), thickness=2, outline=False,
+		  outline_color=(0x00, 0x00, 0x00)):
+	'''Convinience function to write text on an image.
+	
+	Parameters
+	-----------
+	image : numpy.ndarray
+		Image to write on.
+	text : str
+		Text to be written on the image.
+	x, y : int
+		Coordinates of the bottom-left corner of the text.
+	font : int, optional
+		Constants to the opencv fonts. For all options, check their
+		documentation. (Default=cv.FONT_HERSHEY_SIMPLEX)
+	font_scale : float, optional
+		Factor that is multiplied by the font-specific base size.
+		(Default=0.5)
+	color : tuple of int, optional
+		RGB color of the text. (Default=(0xFF, 0xFF, 0xFF))
+	thickness : int, optional
+		Thickness of the text. (Default=2)
+	outline : bool, optional
+		If set to true, the text will be outlined. (Default=False)
+	outline_color : tuple of int, optional
+		Color of the outline. (Default=(0x00, 0x00, 0x00))
+	'''
+	if outline:
+		cv.putText(image, text, (x, y), font, font_scale, outline_color, thickness+5)
+	cv.putText(image, text, (x, y), font, font_scale, color, thickness)
+	

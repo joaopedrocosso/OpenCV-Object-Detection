@@ -2,10 +2,12 @@ import argparse
 
 from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas, DEFAULT_PRECISAO_DETECCAO
 from pessoas_lib.detector_pessoas_video import DetectorPessoasVideo
+from imagelib import ktools
+from toolslib import ptools
 
 def main():
 
-    cam_args, modelo_args, detector_init_args = pega_argumentos()
+    cam_args, modelo_args, detector_init_args, mostrar_video = pega_argumentos()
 
     detector = (
         DetectorPessoasVideo(**detector_init_args)
@@ -15,11 +17,65 @@ def main():
     )
 
     print('\nExecutando reconhecimento de pessoas.')
+            
+
+    while not detector.stopped:
+        if mostrar_video:
+            k = ktools.show_image(detector.pega_frame(), title='Detector',
+                                  wait_time=1, close_window=False)
+            if chr(k) == 'q':
+                break
+    detector.stop()
+    ktools.destroy_all_windows()
+
+
+
+
+def cria_json_pessoa(media_pessoas, max_pessoas, min_pessoas, tempo_total,
+                     frame, destino_json):
+    '''Cria um JSON com os dados de pessoas.
+    
+    Parameters
+    -----------
+    media_pessoas : int
+        Média de pessoas.
+    max_pessoas : int
+        Número máximo de pessoas registradas.
+    min_pessoas : int
+        Número mínimo de pessoas registradas.
+    tempo_total : float
+        Tempo total desde o registro da primeira pessoa na média.
+    frame : numpy.ndarray
+        Imagem do último frame lido.
+    destino_json : str
+        Onde guardar o JSON que será criado.
+    '''
+
+    #print('\ncriando JSON...')
+    texto_dict = {
+        'MediaPessoas':media_pessoas,
+        'MaximoPessoas':max_pessoas,
+        'MinimoPessoas':min_pessoas,
+        'TempoTotal':'{:.2f}'.format(tempo_total)
+    }
+
+    try:
+        ptools.criarJSON(texto_dict, frame, destino_json)
+    except Exception:
+        #print('Nao foi possivel criar JSON.')
+        pass
+    else:
+        #print('JSON criado com sucesso. {}'
+        #.format(datetime.datetime.now().strftime('%c')))
+        pass
+
+    #print()
+
+
 
 def pega_argumentos():
 
     return processa_argumentos(checa_argumentos())
-
 
 def processa_argumentos(args):
 
@@ -67,11 +123,11 @@ def processa_argumentos(args):
     modelo_args = {'dir_modelo':dir_modelo, 'tipo_modelo':tipo_modelo,
                    'precisao_deteccao':args.precisao_deteccao}
     detector_init_args = {
-        'mostrar_video':args.mostrar_video, 'mostrar_precisao':args.mostrar_precisao,
-        'destino_json':args.destino_json, 'tempo_atualizacao_json':args.atualizacao_json
+        'mostrar_caixas':args.mostrar_caixas,
+        'mostrar_precisao':args.mostrar_precisao,
     }
 
-    return cam_args, modelo_args, detector_init_args
+    return cam_args, modelo_args, detector_init_args, args.mostrar_video
 
 
 def checa_argumentos():
@@ -109,8 +165,10 @@ def checa_argumentos():
     #parser.add_argument('--output-video', help='Diretorio para salvar video.')
     parser.add_argument('--mostrar-video', action='store_true',
                         help='Mostrar video convertido enquanto roda programa')
+    parser.add_argument('--mostrar-caixas', action='store_true',
+                        help='Mostrar caixas em volta das pessoas no vídeo.')
     parser.add_argument('--mostrar-precisao', action='store_true',
-                        help='Mostrar precisão acima do retângulo no vídeo.')
+                        help='Mostrar precisão acima das caixas no vídeo.')
     parser.add_argument('--precisao-deteccao', type=float,
                         default=DEFAULT_PRECISAO_DETECCAO,
                         help='Precisao da deteccao de pessoas [0.0, 1.0]')

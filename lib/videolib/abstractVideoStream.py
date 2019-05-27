@@ -41,3 +41,12 @@ class AbstractVideoStream(ABC):
 	def stop(self):
 		'''Para de pegar frames do stream.'''
 		pass
+
+	@abstractmethod
+	def pega_dimensoes(self):
+		'''Retorna as dimensões dos frames do vídeo
+		Returns
+		--------
+		(int, int)
+		'''
+		pass

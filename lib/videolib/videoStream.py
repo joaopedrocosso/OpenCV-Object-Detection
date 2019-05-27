@@ -82,3 +82,11 @@ class VideoStream(AbstractVideoStream):
 	def stop(self):
 		'''Para de pegar frames do stream.'''
 		self.stream.stop()
+
+	def pega_dimensoes(self):
+		'''Retorna as dimensões dos frames do vídeo
+		Returns
+		--------
+		(int, int)
+		'''
+		return self.stream.pega_dimensoes()
