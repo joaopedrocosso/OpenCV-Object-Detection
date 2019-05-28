@@ -8,8 +8,8 @@ class Rastreador:
 	-----------
 	tipo_rastreador : str, optional
 		Tipos de rastreador. As opções são:
-		'csrt',
-		'kcf', (Padrão)
+		'csrt', (Padrão)
+		'kcf',
 		'boosting',
 		'mil',
 		'tld',
@@ -17,11 +17,11 @@ class Rastreador:
 		'mosse'.
 	'''
 
-	def __init__(self, tipo_rastreador='kcf'):
-		self._reiniciar()
+	def __init__(self, tipo_rastreador='csrt'):
+		self.reiniciar()
 		self.tipo_rastreador = tipo_rastreador
 
-	def _reiniciar(self):
+	def reiniciar(self):
 		'''Reinicia os rastreadores.'''
 		self.rastreadores = cv.MultiTracker_create()
 
@@ -41,7 +41,20 @@ class Rastreador:
 			self.rastreadores.add(tracker, frame, caixa)
 
 	def atualiza(self, frame):
+		'''Atualiza os rastreadores.
+
+		Parameters
+		-----------
+		frame : numpy.ndarray
+			Novo frame do vídeo.
+
+		Returns
+		--------
+		[(int, int, int, int), ...]
+			Caixas com as novas posições dos rastreadores.
+		'''
 		sucesso, caixas = self.rastreadores.update(frame)
+		caixas = [(int(x), int(y), int(w), int(h)) for (x, y, w, h) in caixas]
 		return caixas
 
 

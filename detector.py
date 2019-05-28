@@ -7,7 +7,6 @@ from imagelib import ktools
 from toolslib import ptools
 
 def main():
-
     cam_args, modelo_args, detector_init_args, mostrar_video = pega_argumentos()
 
     detector = (

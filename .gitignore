@@ -3,3 +3,5 @@
 /temp
 ex.py
 detector-old.py
+.env
+*.pyc

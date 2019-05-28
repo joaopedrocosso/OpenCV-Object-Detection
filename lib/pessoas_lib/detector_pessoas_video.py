@@ -264,6 +264,7 @@ class DetectorPessoasVideo(Thread):
             if tempo_iteracao <= PERIODO_MINIMO:
                 time.sleep(PERIODO_MINIMO-tempo_iteracao)
 
+        detector_movimento.stop()
         if not self.stream_externo:
             self.stream.stop()
         self.stop()
