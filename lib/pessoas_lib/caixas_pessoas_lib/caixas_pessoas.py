@@ -219,7 +219,7 @@ class CaixasPessoas:
                 pessoa.atualizar(*pessoa.pega_caixa(), pessoa.pega_peso())
                 pessoas_atualizadas.add(chave)
 
-        pessoas_desaparecidas = (set(range(len(self.pessoas)))
+        pessoas_desaparecidas = (set(list(self.pessoas.keys()))
                                  .difference(pessoas_atualizadas))
         self._aumentar_desaparecimento(pessoas_desaparecidas)
         

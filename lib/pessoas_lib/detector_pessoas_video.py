@@ -4,6 +4,7 @@ from threading import Thread
 
 from imagelib import ktools
 from imagelib.detector_movimento import DetectorMovimento
+from imagelib.rastreador import Rastreador
 from videolib.videoStream import VideoStream
 from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas
 from pessoas_lib.pessoas_historico import PessoasHistorico
@@ -256,7 +257,8 @@ class DetectorPessoasVideo(Thread):
                 novo_frame = ktools.draw_rectangles(
                 frame, rectangles_and_info=caixas_com_peso,
                 write_weight=self.mostrar_precisao)
-            ktools.write(novo_frame, modo, x=10, y=novo_frame.shape[0]-10, outline=True)
+            ktools.write(novo_frame, modo, x=10, y=novo_frame.shape[0]-10,
+                         outline=True)
             self.frame = novo_frame
 
             # Dormir de forma que o tempo do loop dê 'PERIODO_MINIMO'.
