@@ -150,23 +150,27 @@ def resize(img, new_width=None, new_height=None):
 	return new_img
 
 
-def draw_rectangles(image, rectangles_and_info, overwrite_original=False,
-					write_weight=True):
-	'''Draw rectangles on an image
+def draw_boxes(image, boxes, infos=[], overwrite_original=False,
+			   write_infos=True):
+	'''Draw boxes on an image.
 	
 	Parameters
 	-----------
 	image : numpy.ndarray
-		The image on which the retangles will be drawn.
-	rectangles_and_info : [((int, int, int, int), float), ...]
-		The coordinates and dimensions of a rectangle, plus information
-		about it.
+		The image on which the boxes will be drawn.
+	boxes : [(int, int, int, int), ...]
+		Boxes that will be drawn on the image.
+	infos : [str, ...], optional
+		Information about each box, that will be displayed above 
+		them. Values can be of any class as long as they can be 
+		converted to strings. If not provided, nothing will be written. 
+		If there are less elements in 'infos' than there are in 'boxes', 
+		nothing will be displayed on top of the remaining boxes.
 	overwrite_original : bool, optional
 		If true, the rectangles are drawn on the original image.
 		Otherwise they are drawn on a copy.
-	write_weight : bool, optional
-		If true, the info in 'rectangles_and_info' is written on the
-		image.
+	write_infos : bool, optional
+		If true, the info in 'infos' will be written on the image.
 
 	Returns
 	--------
@@ -176,9 +180,11 @@ def draw_rectangles(image, rectangles_and_info, overwrite_original=False,
 
 	if not overwrite_original:
 		image = image.copy()
+	# Make sure 'infos' has at least the same length as 'boxes'
+	infos.extend(['']*(len(boxes)-len(infos)))
 
 	# Draws each rectangle with its related info, if available.
-	for rectangle, info in rectangles_and_info:
+	for rectangle, info in zip(boxes, infos):
 
 		# extract coordenates
 		(x, y) = rectangle[:2]
@@ -186,9 +192,8 @@ def draw_rectangles(image, rectangles_and_info, overwrite_original=False,
  
 		# Draws rectangle and text.
 		cv.rectangle(image, (x, y), (x + w, y + h), (0, 0, 0xFF), 2)
-		if write_weight:
-			text = "{:.4f}".format(info)
-			write(image, text, x=x, y=y-5, font_scale=0.5)
+		if write_infos:
+			write(image, info, x=x, y=y-5, font_scale=0.5)
 
 	return image
 

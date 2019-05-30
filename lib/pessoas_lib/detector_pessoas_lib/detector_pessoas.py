@@ -49,20 +49,23 @@ class DetectorPessoas:
 
 		Parameters
 		-----------
-		img : numpy.ndarray de dimensões (n, m, 3)
-			Imagem a ser analizada. (formato BGR)
+		img : numpy.ndarray
+			Imagem a ser analizada.
 		desenha_retangulos : bool, optional
 			Se deve retornar uma imagem com as pessoas enquadradas.
-			(padrão=True)
+			(Padrão=True)
 		
 		Returns
 		--------
 		img : numpy.ndarray
-			Imagem com as pessoas enquadradas, se desenha_retangulos=True.
-			Caso contrário, é a imagem original. (formato BGR)
-		caixas_com_peso : ((int, int, int, int), float)
-			Array de tuplas onde o primeiro elemento é uma 4-upla
-			que representa uma caixa (x, y, w, h) e a segunda é a
-			probabilidade da caixa representar uma pessoa.
+			Imagem com as pessoas enquadradas, se 'desenha_retangulos'
+			for True. Caso contrário, é a imagem original.
+		caixas : [(int, int, int, int), ...]
+			Caixas que representam pessosa em uma imagem. Cada tupla 
+			é composta por (x, y, w, h), ou seja, as coordenadas x e y,
+			a largura e a altura.
+		precisoes : [float, ...]
+			A probabilidade de cada caixa ser uma pessoa. Os valores 
+			variam entre 0.0 e 1.0.
 		'''
 		return self.detector.detecta_pessoas(input_image, desenha_retangulos)

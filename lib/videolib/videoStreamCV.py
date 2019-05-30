@@ -38,8 +38,8 @@ class VideoStreamCV(AbstractVideoStream, Thread):
 		if not self.stream.isOpened():
 			raise CannotOpenStreamError('Não foi possível abrir vídeo da webcam.')
 
-		self.dimensoes_frame = (self.stream.get(cv.CAP_PROP_FRAME_HEIGHT),
-						  		self.stream.get(cv.CAP_PROP_FRAME_WIDTH))
+		self.dimensoes_frame = (self.stream.get(cv.CAP_PROP_FRAME_WIDTH),
+								self.stream.get(cv.CAP_PROP_FRAME_HEIGHT))
 		
 		# frame inicializado com uma imagem preta
 		self.frame = ktools.black_image(*self.dimensoes_frame)
@@ -65,6 +65,7 @@ class VideoStreamCV(AbstractVideoStream, Thread):
 		Returns
 		--------
 		(int, int)
+			Largura e altura, respectivamente.
 		'''
 		return self.dimensoes_frame
 

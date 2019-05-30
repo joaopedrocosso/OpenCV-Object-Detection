@@ -25,8 +25,8 @@ class CaixaPessoa(CaixaComPeso):
         Deve estar em [0.0, 1.0] ou ser 'None'. (Padrão=None)
     min_frames_para_confirmar : int, optional
         Número mínimo de frames para a pessoa registrada ser confirmada
-        como pessoa. Serve para remover falsos positivos. (>= 1)
-        (Padrão=1)
+        como pessoa. Serve para remover falsos positivos. (>= 0)
+        (Padrão=0)
     max_tempo_desaparecida : int, optional
         Número máximo de frames que a pessoa pode desaparecer antes de 
         ser removida. (>0) e (Padrão=5)
@@ -37,12 +37,11 @@ class CaixaPessoa(CaixaComPeso):
         Se um dos valores não estiver dentro do especificado.
     '''
     
-    def __init__(self, x, y, w, h, peso=None, min_frames_para_confirmar=1,
+    def __init__(self, x, y, w, h, peso=None, min_frames_para_confirmar=0,
                  max_tempo_desaparecida=5):
 
         # Levanta ValueError
         super().__init__(x, y, w, h, peso)
-
         try:
             self.min_frames_para_confirmar = int(min_frames_para_confirmar)
             if self.min_frames_para_confirmar < 0:
@@ -61,7 +60,7 @@ class CaixaPessoa(CaixaComPeso):
         self.tempo_desaparecida = 0
         self.viva = True
 
-        self.pessoa_confirmada = False
+        self.pessoa_confirmada = (self.min_frames_para_confirmar == 0)
         self.frames_desde_criacao = 0
         
     

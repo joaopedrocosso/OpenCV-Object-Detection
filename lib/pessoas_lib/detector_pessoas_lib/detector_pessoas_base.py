@@ -46,24 +46,26 @@ class BaseDetectorPessoas(ABC):
 		Returns
 		--------
 		img : numpy.ndarray
-			Imagem com as pessoas enquadradas, se desenha_retangulos=True.
-			Caso contrário, é a imagem original.
-		caixas_com_peso : [((int, int, int, int), float), ...]
-			Array de tuplas onde o primeiro elemento é uma 4-upla
-			que representa uma caixa (x, y, w, h) e a segunda é a
-			probabilidade da caixa representar uma pessoa.
+			Imagem com as pessoas enquadradas, se 'desenha_retangulos'
+			for True. Caso contrário, é a imagem original.
+		caixas : [(int, int, int, int), ...]
+			Caixas que representam pessosa em uma imagem. Cada tupla 
+			é composta por (x, y, w, h), ou seja, as coordenadas x e y,
+			a largura e a altura.
+		precisoes : [float, ...]
+			A probabilidade de cada caixa ser uma pessoa. Os valores 
+			variam entre 0.0 e 1.0.
 		'''
 
 		dados_relevantes = self._analisa_imagem(img)
 
 		caixas, precisoes = self._seleciona_pessoas(img, dados_relevantes)
-		caixas_com_peso = list(zip(caixas, precisoes))
 
 		if desenha_retangulos:
-			nova_img = ktools.draw_rectangles(img, caixas_com_peso)
-			return nova_img , caixas_com_peso
+			nova_img = ktools.draw_boxes(img, caixas, precisoes)
+			return nova_img , caixas, precisoes
 		else:
-			return img, caixas_com_peso
+			return img, caixas, precisoes
 
 	@abstractmethod
 	def _analisa_imagem(self, img):

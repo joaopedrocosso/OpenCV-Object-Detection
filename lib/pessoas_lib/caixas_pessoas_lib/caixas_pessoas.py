@@ -30,7 +30,7 @@ class CaixasPessoas:
         Se os parâmetros não seguirem as especificações.
     '''
 
-    def __init__(self, min_frames_para_confirmar=2, max_tempo_desaparecida=5,
+    def __init__(self, min_frames_para_confirmar=0, max_tempo_desaparecida=5,
                  precisao_minima=0.0):
         # self.pessoas, self.id_contador, self.pessoas_confirmadas
         self.reiniciar()
@@ -59,16 +59,19 @@ class CaixasPessoas:
         self.pessoas_confirmadas = 0
 
 
-    def atualizar(self, caixas_com_peso=[], pos_original='cima-esquerda',
+    def atualizar(self, caixas=None, pesos=None, pos_original='cima-esquerda',
                   caixas_paradas=False):
         '''Atualiza lista de pessoas.
 
         Parameters
         -----------
-        caixas_com_peso : [((int, int, int, int), float), ...], optional
-            Caixas (x, y, w, h) acompanhadas da probabilidade de
-            representarem uma pessoa. [(x, y) >= (-w, -h)], (w, h) > 0 e
-            [0.0 <= peso <= 1.0]. (Padrão=[])
+        caixas : [(int, int, int, int), ...], optional
+            Caixas (x, y, w, h). x >= -w, y >= -h, w,h > 0.
+            Desnecessário se 'caixas_paradas'=True
+        pesos : [float, ...], optional
+            Probabilidades de cada caixa representar uma pessoa. Deve
+            estar entre 0.0 e 1.0, inclusive.
+            Desnecessário se 'caixas_paradas'=True
         pos_original : str, optional
             Posição na qual a origem da caixa se encontra. Opções
             incluem:
@@ -81,33 +84,41 @@ class CaixasPessoas:
             'cima-direita',
             'baixo-esquerda',
             'baixo-direita'.
+            Desnecessário se 'caixas_paradas'=True
         caixas_paradas : bool
             Quando as caixas desta chamada são as mesmas da anterior.
             Neste caso, os dados da chamada anterior são usados sem
-            olhar as 'caixas_com_peso'.
+            olhar as caixas ou pesos..
 
         Returns
         --------
-        [((int, int, int, int), float), ...]
-            Caixas equivalentes, no formato ((xf, yf, w, h), peso).
+        caixas : [(int, int, int, int), ...]
+            Todas as caixas registradas como pessoas.
+        pesos : [float, ...]
+            Probabilidade das caixas representarem pessoas.
 
         Raises
         -------
         ValueError
-            Se ao menos uma das caixas recebidas ou uma das caixas
-            guardadas tiver x, y < 0, w, h <= 0, ou o parâmetro
-            'pos_original' não estiver dentro dos valores especificados.
+            Se as caixas ou pesos não forem fornecidos e 
+            'caixas_paradas' for falso ou algum dos parâmetros não 
+            bater as especificações.
         '''
         if caixas_paradas:
             self._atualizar_repetir_iteracao()
         else:
+            if caixas is None or pesos is None:
+                raise ValueError(
+                    "'caixas' e 'pesos' devem ser preenchidos se 'caixas_paradas'"
+                    " for False."
+                )
             # Levanta ValueError
-            self._atualizar_caixas_novas(caixas_com_peso, pos_original)
+            self._atualizar_caixas_novas(caixas, pesos, pos_original)
 
-        return self.pega_caixas_pessoas()
+        return self.pega_pessoas()
 
 
-    def _atualizar_caixas_novas(self, caixas_com_peso, pos_original):
+    def _atualizar_caixas_novas(self, caixas, pesos, pos_original):
         '''
         Atualiza a lista de pessoas, comparando as pessoas registradas
         com as caixas novas.
@@ -116,10 +127,11 @@ class CaixasPessoas:
 
         Parameters
         -----------
-        caixas_com_peso : [((int, int, int, int), float), ...], optional
-            Caixas (x, y, w, h) acompanhadas da probabilidade de
-            representarem uma pessoa. [(x, y) >= (-w, -h)], (w, h) > 0 e
-            [0.0 <= peso <= 1.0]. (Padrão=[])
+        caixas : [(int, int, int, int), ...]
+            Caixas (x, y, w, h). x >= -w, y >= -h, w,h > 0.
+        pesos : [float, ...]
+            Probabilidades de cada caixa representar uma pessoa. Devem
+            estar entre 0.0 e 1.0, inclusive, ou serem None.
         pos_original : str, optional
             Posição na qual a origem da caixa se encontra. Opções
             incluem:
@@ -136,23 +148,22 @@ class CaixasPessoas:
         Raises
         -------
         ValueError
-            Se ao menos uma das caixas recebidas ou uma das caixas
-            guardadas tiver x, y < 0, w, h <= 0, ou o parâmetro
-            'pos_original' não estiver dentro dos valores especificados.
+            Se algum dos parâmetros não bater as especificações.
         '''
 
         # Passa a origem para o centro.
-        caixas_com_peso = [
-            (caixa_tools.muda_origem_caixa(*c, pos_original=pos_original), p)
-            for c, p in caixas_com_peso if c[1] >= self.precisao_minima
-        ]
+        caixas = [caixa_tools.muda_origem_caixa(*c, pos_original=pos_original)
+                  for c in caixas]
+        # len(pesos) será >= len(caixas).
+        pesos.extend([None]*(len(caixas)-len(pesos)))
+        caixas, pesos = self._remove_pesos_pequenos(caixas, pesos)
 
-        if len(caixas_com_peso) == 0:
+        if len(caixas) == 0:
             self._aumentar_desaparecimento()
         elif len(self.pessoas) == 0:
             self.reiniciar()
             # Levanta ValueError.
-            self._registra_pessoas(caixas_com_peso)
+            self._registra_pessoas(caixas, pesos)
 
         else:
             pessoas_ids = list(self.pessoas.keys())
@@ -161,7 +172,7 @@ class CaixasPessoas:
 
             # Cria matriz de distâncias pessoas x caixas.
             distancias = distance.cdist(
-                pessoas_centroides, [c[:2] for c, p in caixas_com_peso])
+                pessoas_centroides, [c[:2] for c in caixas])
 
             # Ordena as coordenadas da matriz de forma que os itens da matriz
             # distancias fiquem crescentes.
@@ -178,7 +189,7 @@ class CaixasPessoas:
 
                 if p in pessoas_usadas or c in caixas_usadas:
                     continue
-                (x, y, w, h), peso = caixas_com_peso[c]
+                (x, y, w, h), peso = caixas[c], pesos[c]
                 pessoa = self.pessoas[pessoas_ids[p]]
                 w_pessoa, h_pessoa = pessoa.pega_dimensoes()
 
@@ -192,17 +203,19 @@ class CaixasPessoas:
                 caixas_usadas.add(c)
 
                 if (len(pessoas_usadas) == len(pessoas_ids)
-                    or len(caixas_usadas) == len(caixas_com_peso)):
+                    or len(caixas_usadas) == len(caixas)):
                     #
                     break
 
-            if len(caixas_usadas) < len(caixas_com_peso):
-                caixas_nao_usadas = (set(range(len(caixas_com_peso)))
-                                    .difference(caixas_usadas))
+            if len(caixas_usadas) < len(caixas):
+                caixas_nao_usadas = (set(range(len(caixas)))
+                                    .difference(caixas)) 
                 # Levanta ValueError.
-                self._registra_pessoas([
-                    cp for i, cp in enumerate(caixas_com_peso)
-                    if i in caixas_nao_usadas])
+                self._registra_pessoas(
+                    [c for i, c in enumerate(caixas)
+                     if i in caixas_nao_usadas],
+                    [peso for i, peso in enumerate(pesos)
+                     if i in caixas_nao_usadas])
             
             if len(pessoas_usadas) < len(pessoas_ids):
                 pessoas_nao_usadas = (set(range(len(pessoas_ids)))
@@ -244,11 +257,12 @@ class CaixasPessoas:
                 self._retira_pessoa(chave)
                 
 
-    def pega_caixas_pessoas(self, pos_final='cima-esquerda'):
+    def pega_pessoas(self, pos_final='cima-esquerda', retorna_peso=True):
 
-        '''Retorna as caixas equivalentes às pessoas, com peso.
+        '''Retorna as caixas equivalentes às pessoas.
 
         Parameters
+        -----------
         pos : str, optional
             Posicão que a coordenada (x, y) representa. Pode ser:
             'centro',
@@ -260,11 +274,17 @@ class CaixasPessoas:
             'cima-direita',
             'baixo-esquerda',
             'baixo-direita'.
+        retorna_peso : bool, optional
+            Se verdadeiro, retorna a probabilidade das caixas
+            representarem pessoas junto às caixas. (Padrão=True)
 
         Returns
         --------
-        [((int, int, int, int), float), ...]
-            Caixas equivalentes, no formato ((xf, yf, w, h), peso).
+        caixas : [(int, int, int, int), ...]
+            Caixas equivalentes, no formato (xf, yf, w, h).
+        pesos : [float, ...], optional
+            Probabilidade das caixas representarem pessoas. Só é
+            retornado se 'retorna_peso' for verdadeiro.
 
         Raises
         -------
@@ -274,36 +294,43 @@ class CaixasPessoas:
          '''
 
         pessoas_retorno = []
+        pesos_retorno = []
         for pessoa in self.pessoas.values():
             if not pessoa.esta_confirmada():
                 continue
-            caixa, peso = pessoa.pega_caixa_com_peso()
+            caixa = pessoa.pega_caixa()
             caixa = caixa_tools.muda_origem_caixa(
                 *caixa, pos_original='centro', pos_final=pos_final)
-            pessoas_retorno.append((caixa, peso))
+            pessoas_retorno.append(caixa)
+            if retorna_peso:
+                pesos_retorno.append(pessoa.pega_peso())
 
-        return pessoas_retorno
-    
+        if retorna_peso:
+            return pessoas_retorno, pesos_retorno
+        else:
+            return pessoas_retorno
 
-    def _registra_pessoas(self, caixas_com_peso):
+
+    def _registra_pessoas(self, caixas, peso):
         '''Registra novas caixas que representam pessoas.
 
         Parameters
         -----------
-        caixas_com_peso : [((int, int, int, int), float), ...]
-            Caixas e a probabilidade de representarem pessoas.
-            (x, y, w, h) = coordenadas x e y (>= -w, -h) e largura e altura
-            (> 0).
+        caixas : [(int, int, int, int), ...]
+            Caixas (x, y, w, h). x >= -w, y >= -h, w,h > 0.
+        pesos : [float, ...]
+            Probabilidades de cada caixa representar uma pessoa. Devem
+            estar entre 0.0 e 1.0, inclusive, ou serem None.
 
         Raises
         -------
         ValueError
-            Se os valores de caixas_com_peso forem inválidos.
+            Se os valores de caixas ou de peso forem inválidos.
         '''
-        for caixa, peso in caixas_com_peso:
+        for caixa, peso in zip(caixas, peso):
             self._registra_pessoa(*caixa, peso)
 
-    def _registra_pessoa(self, x, y, w, h, peso):
+    def _registra_pessoa(self, x, y, w, h, peso=None):
         '''Registra nova caixa que representa uma pessoa.
 
         Parameters
@@ -321,7 +348,6 @@ class CaixasPessoas:
         ValueError
             Se os argumentos não seguirem as restrições.
         '''
-
         self.pessoas[self.id_contador] = CaixaPessoa(
             x, y, w, h, peso, self.min_frames_para_confirmar, self.max_tempo_desaparecida
         )
@@ -344,6 +370,43 @@ class CaixasPessoas:
             del self.pessoas[id]
         except KeyError:
             raise KeyError('ID inválido.')
+    
+    def _remove_pesos_pequenos(self, caixas, pesos):
+        '''
+        Retorna somente as caixas e pesos que tem probabilidade maior
+        ou igual que 'self.precisao_minima' ou que são None.
+
+        Parameters
+        -----------
+        caixas : [(int, int, int, int), ...]
+            Caixas que representam pessoas.
+        pesos : [float, ...]
+            Probabilidades de cada caixa representar uma pessoa. Podem
+            ser None.
+        
+        Returns
+        --------
+        caixas : [(int, int, int, int)]
+            Somente as caixas cujos pesos forem maiores ou iguais que 
+            'self.precisao_minima'.
+        pesos : [float, ...]
+            Somente os pesos maiores ou iguais a 'self.precisao_minima'
+            ou None.
+
+        Raises
+        -------
+        ValueError
+            Se ao menos um dos pesos for menor que 0.0 ou maior que 1.0.
+        '''
+        novo_caixas, novo_pesos = [], []
+        for c, p in zip(caixas, pesos):
+            if p is not None and (p < 0.0 or p > 1.0):
+                raise ValueError(
+                    'Pesos devem estar entre 0.0 e 1.0, incl., ou serem None.')
+            if p is None or p >= self.precisao_minima:
+                novo_caixas.append(c)
+                novo_pesos.append(p)
+        return novo_caixas, novo_pesos
 
 
     def __len__(self):

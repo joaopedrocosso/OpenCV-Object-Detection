@@ -44,7 +44,7 @@ class DetectorPessoasVideo(Thread):
     '''
 
     def __init__(self, mostrar_caixas=False, mostrar_precisao=False,
-                 max_tempo_sem_deteccao=60, max_largura_frame=700):
+                 max_tempo_sem_deteccao=5, max_largura_frame=700):
 
         super().__init__()
 
@@ -183,23 +183,26 @@ class DetectorPessoasVideo(Thread):
     def run(self):
         '''Detecta pessoas em um vídeo.'''
 
-        TEMPO_MAXIMO_PARA_RASTREAMENTO = 1.0 #segundo
+        MAX_TEMPO_ENTRE_REGISTROS = 1.0 #segundo
         PERIODO_MINIMO = 0.7 #segundo
-        MAX_FRAMES_PARADO = 5
+        MAX_TEMPO_PARADO = 20 #segundos
 
         if self.stream is None or self.detectorPessoas is None:
             print('Erro: stream ou detector de pessoas não configurado.')
             return
         self.stream.start()
+        time.sleep(2)
         
         detector_movimento = (
             DetectorMovimento(periodo_minimo=PERIODO_MINIMO)
             .recebe_video(self.stream)
             .start()
         )
+        rastreador = Rastreador()
 
         tempo_ultima_deteccao = time.time()-self.max_tempo_sem_deteccao
-        frames_parado = 0
+        tempo_em_que_parou = time.time()-MAX_TEMPO_PARADO
+        ultimo_modo = ''
 
         while not self.stopped:
 
@@ -217,52 +220,63 @@ class DetectorPessoasVideo(Thread):
 
             # Se houver mudança no frame ou já passou do tempo limite
             # sem detecção, detectar pessoas.
-            if (detector_movimento.detecta_movimento(frame)
-                or time.time()-tempo_ultima_deteccao > self.max_tempo_sem_deteccao):
+            if (not detector_movimento.detecta_movimento(frame) 
+                and time.time()-tempo_em_que_parou < MAX_TEMPO_PARADO):
                 #
-                modo = 'detector'
-                frames_parado = 0
-            elif frames_parado < MAX_FRAMES_PARADO:
-                modo = 'detector parado'
-                frames_parado += 1
-            else:
                 modo = 'parado'
+            elif time.time()-tempo_ultima_deteccao > self.max_tempo_sem_deteccao:
+                modo = 'detectando'
+            else:
+                modo = 'rastreando'
 
-            if modo in ['detector', 'detector parado']:
+            if modo == 'detectando':
                 try:
-                    _, caixas_com_peso = self.detectorPessoas.detecta_pessoas(
+                    _, caixas, pesos = self.detectorPessoas.detecta_pessoas(
                         frame, desenha_retangulos=False)
                 except Exception as e:
                     print('Erro de detecção:\n\t[{}]: {}'
                         .format(type(e).__name__, str(e)))
                     break
                 tempo_ultima_deteccao = time.time()
-            else:
-                caixas_com_peso = []
+            elif modo == 'rastreando':
+                if ultimo_modo != modo:
+                    rastreador.reiniciar()
+                    rastreador.adiciona_rastreadores(
+                        frame,
+                        self.pessoas_registradas.pega_pessoas(retorna_peso=False)
+                    )
+                caixas = rastreador.atualiza(frame)
+                pesos = []
+            elif modo == 'parado':
+                if ultimo_modo != modo:
+                    tempo_em_que_parou = time.time()
+                caixas, pesos = [], []
                     
             # Se a iteração for muito lenta, reiniciar o registro.
-            if time.time()-tempo_comeco_iteracao > TEMPO_MAXIMO_PARA_RASTREAMENTO:
+            if time.time()-tempo_comeco_iteracao > MAX_TEMPO_ENTRE_REGISTROS:
                 self.pessoas_registradas.reiniciar()
 
-            caixas_com_peso = self.pessoas_registradas.atualizar(
-                caixas_com_peso, caixas_paradas=(modo=='parado'))
+            caixas, pesos = self.pessoas_registradas.atualizar(
+                caixas, pesos, caixas_paradas=(modo=='parado'))
 
             # Salva o numero de pessoas registradas neste ciclo.
-            self.pessoas_historico.atualiza_periodo(len(caixas_com_peso))
-
+            self.pessoas_historico.atualiza_periodo(len(caixas))
 
             if not self.mostrar_caixas:
                 novo_frame = frame
             else:
-                novo_frame = ktools.draw_rectangles(
-                frame, rectangles_and_info=caixas_com_peso,
-                write_weight=self.mostrar_precisao)
+                novo_frame = ktools.draw_boxes(
+                frame, boxes=caixas, infos=pesos,
+                write_infos=self.mostrar_precisao)
             ktools.write(novo_frame, modo, x=10, y=novo_frame.shape[0]-10,
                          outline=True)
             self.frame = novo_frame
 
+            ultimo_modo = modo
+
             # Dormir de forma que o tempo do loop dê 'PERIODO_MINIMO'.
             tempo_iteracao = time.time() - tempo_comeco_iteracao
+            print(tempo_iteracao)
             if tempo_iteracao <= PERIODO_MINIMO:
                 time.sleep(PERIODO_MINIMO-tempo_iteracao)
 
