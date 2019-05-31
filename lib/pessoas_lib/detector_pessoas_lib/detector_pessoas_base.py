@@ -3,6 +3,7 @@
 # 	https://www.pyimagesearch.com/2017/09/11/object-detection-with-deep-learning-and-opencv/
 #	https://www.pyimagesearch.com/2017/09/11/object-detection-with-deep-learning-and-opencv/
 
+import cv2 as cv
 from abc import ABC, abstractmethod
 
 from imagelib import ktools

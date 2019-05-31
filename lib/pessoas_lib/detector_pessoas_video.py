@@ -11,6 +11,7 @@ from pessoas_lib.pessoas_historico import PessoasHistorico
 from pessoas_lib.caixas_pessoas_lib.caixas_pessoas import CaixasPessoas
 from videolib.abstractVideoStream import AbstractVideoStream
 from videolib.exceptions import CannotOpenStreamError, StreamClosedError, StreamStoppedError
+from toolslib.ktools import LoopPeriodControl
 
 class DetectorPessoasVideo(Thread):
 
@@ -29,13 +30,23 @@ class DetectorPessoasVideo(Thread):
         Se a precisão deve ser mostrada em cima da caixa. Se
         'mostrar_caixas' for 'False', a precisão não é mostrada.
         (Padrão=False)
-    max_tempo_sem_deteccao : int, optional
-        Tempo máximo que se pode identificar pessoas (ou sua ausência)
-        por métodos que não sejam uma detecção (detector de movimento,
-        rastreador, etc). Deve ser positivo ou zero. (Padrão=60)
+    max_tempo_sem_deteccao : float, optional
+        Tempo máximo que se pode ficar usando métodos mais leves de
+        detecção, ao invés do principal. Em casos em que o detector seja
+        leve, o valor pode ser 0 (i.e. sempre detectar).
+        Deve ser positivo ou zero. (Padrão=5)
+    max_tempo_parado : float, optional
+        Tempo máximo que se pode ficar sem usar algum método de 
+        detecção, nos casos em que o frame basicamente não se moveu.
+        Deve ser positivo ou zero. (Padrão=60)
     max_largura_frame : int, optional
         Se o frame do vídeo for maior que este valor, ele será
         redimensionado. Deve ser positivo. (Padrão=700)
+    usar_rastreamento : bool, optional
+        Se for verdadeiro, o detector só será usado uma vez a cada
+        período de tempo, e um rastreador será empregado para
+        localizar as pessoas detectadas até o detector ser empregado
+        de novo. (Padrão=False)
 
     Raises
     ------
@@ -44,19 +55,25 @@ class DetectorPessoasVideo(Thread):
     '''
 
     def __init__(self, mostrar_caixas=False, mostrar_precisao=False,
-                 max_tempo_sem_deteccao=5, max_largura_frame=700):
+                 max_tempo_sem_deteccao=5.0, max_tempo_parado=60.0,
+                 max_largura_frame=700, usar_rastreamento=False):
 
         super().__init__()
 
         self.mostrar_caixas = mostrar_caixas
         self.mostrar_precisao = mostrar_precisao
+        self.usar_rastreamento = usar_rastreamento
         if max_tempo_sem_deteccao < 0:
             raise ValueError(
                 "'max_tempo_sem_deteccao' deve ser um número positivo.")
+        if max_tempo_parado <= 0:
+            raise ValueError(
+                "'max_tempo_parado' deve ser um número positivo ou zero.")
         if max_largura_frame <= 0:
             raise ValueError(
                 "'max_largura_frame' deve ser um número positivo ou zero.")
         self.max_tempo_sem_deteccao = max_tempo_sem_deteccao
+        self.max_tempo_parado = max_tempo_parado
         self.max_largura_frame = max_largura_frame
 
         self.pessoas_historico = PessoasHistorico()
@@ -113,7 +130,7 @@ class DetectorPessoasVideo(Thread):
 
         try:
             self.stream = VideoStream(tipo, **keywords)
-        except (ImportError, CannotOpenStreamError) as e:
+        except (ImportError, CannotOpenStreamError):
             raise
         self.stream_externo = False
 
@@ -161,7 +178,7 @@ class DetectorPessoasVideo(Thread):
         try:
             self.detectorPessoas = DetectorPessoas(
                 dir_modelo, tipo_modelo=tipo_modelo, precisao=precisao_deteccao)
-        except Exception as e:
+        except Exception:
             raise
 
         return self
@@ -185,7 +202,6 @@ class DetectorPessoasVideo(Thread):
 
         MAX_TEMPO_ENTRE_REGISTROS = 1.0 #segundo
         PERIODO_MINIMO = 0.7 #segundo
-        MAX_TEMPO_PARADO = 20 #segundos
 
         if self.stream is None or self.detectorPessoas is None:
             print('Erro: stream ou detector de pessoas não configurado.')
@@ -198,11 +214,12 @@ class DetectorPessoasVideo(Thread):
             .recebe_video(self.stream)
             .start()
         )
+        modo_deteccao = ModoDeteccao(
+            detector_movimento, self.max_tempo_sem_deteccao,
+            self.max_tempo_parado, self.usar_rastreamento
+        )
         rastreador = Rastreador()
-
-        tempo_ultima_deteccao = time.time()-self.max_tempo_sem_deteccao
-        tempo_em_que_parou = time.time()-MAX_TEMPO_PARADO
-        ultimo_modo = ''
+        controla_periodo_loop = LoopPeriodControl(PERIODO_MINIMO)
 
         while not self.stopped:
 
@@ -211,23 +228,16 @@ class DetectorPessoasVideo(Thread):
             try:
                 frame = self.stream.read()
             except (StreamClosedError, StreamStoppedError) as e:
-                print(str(e))
+                print('Não foi possível ler frame.')
                 break
 
-            # Redimensiona imagem para diminuir os gastos de detecção de 
-            # movimento.
+            # Redimensiona imagem para diminuir os gastos de detecção 
+            # de movimento.
             frame = ktools.resize(frame, min(self.max_largura_frame, frame.shape[1]))
 
-            # Se houver mudança no frame ou já passou do tempo limite
-            # sem detecção, detectar pessoas.
-            if (not detector_movimento.detecta_movimento(frame) 
-                and time.time()-tempo_em_que_parou < MAX_TEMPO_PARADO):
-                #
-                modo = 'parado'
-            elif time.time()-tempo_ultima_deteccao > self.max_tempo_sem_deteccao:
-                modo = 'detectando'
-            else:
-                modo = 'rastreando'
+            # Decide se o loop estará no modo 'detectando', 
+            # 'rastreando' ou 'parado'.
+            modo = modo_deteccao.atualiza_modo(frame)
 
             if modo == 'detectando':
                 try:
@@ -237,9 +247,8 @@ class DetectorPessoasVideo(Thread):
                     print('Erro de detecção:\n\t[{}]: {}'
                         .format(type(e).__name__, str(e)))
                     break
-                tempo_ultima_deteccao = time.time()
             elif modo == 'rastreando':
-                if ultimo_modo != modo:
+                if modo_deteccao.mudou_modo():
                     rastreador.reiniciar()
                     rastreador.adiciona_rastreadores(
                         frame,
@@ -247,10 +256,9 @@ class DetectorPessoasVideo(Thread):
                     )
                 caixas = rastreador.atualiza(frame)
                 pesos = []
-            elif modo == 'parado':
-                if ultimo_modo != modo:
-                    tempo_em_que_parou = time.time()
+            else: #modo == 'parado':
                 caixas, pesos = [], []
+                
                     
             # Se a iteração for muito lenta, reiniciar o registro.
             if time.time()-tempo_comeco_iteracao > MAX_TEMPO_ENTRE_REGISTROS:
@@ -262,23 +270,10 @@ class DetectorPessoasVideo(Thread):
             # Salva o numero de pessoas registradas neste ciclo.
             self.pessoas_historico.atualiza_periodo(len(caixas))
 
-            if not self.mostrar_caixas:
-                novo_frame = frame
-            else:
-                novo_frame = ktools.draw_boxes(
-                frame, boxes=caixas, infos=pesos,
-                write_infos=self.mostrar_precisao)
-            ktools.write(novo_frame, modo, x=10, y=novo_frame.shape[0]-10,
-                         outline=True)
-            self.frame = novo_frame
+            self._atualiza_frame(frame, caixas, pesos, modo)
 
-            ultimo_modo = modo
-
-            # Dormir de forma que o tempo do loop dê 'PERIODO_MINIMO'.
-            tempo_iteracao = time.time() - tempo_comeco_iteracao
-            print(tempo_iteracao)
-            if tempo_iteracao <= PERIODO_MINIMO:
-                time.sleep(PERIODO_MINIMO-tempo_iteracao)
+            # Período do loop >= 'PERIODO_MINIMO'.
+            controla_periodo_loop.force_minimum_loop_period()
 
         detector_movimento.stop()
         if not self.stream_externo:
@@ -326,3 +321,121 @@ class DetectorPessoasVideo(Thread):
             Tempo total decorrido.
         '''
         return self.pessoas_historico.finaliza_periodo()
+    
+    def _atualiza_frame(self, frame, caixas, pesos, modo):
+        '''
+        Guarda o frame mais recente do vídeo com informações relevantes.
+
+        Parameters
+        -----------
+        frame : numpy.ndarray
+            Frame a ser guardado.
+        caixas : [(int, int, int, int), ...]
+            Caixas a serem desenhadas no frame, se desejado.
+        pesos : [float, ...]
+            Probabilidade de cada caixa representar uma pessoa, que 
+            aparecerá em cima da caixa, se desejado.
+        modo : str
+            Modo de detecção em que o loop está, no momento, que será
+            escrito no frame.
+        '''
+        if not self.mostrar_caixas:
+            novo_frame = frame
+        else:
+            novo_frame = ktools.draw_boxes(frame, boxes=caixas, infos=pesos,
+                                           write_infos=self.mostrar_precisao)
+        ktools.write(novo_frame, modo, x=10, y=novo_frame.shape[0]-10,
+                     outline=True)
+        self.frame = novo_frame
+
+
+class ModoDeteccao:
+
+    '''Escolhe o modo de detecção de um loop em DeteccaoPessoasVideo.
+    
+    Parameters
+    -----------
+    detector_movimento : imagelib.detector_movimento.DetectorMovimento
+        Objeto que detecta movimento em um vídeo. Assume-se que já 
+        esteja configurado e iniciado.
+    max_tempo_sem_deteccao : float
+        Tempo máximo que se pode ficar usando métodos mais leves de
+        detecção, ao invés do principal. Em casos em que o detector seja
+        leve, o valor pode ser 0 (i.e. sempre detectar).
+        Deve ser positivo ou zero.
+    max_tempo_parado : float
+        Tempo máximo que se pode ficar sem usar algum método de 
+        detecção, nos casos em que o frame basicamente não se moveu.
+        Deve ser positivo ou zero.
+    usar_rastreamento : bool
+        Se for verdadeiro, o detector só será usado uma vez a cada
+        período de tempo, e um rastreador será empregado para
+        localizar as pessoas detectadas até o detector ser empregado
+        de novo.
+    '''
+
+    def __init__(self, detector_movimento, max_tempo_sem_deteccao, 
+                 max_tempo_parado, usar_rastreamento):
+
+        self.detector_movimento = detector_movimento
+        self.max_tempo_sem_deteccao = max_tempo_sem_deteccao
+        self.max_tempo_parado = max_tempo_parado
+        self.usar_rastreamento = usar_rastreamento
+
+        self.tempo_em_que_parou = time.time()-self.max_tempo_parado
+        self.tempo_ultima_deteccao = time.time()-self.max_tempo_sem_deteccao
+
+        self.modo = ''
+        self.modo_anterior = ''
+    
+    def atualiza_modo(self, frame):
+        '''Atualiza o modo no qual a detecção se encontra.
+        Parameters
+        -----------
+        frame : numpy.ndarray
+            Frame do vídeo, que será usado na decisão do modo.
+        Returns
+        --------
+        str
+            Modo decidido.
+        '''
+        self.modo_anterior = self.modo
+
+        teve_movimento = self.detector_movimento.houve_mudanca()
+        parado_demais = time.time()-self.tempo_em_que_parou >= self.max_tempo_parado
+        sem_detectar_demais = (
+            time.time()-self.tempo_ultima_deteccao >= self.max_tempo_sem_deteccao)
+        
+        print(teve_movimento, parado_demais, sem_detectar_demais)
+        if self.modo_anterior == 'detectando':
+            if not teve_movimento:
+                self.modo = 'parado'
+            elif not self.usar_rastreamento:
+                self.modo = 'detectando'
+            else:
+                self.modo = 'rastreando'
+        elif self.modo_anterior == 'parado':
+            if teve_movimento or parado_demais:
+                self.modo = 'detectando'
+            else:
+                self.modo = 'parado'
+        elif self.modo_anterior == 'rastreando':
+            if not teve_movimento or sem_detectar_demais:
+                self.modo = 'detectando'
+        else:
+            self.modo = 'detectando'
+        
+        if self.modo == 'parado' and self.modo_anterior != 'parado':
+            self.tempo_em_que_parou = time.time()
+        elif self.modo == 'detectando':
+            self.tempo_ultima_deteccao = time.time()
+        
+        return self.modo
+
+    def mudou_modo(self):
+        '''Retorna se o modo mudou ou não desde a última atualização
+        Returns
+        --------
+        bool
+        '''
+        return self.modo != self.modo_anterior

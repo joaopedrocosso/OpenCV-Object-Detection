@@ -29,7 +29,7 @@ class CaixaPessoa(CaixaComPeso):
         (Padrão=0)
     max_tempo_desaparecida : int, optional
         Número máximo de frames que a pessoa pode desaparecer antes de 
-        ser removida. (>0) e (Padrão=5)
+        ser removida. (>= 0) e (Padrão=5)
 
     Raises
     -------
@@ -38,7 +38,7 @@ class CaixaPessoa(CaixaComPeso):
     '''
     
     def __init__(self, x, y, w, h, peso=None, min_frames_para_confirmar=0,
-                 max_tempo_desaparecida=5):
+                 max_tempo_desaparecida=0):
 
         # Levanta ValueError
         super().__init__(x, y, w, h, peso)
@@ -47,14 +47,18 @@ class CaixaPessoa(CaixaComPeso):
             if self.min_frames_para_confirmar < 0:
                 raise ValueError
         except ValueError:
-            raise ValueError("'min_frames_para_confirmar' deve ser um número inteiro não-negativo.")
+            raise ValueError(
+                "'min_frames_para_confirmar' deve ser um número inteiro "
+                "não-negativo.")
 
         try:
             self.max_tempo_desaparecida = int(max_tempo_desaparecida)
-            if self.max_tempo_desaparecida <= 0:
+            if self.max_tempo_desaparecida < 0:
                 raise ValueError
         except ValueError:
-            raise ValueError("'max_tempo_desaparecida' deve ser um número inteiro positivo.")
+            raise ValueError(
+                "'max_tempo_desaparecida' deve ser um número não "
+                "negativo.")
 
         self.rastros = collections.deque(maxlen=100)
         self.tempo_desaparecida = 0

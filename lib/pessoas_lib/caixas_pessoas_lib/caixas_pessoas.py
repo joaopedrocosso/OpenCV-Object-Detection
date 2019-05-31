@@ -19,7 +19,7 @@ class CaixasPessoas:
         (>= 0) (Padrão=2)
     max_tempo_desaparecida : int, optional
         Tempo máximo que uma caixa pode sumir do vídeo antes de ser
-        descartada do registro. (> 0) (Padrão=5)
+        descartada do registro. (>= 0) (Padrão=0)
     precisao_minima : float, optional
         Probabilidade mínima da caixa ser uma pessoa para que seja
         aceita no registro. (em [0.0, 1.0]) (Padrão=0.0)
@@ -30,7 +30,7 @@ class CaixasPessoas:
         Se os parâmetros não seguirem as especificações.
     '''
 
-    def __init__(self, min_frames_para_confirmar=0, max_tempo_desaparecida=5,
+    def __init__(self, min_frames_para_confirmar=0, max_tempo_desaparecida=0,
                  precisao_minima=0.0):
         # self.pessoas, self.id_contador, self.pessoas_confirmadas
         self.reiniciar()

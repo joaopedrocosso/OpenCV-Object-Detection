@@ -58,7 +58,6 @@ class DetectorPessoasYolo(BaseDetectorPessoas):
 		dados_relevantes : [numpy.ndarray de floats, ...]
 			Dados de análise da imagem.
 		'''
-
 		blob = cv.dnn.blobFromImage(img, 1/255.0, (416, 416), swapRB=True, crop=False)
 		self.net.setInput(blob)
 		return self.net.forward(self.ln)
