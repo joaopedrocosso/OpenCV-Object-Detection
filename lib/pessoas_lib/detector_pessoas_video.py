@@ -349,6 +349,7 @@ class DetectorPessoasVideo(Thread):
         self.frame = novo_frame
 
 
+
 class ModoDeteccao:
 
     '''Escolhe o modo de detecção de um loop em DeteccaoPessoasVideo.

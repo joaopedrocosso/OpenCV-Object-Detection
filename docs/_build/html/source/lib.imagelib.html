@@ -1,0 +1,775 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt_BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>lib.imagelib package &#8212; documentação Detector de Pessoas em Vídeos </title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script type="text/javascript" src="../_static/translations.js"></script>
+    
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Buscar" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navegação</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="Índice Geral"
+             accesskey="I">índice</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Índice de Módulos Python"
+             >módulos</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">documentação Detector de Pessoas em Vídeos </a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="lib-imagelib-package">
+<h1>lib.imagelib package<a class="headerlink" href="#lib-imagelib-package" title="Link permanente para este título">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link permanente para este título">¶</a></h2>
+</div>
+<div class="section" id="module-lib.imagelib.caixa_com_peso">
+<span id="lib-imagelib-caixa-com-peso-module"></span><h2>lib.imagelib.caixa_com_peso module<a class="headerlink" href="#module-lib.imagelib.caixa_com_peso" title="Link permanente para este título">¶</a></h2>
+<dl class="class">
+<dt id="lib.imagelib.caixa_com_peso.CaixaComPeso">
+<em class="property">class </em><code class="sig-prename descclassname">lib.imagelib.caixa_com_peso.</code><code class="sig-name descname">CaixaComPeso</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">w</em>, <em class="sig-param">h</em>, <em class="sig-param">peso=None</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.caixa_com_peso.CaixaComPeso" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Base: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Guarda informações relacionadas a uma pessoa detectada em uma imagem.</p>
+<p>Este objeto guarda uma caixa onde uma pessoa está localizada e a 
+probabilidade dela ser, de fato, uma pessoa.</p>
+<p>Para evitar falsos positivos, a pessoa só é confirmada depois de 
+aparecer por n frames. Depois de confirmada, ela só é desconfirmada 
+(ou morta) após desaparecer por n frames.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x, y: int</strong></p>
+<blockquote>
+<div><p>Coordenadas do centro da caixa onde a pessoa está.
+(‘x’, ‘y’ &gt;= -‘w’, -‘h’)</p>
+</div></blockquote>
+<p><strong>w, h</strong> : int</p>
+<blockquote>
+<div><p>Largura e altura da caixa. (‘w’, ‘h’ &gt; 0)</p>
+</div></blockquote>
+<p><strong>peso</strong> : float, optional</p>
+<blockquote>
+<div><p>Probabilidade, se houver, de a pessoa ser, de fato, uma pessoa.
+Deve estar em [0.0, 1.0] ou ser ‘None’. (Padrão=None)</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong></p>
+<blockquote>
+<div><p>Se um dos valores não estiver dentro do especificado.</p>
+</div></blockquote>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.imagelib.caixa_com_peso.CaixaComPeso.atualizar" title="lib.imagelib.caixa_com_peso.CaixaComPeso.atualizar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">atualizar</span></code></a>(x, y, w, h[, peso])</p></td>
+<td><p>Atualiza as informações da pessoa.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.imagelib.caixa_com_peso.CaixaComPeso.pega_caixa" title="lib.imagelib.caixa_com_peso.CaixaComPeso.pega_caixa"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pega_caixa</span></code></a>()</p></td>
+<td><p>Pega coordenadas e dimensões da caixa.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.imagelib.caixa_com_peso.CaixaComPeso.pega_caixa_com_peso" title="lib.imagelib.caixa_com_peso.CaixaComPeso.pega_caixa_com_peso"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pega_caixa_com_peso</span></code></a>()</p></td>
+<td><p>Pega coordenadas, dimensões da caixa e um peso.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.imagelib.caixa_com_peso.CaixaComPeso.pega_coordenadas" title="lib.imagelib.caixa_com_peso.CaixaComPeso.pega_coordenadas"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pega_coordenadas</span></code></a>()</p></td>
+<td><p>Pega as coordenadas da caixa.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.imagelib.caixa_com_peso.CaixaComPeso.pega_dimensoes" title="lib.imagelib.caixa_com_peso.CaixaComPeso.pega_dimensoes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pega_dimensoes</span></code></a>()</p></td>
+<td><p>Pega as dimensões da caixa.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.imagelib.caixa_com_peso.CaixaComPeso.pega_peso" title="lib.imagelib.caixa_com_peso.CaixaComPeso.pega_peso"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pega_peso</span></code></a>()</p></td>
+<td><p>Pega peso da caixa.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="lib.imagelib.caixa_com_peso.CaixaComPeso.atualizar">
+<code class="sig-name descname">atualizar</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">w</em>, <em class="sig-param">h</em>, <em class="sig-param">peso=None</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.caixa_com_peso.CaixaComPeso.atualizar" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Atualiza as informações da pessoa.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x, y</strong> : int</p>
+<blockquote>
+<div><p>Coordenadas novas da caixa. (&gt;= -‘w’, -‘h’)</p>
+</div></blockquote>
+<p><strong>w, h</strong> : int</p>
+<blockquote>
+<div><p>Largura e altura novas da caixa. (&gt; 0)</p>
+</div></blockquote>
+<p><strong>peso</strong> : float, optional</p>
+<blockquote>
+<div><p>Novo peso da caixa, se houver.
+(No período [0.0, 1.0], ou None) (Padrão=None)</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong></p>
+<blockquote>
+<div><p>Se um dos parâmetros não estiver dentro do especificado.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.imagelib.caixa_com_peso.CaixaComPeso.pega_caixa">
+<code class="sig-name descname">pega_caixa</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.caixa_com_peso.CaixaComPeso.pega_caixa" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Pega coordenadas e dimensões da caixa.
+Returns
+——–
+tuple of int</p>
+<blockquote>
+<div><p>Coordenadas x e y, largura e altura.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.imagelib.caixa_com_peso.CaixaComPeso.pega_caixa_com_peso">
+<code class="sig-name descname">pega_caixa_com_peso</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.caixa_com_peso.CaixaComPeso.pega_caixa_com_peso" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Pega coordenadas, dimensões da caixa e um peso.
+Returns
+——–
+((int, int, int, int), float)</p>
+<blockquote>
+<div><p>Coordenadas x e y, largura, altura, em uma tupla, mais um
+peso.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.imagelib.caixa_com_peso.CaixaComPeso.pega_coordenadas">
+<code class="sig-name descname">pega_coordenadas</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.caixa_com_peso.CaixaComPeso.pega_coordenadas" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Pega as coordenadas da caixa.
+Returns
+———–
+tuple of int</p>
+<blockquote>
+<div><p>Coordenadas x e y.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.imagelib.caixa_com_peso.CaixaComPeso.pega_dimensoes">
+<code class="sig-name descname">pega_dimensoes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.caixa_com_peso.CaixaComPeso.pega_dimensoes" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Pega as dimensões da caixa.
+Returns
+——–
+tuple of int</p>
+<blockquote>
+<div><p>Largura e altura.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.imagelib.caixa_com_peso.CaixaComPeso.pega_peso">
+<code class="sig-name descname">pega_peso</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.caixa_com_peso.CaixaComPeso.pega_peso" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Pega peso da caixa.
+Returns
+——–
+float</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-lib.imagelib.caixa_tools">
+<span id="lib-imagelib-caixa-tools-module"></span><h2>lib.imagelib.caixa_tools module<a class="headerlink" href="#module-lib.imagelib.caixa_tools" title="Link permanente para este título">¶</a></h2>
+<dl class="function">
+<dt id="lib.imagelib.caixa_tools.muda_origem_caixa">
+<code class="sig-prename descclassname">lib.imagelib.caixa_tools.</code><code class="sig-name descname">muda_origem_caixa</code><span class="sig-paren">(</span><em class="sig-param">x0</em>, <em class="sig-param">y0</em>, <em class="sig-param">w</em>, <em class="sig-param">h</em>, <em class="sig-param">pos_original='centro'</em>, <em class="sig-param">pos_final='centro'</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.caixa_tools.muda_origem_caixa" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Retorna a caixa com a origem em outra posição.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x0, y0</strong> : int</p>
+<blockquote>
+<div><p>Origem original. (&gt;= -w, -h)</p>
+</div></blockquote>
+<p><strong>w, h</strong> : int</p>
+<blockquote>
+<div><p>Largura e altura. (&gt; 0)</p>
+</div></blockquote>
+<p><strong>pos_original, pos_final:</strong> : str</p>
+<blockquote>
+<div><p>Posição da origem original (x0, y0) e posição da origem
+modificada (xf, yf).
+Ambas podem ser:</p>
+<blockquote>
+<div><p>‘centro’, (padrao)
+‘cima’,
+‘baixo’,
+‘direita’,
+‘esquerda’,
+‘cima-esquerda’
+‘cima-direita’,
+‘baixo-esquerda’,
+‘baixo-direita’.</p>
+</div></blockquote>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>int, int, int, int</p>
+<blockquote>
+<div><p>Coordenadas da origem final x0 e y0, largura e altura.</p>
+</div></blockquote>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>ValueError</strong></p>
+<blockquote>
+<div><p>Se ao menos um dos argumentos não estiver dentro dos limites
+especificados.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lib.imagelib.detector_movimento">
+<span id="lib-imagelib-detector-movimento-module"></span><h2>lib.imagelib.detector_movimento module<a class="headerlink" href="#module-lib.imagelib.detector_movimento" title="Link permanente para este título">¶</a></h2>
+<dl class="class">
+<dt id="lib.imagelib.detector_movimento.DetectorMovimento">
+<em class="property">class </em><code class="sig-prename descclassname">lib.imagelib.detector_movimento.</code><code class="sig-name descname">DetectorMovimento</code><span class="sig-paren">(</span><em class="sig-param">detecta_sombras=True</em>, <em class="sig-param">mudanca_minima=0.001</em>, <em class="sig-param">periodo_minimo=0.0</em>, <em class="sig-param">max_largura_frame=700</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.detector_movimento.DetectorMovimento" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Base: <code class="xref py py-class docutils literal notranslate"><span class="pre">threading.Thread</span></code></p>
+<p>Detecta movimento em um vídeo.</p>
+<p>Deve-se chamar o método ‘recebe_video’ antes de rodar a thread.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>detecta_sombras</strong> : bool, optional</p>
+<blockquote>
+<div><p>Se verdadeiro, ele marca sombras.</p>
+</div></blockquote>
+<p><strong>mudanca_minima</strong> : float, optional</p>
+<blockquote>
+<div><p>Valor mínimo para que um movimento tenha ocorrido.
+(0.0 &lt;= ‘mudanca_minima’ &lt;= 1.0) (Padrão=0.001)</p>
+</div></blockquote>
+<p><strong>periodo_minimo</strong> : float, optional</p>
+<blockquote>
+<div><p>Período mínimo por deteccção de movimento. (&gt; 0.0) (Padrão=0.5)</p>
+</div></blockquote>
+</dd>
+</dl>
+<p class="rubric">Attributes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">daemon</span></code></p></td>
+<td><p>A boolean value indicating whether this thread is a daemon thread.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ident</span></code></p></td>
+<td><p>Thread identifier of this thread or None if it has not been started.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>A string used for identification purposes only.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.imagelib.detector_movimento.DetectorMovimento.detecta_movimento" title="lib.imagelib.detector_movimento.DetectorMovimento.detecta_movimento"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detecta_movimento</span></code></a>(frame)</p></td>
+<td><p>Checa se houve movimento no vídeo.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">getName</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.imagelib.detector_movimento.DetectorMovimento.houve_mudanca" title="lib.imagelib.detector_movimento.DetectorMovimento.houve_mudanca"><code class="xref py py-obj docutils literal notranslate"><span class="pre">houve_mudanca</span></code></a>()</p></td>
+<td><p>Retorna se houve algura mudança no vídeo.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">isAlive</span></code>()</p></td>
+<td><p>Return whether the thread is alive.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">isDaemon</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_alive</span></code>()</p></td>
+<td><p>Return whether the thread is alive.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">join</span></code>([timeout])</p></td>
+<td><p>Wait until the thread terminates.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.imagelib.detector_movimento.DetectorMovimento.recebe_video" title="lib.imagelib.detector_movimento.DetectorMovimento.recebe_video"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recebe_video</span></code></a>(stream)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.imagelib.detector_movimento.DetectorMovimento.run" title="lib.imagelib.detector_movimento.DetectorMovimento.run"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code></a>()</p></td>
+<td><p>Detecta movimento uma vez a cada período.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">setDaemon</span></code>(daemonic)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">setName</span></code>(name)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.imagelib.detector_movimento.DetectorMovimento.start" title="lib.imagelib.detector_movimento.DetectorMovimento.start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">start</span></code></a>()</p></td>
+<td><p>Começa a thread.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.imagelib.detector_movimento.DetectorMovimento.stop" title="lib.imagelib.detector_movimento.DetectorMovimento.stop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stop</span></code></a>()</p></td>
+<td><p>Para a thread.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="lib.imagelib.detector_movimento.DetectorMovimento.detecta_movimento">
+<code class="sig-name descname">detecta_movimento</code><span class="sig-paren">(</span><em class="sig-param">frame</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.detector_movimento.DetectorMovimento.detecta_movimento" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Checa se houve movimento no vídeo.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>frame</strong> : numpy.ndarray</p>
+<blockquote>
+<div><p>Novo frame do vídeo.</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>bool</p>
+<blockquote>
+<div><p>Verdadeiro, se houve mudança, e falso, caso contrário.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.imagelib.detector_movimento.DetectorMovimento.houve_mudanca">
+<code class="sig-name descname">houve_mudanca</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.detector_movimento.DetectorMovimento.houve_mudanca" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Retorna se houve algura mudança no vídeo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.imagelib.detector_movimento.DetectorMovimento.recebe_video">
+<code class="sig-name descname">recebe_video</code><span class="sig-paren">(</span><em class="sig-param">stream</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.detector_movimento.DetectorMovimento.recebe_video" title="Link permanente para esta definição">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lib.imagelib.detector_movimento.DetectorMovimento.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.detector_movimento.DetectorMovimento.run" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Detecta movimento uma vez a cada período.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.imagelib.detector_movimento.DetectorMovimento.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.detector_movimento.DetectorMovimento.start" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Começa a thread.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>self</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.imagelib.detector_movimento.DetectorMovimento.stop">
+<code class="sig-name descname">stop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.detector_movimento.DetectorMovimento.stop" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Para a thread.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-lib.imagelib.ktools">
+<span id="lib-imagelib-ktools-module"></span><h2>lib.imagelib.ktools module<a class="headerlink" href="#module-lib.imagelib.ktools" title="Link permanente para este título">¶</a></h2>
+<dl class="function">
+<dt id="lib.imagelib.ktools.black_image">
+<code class="sig-prename descclassname">lib.imagelib.ktools.</code><code class="sig-name descname">black_image</code><span class="sig-paren">(</span><em class="sig-param">width</em>, <em class="sig-param">height</em>, <em class="sig-param">image_type='bgr'</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.ktools.black_image" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Returns a black image.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>width, height: int</strong></p>
+<blockquote>
+<div><p>Width and height of the image.</p>
+</div></blockquote>
+<p><strong>image_type: {‘bgr’, ‘rgb’, ‘hsv’, ‘grayscale’}, optional</strong></p>
+<blockquote>
+<div><p>Format of the image.</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+<blockquote>
+<div><p>Multi-dimensional array of shape adequate for the type provided.</p>
+</div></blockquote>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>ValueError</strong></p>
+<blockquote>
+<div><p>If ‘image_type’ is an invalid type.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.imagelib.ktools.destroy_all_windows">
+<code class="sig-prename descclassname">lib.imagelib.ktools.</code><code class="sig-name descname">destroy_all_windows</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.ktools.destroy_all_windows" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Destroys all windows created using opencv.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.imagelib.ktools.draw_boxes">
+<code class="sig-prename descclassname">lib.imagelib.ktools.</code><code class="sig-name descname">draw_boxes</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">boxes</em>, <em class="sig-param">infos=[]</em>, <em class="sig-param">overwrite_original=False</em>, <em class="sig-param">write_infos=True</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.ktools.draw_boxes" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Draw boxes on an image.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>image</strong> : numpy.ndarray</p>
+<blockquote>
+<div><p>The image on which the boxes will be drawn.</p>
+</div></blockquote>
+<p><strong>boxes</strong> : [(int, int, int, int), …]</p>
+<blockquote>
+<div><p>Boxes that will be drawn on the image.</p>
+</div></blockquote>
+<p><strong>infos</strong> : [str, …], optional</p>
+<blockquote>
+<div><p>Information about each box, that will be displayed above 
+them. Values can be of any class as long as they can be 
+converted to strings. If not provided, nothing will be written. 
+If there are less elements in ‘infos’ than there are in ‘boxes’, 
+nothing will be displayed on top of the remaining boxes.</p>
+</div></blockquote>
+<p><strong>overwrite_original</strong> : bool, optional</p>
+<blockquote>
+<div><p>If true, the rectangles are drawn on the original image.
+Otherwise they are drawn on a copy.</p>
+</div></blockquote>
+<p><strong>write_infos</strong> : bool, optional</p>
+<blockquote>
+<div><p>If true, the info in ‘infos’ will be written on the image.</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+<blockquote>
+<div><p>Image on which the rectangles were drawn.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.imagelib.ktools.non_maxima_suppression">
+<code class="sig-prename descclassname">lib.imagelib.ktools.</code><code class="sig-name descname">non_maxima_suppression</code><span class="sig-paren">(</span><em class="sig-param">caixas</em>, <em class="sig-param">precisoes</em>, <em class="sig-param">precisao_minima=0.5</em>, <em class="sig-param">supressao_caixas=0.4</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.ktools.non_maxima_suppression" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Combina caixas muito próximas ou dentro de outras.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>caixas</strong> : [(int, int, int, int), …]</p>
+<blockquote>
+<div><p>Caixas com as coordenadas x, y e suas dimensões.</p>
+</div></blockquote>
+<p><strong>precisoes</strong> : list of float</p>
+<blockquote>
+<div><p>Precisões de cada uma das caixas.</p>
+</div></blockquote>
+<p><strong>precisao_minima</strong> : float</p>
+<blockquote>
+<div><p>Precisão mínima para a caixa ser aceita.
+(0.0 &lt;= ‘precisao_minima’ &lt;= 1.0) e (Padrão=0.5)</p>
+</div></blockquote>
+<p><strong>supressao_caixas</strong> : float</p>
+<blockquote>
+<div><p>Nível de supressão das caixas.
+(0.0 &lt;= ‘supressao_caixas’ &lt;= 1.0) e Padrão=0.4)</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+<blockquote>
+<div><p>Índices das caixas resultantes.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.imagelib.ktools.resize">
+<code class="sig-prename descclassname">lib.imagelib.ktools.</code><code class="sig-name descname">resize</code><span class="sig-paren">(</span><em class="sig-param">img</em>, <em class="sig-param">new_width=None</em>, <em class="sig-param">new_height=None</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.ktools.resize" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Resizes image to the desired size.</p>
+<p>If only one of the dimensions is specified, the image is resized 
+proportionally.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>img</strong> : numpy.ndarray</p>
+<blockquote>
+<div><p>The image to be resized.</p>
+</div></blockquote>
+<p><strong>new_width</strong> : int, optional</p>
+<blockquote>
+<div><p>The new width of the image. (&gt; 0)</p>
+</div></blockquote>
+<p><strong>new_height</strong> : int, optional</p>
+<blockquote>
+<div><p>The new height of the image. (&gt; 0)</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+<blockquote>
+<div><p>The resized image.</p>
+</div></blockquote>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>ValueError</strong></p>
+<blockquote>
+<div><p>If no arguments are given.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.imagelib.ktools.show_image">
+<code class="sig-prename descclassname">lib.imagelib.ktools.</code><code class="sig-name descname">show_image</code><span class="sig-paren">(</span><em class="sig-param">img</em>, <em class="sig-param">title='title'</em>, <em class="sig-param">wait_time=0</em>, <em class="sig-param">close_window=True</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.ktools.show_image" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Opens a window with the desired image.</p>
+<p>Returns control after ‘wait_time’ seconds or after the user presses
+a key on the keyboard.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>img</strong> : numpy.ndarray</p>
+<blockquote>
+<div><p>Image to be shown on the window box.</p>
+</div></blockquote>
+<p><strong>title</strong> : str, optional</p>
+<blockquote>
+<div><p>Title of the window. Default=’title’.</p>
+</div></blockquote>
+<p><strong>wait_time</strong> : int, optional</p>
+<blockquote>
+<div><p>Time to wait before returning control to the program.
+If it equals 0, then it won’t be closed. Default=0.</p>
+</div></blockquote>
+<p><strong>close_window</strong> : bool, optional</p>
+<blockquote>
+<div><p>If True, the window will be closed after control is returned.</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>int</p>
+<blockquote>
+<div><p>Key pressed on the window.</p>
+</div></blockquote>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>TypeError</strong></p>
+<blockquote>
+<div><p>If any arguments have the wrong type.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.imagelib.ktools.write">
+<code class="sig-prename descclassname">lib.imagelib.ktools.</code><code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">text</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">font=0</em>, <em class="sig-param">font_scale=0.8</em>, <em class="sig-param">color=(255</em>, <em class="sig-param">255</em>, <em class="sig-param">255)</em>, <em class="sig-param">thickness=2</em>, <em class="sig-param">outline=False</em>, <em class="sig-param">outline_color=(0</em>, <em class="sig-param">0</em>, <em class="sig-param">0)</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.ktools.write" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Convinience function to write text on an image.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>image</strong> : numpy.ndarray</p>
+<blockquote>
+<div><p>Image to write on.</p>
+</div></blockquote>
+<p><strong>text</strong> : str</p>
+<blockquote>
+<div><p>Text to be written on the image.</p>
+</div></blockquote>
+<p><strong>x, y</strong> : int</p>
+<blockquote>
+<div><p>Coordinates of the bottom-left corner of the text.</p>
+</div></blockquote>
+<p><strong>font</strong> : int, optional</p>
+<blockquote>
+<div><p>Constants to the opencv fonts. For all options, check their
+documentation. (Default=cv.FONT_HERSHEY_SIMPLEX)</p>
+</div></blockquote>
+<p><strong>font_scale</strong> : float, optional</p>
+<blockquote>
+<div><p>Factor that is multiplied by the font-specific base size.
+(Default=0.5)</p>
+</div></blockquote>
+<p><strong>color</strong> : tuple of int, optional</p>
+<blockquote>
+<div><p>RGB color of the text. (Default=(0xFF, 0xFF, 0xFF))</p>
+</div></blockquote>
+<p><strong>thickness</strong> : int, optional</p>
+<blockquote>
+<div><p>Thickness of the text. (Default=2)</p>
+</div></blockquote>
+<p><strong>outline</strong> : bool, optional</p>
+<blockquote>
+<div><p>If set to true, the text will be outlined. (Default=False)</p>
+</div></blockquote>
+<p><strong>outline_color</strong> : tuple of int, optional</p>
+<blockquote>
+<div><p>Color of the outline. (Default=(0x00, 0x00, 0x00))</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lib.imagelib.rastreador">
+<span id="lib-imagelib-rastreador-module"></span><h2>lib.imagelib.rastreador module<a class="headerlink" href="#module-lib.imagelib.rastreador" title="Link permanente para este título">¶</a></h2>
+<dl class="data">
+<dt id="lib.imagelib.rastreador.OPENCV_OBJECT_TRACKERS">
+<code class="sig-prename descclassname">lib.imagelib.rastreador.</code><code class="sig-name descname">OPENCV_OBJECT_TRACKERS</code><em class="property"> = {'boosting': &lt;built-in function TrackerBoosting_create&gt;, 'csrt': &lt;built-in function TrackerCSRT_create&gt;, 'kcf': &lt;built-in function TrackerKCF_create&gt;, 'medianflow': &lt;built-in function TrackerMedianFlow_create&gt;, 'mil': &lt;built-in function TrackerMIL_create&gt;, 'mosse': &lt;built-in function TrackerMOSSE_create&gt;, 'tld': &lt;built-in function TrackerTLD_create&gt;}</em><a class="headerlink" href="#lib.imagelib.rastreador.OPENCV_OBJECT_TRACKERS" title="Link permanente para esta definição">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="lib.imagelib.rastreador.Rastreador">
+<em class="property">class </em><code class="sig-prename descclassname">lib.imagelib.rastreador.</code><code class="sig-name descname">Rastreador</code><span class="sig-paren">(</span><em class="sig-param">tipo_rastreador='csrt'</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.rastreador.Rastreador" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Base: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Rastreia objetos em um vídeo.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>tipo_rastreador</strong> : str, optional</p>
+<blockquote>
+<div><p>Tipos de rastreador. As opções são:
+‘csrt’, (Padrão)
+‘kcf’,
+‘boosting’,
+‘mil’,
+‘tld’,
+‘medianflow’,
+‘mosse’.</p>
+</div></blockquote>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.imagelib.rastreador.Rastreador.adiciona_rastreadores" title="lib.imagelib.rastreador.Rastreador.adiciona_rastreadores"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adiciona_rastreadores</span></code></a>(frame, caixas)</p></td>
+<td><p>Adiciona rastreadores.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.imagelib.rastreador.Rastreador.atualiza" title="lib.imagelib.rastreador.Rastreador.atualiza"><code class="xref py py-obj docutils literal notranslate"><span class="pre">atualiza</span></code></a>(frame)</p></td>
+<td><p>Atualiza os rastreadores.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.imagelib.rastreador.Rastreador.reiniciar" title="lib.imagelib.rastreador.Rastreador.reiniciar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reiniciar</span></code></a>()</p></td>
+<td><p>Reinicia os rastreadores.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="lib.imagelib.rastreador.Rastreador.adiciona_rastreadores">
+<code class="sig-name descname">adiciona_rastreadores</code><span class="sig-paren">(</span><em class="sig-param">frame</em>, <em class="sig-param">caixas</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.rastreador.Rastreador.adiciona_rastreadores" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Adiciona rastreadores.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>frame</strong> : numpy.ndarray</p>
+<blockquote>
+<div><p>Frame do vídeo onde objetos estão sendo rastreados.</p>
+</div></blockquote>
+<p><strong>caixas</strong> : [(int, int, int, int), …]</p>
+<blockquote>
+<div><p>Caixas que representam os objetos a serem rastreados
+(x, y, largura, altura).</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.imagelib.rastreador.Rastreador.atualiza">
+<code class="sig-name descname">atualiza</code><span class="sig-paren">(</span><em class="sig-param">frame</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.rastreador.Rastreador.atualiza" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Atualiza os rastreadores.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>frame</strong> : numpy.ndarray</p>
+<blockquote>
+<div><p>Novo frame do vídeo.</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>[(int, int, int, int), …]</p>
+<blockquote>
+<div><p>Caixas com as novas posições dos rastreadores.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.imagelib.rastreador.Rastreador.reiniciar">
+<code class="sig-name descname">reiniciar</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.imagelib.rastreador.Rastreador.reiniciar" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Reinicia os rastreadores.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-lib.imagelib">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lib.imagelib" title="Link permanente para este título">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Busca rápida</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Ir" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navegação</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="Índice Geral"
+             >índice</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Índice de Módulos Python"
+             >módulos</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">documentação Detector de Pessoas em Vídeos </a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, LCC.
+      Criado usando <a href="http://sphinx-doc.org/">Sphinx</a> 2.1.0.
+    </div>
+  </body>
+</html>

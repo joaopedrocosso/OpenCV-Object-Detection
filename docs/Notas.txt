@@ -1,5 +1,0 @@
-1. O rastreamento de pessoas deve não envelhecer enquanto não houver movimento, já que, em teoria, nada muda neste período.
-
-2. O desenho de caixas também deve ser mantido.
-
-3. As caixas devem se conectar com certas detecções somente se fizer sentido.

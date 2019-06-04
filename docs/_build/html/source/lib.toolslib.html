@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt_BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>lib.toolslib package &#8212; documentação Detector de Pessoas em Vídeos </title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script type="text/javascript" src="../_static/translations.js"></script>
+    
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Buscar" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navegação</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="Índice Geral"
+             accesskey="I">índice</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Índice de Módulos Python"
+             >módulos</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">documentação Detector de Pessoas em Vídeos </a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="lib-toolslib-package">
+<h1>lib.toolslib package<a class="headerlink" href="#lib-toolslib-package" title="Link permanente para este título">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link permanente para este título">¶</a></h2>
+</div>
+<div class="section" id="module-lib.toolslib.ktools">
+<span id="lib-toolslib-ktools-module"></span><h2>lib.toolslib.ktools module<a class="headerlink" href="#module-lib.toolslib.ktools" title="Link permanente para este título">¶</a></h2>
+<dl class="class">
+<dt id="lib.toolslib.ktools.LoopPeriodControl">
+<em class="property">class </em><code class="sig-prename descclassname">lib.toolslib.ktools.</code><code class="sig-name descname">LoopPeriodControl</code><span class="sig-paren">(</span><em class="sig-param">loop_period</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.toolslib.ktools.LoopPeriodControl" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Base: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Forces each iteration of a loop to take, at least, a set amount of 
+time to run.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>loop_period</strong> : float</p>
+<blockquote>
+<div><p>Minimum amount of time an iteration must take to run. Must be 
+non-negative.</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong></p>
+<blockquote>
+<div><p>If an invalid value was provided to ‘loop_period’.</p>
+</div></blockquote>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.toolslib.ktools.LoopPeriodControl.force_minimum_loop_period" title="lib.toolslib.ktools.LoopPeriodControl.force_minimum_loop_period"><code class="xref py py-obj docutils literal notranslate"><span class="pre">force_minimum_loop_period</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.toolslib.ktools.LoopPeriodControl.reset" title="lib.toolslib.ktools.LoopPeriodControl.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="lib.toolslib.ktools.LoopPeriodControl.force_minimum_loop_period">
+<code class="sig-name descname">force_minimum_loop_period</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.toolslib.ktools.LoopPeriodControl.force_minimum_loop_period" title="Link permanente para esta definição">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lib.toolslib.ktools.LoopPeriodControl.reset">
+<code class="sig-name descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.toolslib.ktools.LoopPeriodControl.reset" title="Link permanente para esta definição">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.toolslib.ktools.get_files">
+<code class="sig-prename descclassname">lib.toolslib.ktools.</code><code class="sig-name descname">get_files</code><span class="sig-paren">(</span><em class="sig-param">path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.toolslib.ktools.get_files" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Gets all files from a path ‘path’.</p>
+<p>If no path is passed, the current directory is used.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> : str, optional</p>
+<blockquote>
+<div><p>Path to files. (Default: None)</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>list of str</p>
+<blockquote>
+<div><p>Files inside the directory ‘path’.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lib.toolslib.ptools">
+<span id="lib-toolslib-ptools-module"></span><h2>lib.toolslib.ptools module<a class="headerlink" href="#module-lib.toolslib.ptools" title="Link permanente para este título">¶</a></h2>
+<dl class="function">
+<dt id="lib.toolslib.ptools.criaFrameString">
+<code class="sig-prename descclassname">lib.toolslib.ptools.</code><code class="sig-name descname">criaFrameString</code><span class="sig-paren">(</span><em class="sig-param">frame</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.toolslib.ptools.criaFrameString" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Transforma uma imagem em uma string base64.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>frame</strong> : numpy.ndarray</p>
+<blockquote>
+<div><p>Imagem a ser convertida para string.</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>str</p>
+<blockquote>
+<div><p>Imagem convertida em string base64.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="lib.toolslib.ptools.criarJSON">
+<code class="sig-prename descclassname">lib.toolslib.ptools.</code><code class="sig-name descname">criarJSON</code><span class="sig-paren">(</span><em class="sig-param">dados</em>, <em class="sig-param">frame</em>, <em class="sig-param">path='dados.json'</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.toolslib.ptools.criarJSON" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Cria um JSON com uma imagem.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dados</strong> : dict</p>
+<blockquote>
+<div><p>Texto a colocar no JSON.</p>
+</div></blockquote>
+<p><strong>frame</strong> : numpy.ndarray</p>
+<blockquote>
+<div><p>Imagem a ser colocada no JSON.</p>
+</div></blockquote>
+<p><strong>path</strong> : str, optional</p>
+<blockquote>
+<div><p>Diretório onde o JSON será salvo.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lib.toolslib">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lib.toolslib" title="Link permanente para este título">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Busca rápida</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Ir" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navegação</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="Índice Geral"
+             >índice</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Índice de Módulos Python"
+             >módulos</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">documentação Detector de Pessoas em Vídeos </a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, LCC.
+      Criado usando <a href="http://sphinx-doc.org/">Sphinx</a> 2.1.0.
+    </div>
+  </body>
+</html>

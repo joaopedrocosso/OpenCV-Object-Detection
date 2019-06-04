@@ -1,1 +1,0 @@
-caixas_com_peso = [((x, y, w, h), peso), ...]

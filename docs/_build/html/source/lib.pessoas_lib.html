@@ -1,0 +1,581 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt_BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>lib.pessoas_lib package &#8212; documentação Detector de Pessoas em Vídeos </title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script type="text/javascript" src="../_static/translations.js"></script>
+    
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Buscar" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navegação</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="Índice Geral"
+             accesskey="I">índice</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Índice de Módulos Python"
+             >módulos</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">documentação Detector de Pessoas em Vídeos </a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="lib-pessoas-lib-package">
+<h1>lib.pessoas_lib package<a class="headerlink" href="#lib-pessoas-lib-package" title="Link permanente para este título">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link permanente para este título">¶</a></h2>
+</div>
+<div class="section" id="module-lib.pessoas_lib.detector_pessoas_video">
+<span id="lib-pessoas-lib-detector-pessoas-video-module"></span><h2>lib.pessoas_lib.detector_pessoas_video module<a class="headerlink" href="#module-lib.pessoas_lib.detector_pessoas_video" title="Link permanente para este título">¶</a></h2>
+<dl class="class">
+<dt id="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo">
+<em class="property">class </em><code class="sig-prename descclassname">lib.pessoas_lib.detector_pessoas_video.</code><code class="sig-name descname">DetectorPessoasVideo</code><span class="sig-paren">(</span><em class="sig-param">mostrar_caixas=False</em>, <em class="sig-param">mostrar_precisao=False</em>, <em class="sig-param">max_tempo_sem_deteccao=5.0</em>, <em class="sig-param">max_tempo_parado=60.0</em>, <em class="sig-param">max_largura_frame=700</em>, <em class="sig-param">usar_rastreamento=False</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Base: <code class="xref py py-class docutils literal notranslate"><span class="pre">threading.Thread</span></code></p>
+<p>Detecta pessoas em um vídeo em uma thread separada.</p>
+<p>Deve-se configurar o objeto chamando os métodos ‘configura_video’
+ou ‘recebe_video’, para haver uma entrada de vídeo, e
+‘configura_detector’, para configurar o detector de pessoas.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>mostrar_caixas</strong> : bool, optional.</p>
+<blockquote>
+<div><p>Se o frame guardado deve conter as caixas em volta das pessoas
+(Padrão=False)</p>
+</div></blockquote>
+<p><strong>mostrar_precisao</strong> : bool, optional.</p>
+<blockquote>
+<div><p>Se a precisão deve ser mostrada em cima da caixa. Se
+‘mostrar_caixas’ for ‘False’, a precisão não é mostrada.
+(Padrão=False)</p>
+</div></blockquote>
+<p><strong>max_tempo_sem_deteccao</strong> : float, optional</p>
+<blockquote>
+<div><p>Tempo máximo que se pode ficar usando métodos mais leves de
+detecção, ao invés do principal. Em casos em que o detector seja
+leve, o valor pode ser 0 (i.e. sempre detectar).
+Deve ser positivo ou zero. (Padrão=5)</p>
+</div></blockquote>
+<p><strong>max_tempo_parado</strong> : float, optional</p>
+<blockquote>
+<div><p>Tempo máximo que se pode ficar sem usar algum método de 
+detecção, nos casos em que o frame basicamente não se moveu.
+Deve ser positivo ou zero. (Padrão=60)</p>
+</div></blockquote>
+<p><strong>max_largura_frame</strong> : int, optional</p>
+<blockquote>
+<div><p>Se o frame do vídeo for maior que este valor, ele será
+redimensionado. Deve ser positivo. (Padrão=700)</p>
+</div></blockquote>
+<p><strong>usar_rastreamento</strong> : bool, optional</p>
+<blockquote>
+<div><p>Se for verdadeiro, o detector só será usado uma vez a cada
+período de tempo, e um rastreador será empregado para
+localizar as pessoas detectadas até o detector ser empregado
+de novo. (Padrão=False)</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong></p>
+<blockquote>
+<div><p>Se um dos argumentos não atender às especificações.</p>
+</div></blockquote>
+</dd>
+</dl>
+<p class="rubric">Attributes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">daemon</span></code></p></td>
+<td><p>A boolean value indicating whether this thread is a daemon thread.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ident</span></code></p></td>
+<td><p>Thread identifier of this thread or None if it has not been started.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>A string used for identification purposes only.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.configura_detector" title="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.configura_detector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configura_detector</span></code></a>(dir_modelo[, …])</p></td>
+<td><p>Detecta pessoas usando um modelo de deep learning.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.configura_video" title="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.configura_video"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configura_video</span></code></a>(tipo, **keywords)</p></td>
+<td><p>Configura a entrada de vídeo internamente.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">getName</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">isAlive</span></code>()</p></td>
+<td><p>Return whether the thread is alive.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">isDaemon</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_alive</span></code>()</p></td>
+<td><p>Return whether the thread is alive.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">join</span></code>([timeout])</p></td>
+<td><p>Wait until the thread terminates.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.pega_dados_periodo" title="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.pega_dados_periodo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pega_dados_periodo</span></code></a>()</p></td>
+<td><p>Retorna dados coletados desde a última chamada (ou início).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.pega_frame" title="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.pega_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pega_frame</span></code></a>()</p></td>
+<td><p>Retorna o último frame analizado.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.pega_pessoas" title="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.pega_pessoas"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pega_pessoas</span></code></a>()</p></td>
+<td><p>Retorna o número de pessoas registradas no momento.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.recebe_video" title="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.recebe_video"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recebe_video</span></code></a>(stream)</p></td>
+<td><p>Configura a entrada de vídeo com um objeto externo.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.run" title="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.run"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code></a>()</p></td>
+<td><p>Detecta pessoas em um vídeo.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">setDaemon</span></code>(daemonic)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">setName</span></code>(name)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.start" title="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">start</span></code></a>()</p></td>
+<td><p>Executa o código principal em uma nova thread.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.stop" title="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.stop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stop</span></code></a>()</p></td>
+<td><p>Finaliza a thread.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.configura_detector">
+<code class="sig-name descname">configura_detector</code><span class="sig-paren">(</span><em class="sig-param">dir_modelo</em>, <em class="sig-param">tipo_modelo='yolo'</em>, <em class="sig-param">precisao_deteccao=0.4</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.configura_detector" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Detecta pessoas usando um modelo de deep learning.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dir_modelo</strong> : str</p>
+<blockquote>
+<div><p>Destino do modelo desejado.</p>
+</div></blockquote>
+<p><strong>tipo_modelo</strong> : {‘yolo’, ‘sdd’}, optional</p>
+<blockquote>
+<div><p>Tipo do modelo.</p>
+</div></blockquote>
+<p><strong>precisao_deteccao: float</strong></p>
+<blockquote>
+<div><p>Quão precisa a detecção deve ser. Deve estar entre
+0.0 e 1.0 inclusive. (padrão=0.4)</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong></p>
+<blockquote>
+<div><p>Se o tipo do modelo for inválido.</p>
+</div></blockquote>
+<p><strong>Exceções relacionadas ao OpenCV.</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.configura_video">
+<code class="sig-name descname">configura_video</code><span class="sig-paren">(</span><em class="sig-param">tipo</em>, <em class="sig-param">**keywords</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.configura_video" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Configura a entrada de vídeo internamente.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>tipo</strong> : {‘picamera’, ‘ipcamera’, ‘webcam’, ‘arquivo’}</p>
+<p><strong>resolucao</strong> : (int, int)</p>
+<blockquote>
+<div><p>Se ‘picamera’ foi escolhido.
+Tupla que representa a resolução do vídeo. Ex.: (320, 240).</p>
+</div></blockquote>
+<p><strong>fps</strong> : int</p>
+<blockquote>
+<div><p>Se ‘picamera’ foi escolhido.
+Frames por segundo.</p>
+</div></blockquote>
+<p><strong>cameraURL</strong> : str</p>
+<blockquote>
+<div><p>Se ‘ipcamera’ foi escolhido.
+Url da câmera.</p>
+</div></blockquote>
+<p><strong>login: str</strong></p>
+<blockquote>
+<div><p>Se ‘ipcamera’ foi escolhido.
+Login da câmera.</p>
+</div></blockquote>
+<p><strong>senha: str</strong></p>
+<blockquote>
+<div><p>Se ‘ipcamera’ foi escolhido.
+Senha da câmera.</p>
+</div></blockquote>
+<p><strong>idCam</strong> : str or int</p>
+<blockquote>
+<div><p>Se ‘webcam’ foi escolhido.
+Número da câmera. (padrão=0)</p>
+</div></blockquote>
+<p><strong>arquivo</strong> : str</p>
+<blockquote>
+<div><p>Se ‘arquivo’ foi escolhido.
+Caminho ao arquivo.</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>self</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>CannotOpenStreamError</strong></p>
+<blockquote>
+<div><p>Se não foi possível abrir o stream.</p>
+</div></blockquote>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">Ver também</p>
+<dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">usa_video_externo</span></code></dt><dd><p>Para receber um leitor de vídeo de fora.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.pega_dados_periodo">
+<code class="sig-name descname">pega_dados_periodo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.pega_dados_periodo" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Retorna dados coletados desde a última chamada (ou início).</p>
+<dl class="field-list">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>media</strong> : float</p>
+<blockquote>
+<div><p>Média ponderada dos valores com o intervalo de tempo.</p>
+</div></blockquote>
+<p><strong>max_valor</strong> : float</p>
+<blockquote>
+<div><p>Valor máximo recebido.</p>
+</div></blockquote>
+<p><strong>min_valor</strong> : float</p>
+<blockquote>
+<div><p>Valor mínimo recebido.</p>
+</div></blockquote>
+<p><strong>tempo_decorrido</strong> : float</p>
+<blockquote>
+<div><p>Tempo total decorrido.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.pega_frame">
+<code class="sig-name descname">pega_frame</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.pega_frame" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Retorna o último frame analizado.</p>
+<dl class="field-list">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+<blockquote>
+<div><p>Frame a ser retornado. Antes de qualquer frame ser lido
+da fonte, retorna uma imagem preta de mesmas dimensões do
+vídeo.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.pega_pessoas">
+<code class="sig-name descname">pega_pessoas</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.pega_pessoas" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Retorna o número de pessoas registradas no momento.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.recebe_video">
+<code class="sig-name descname">recebe_video</code><span class="sig-paren">(</span><em class="sig-param">stream</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.recebe_video" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Configura a entrada de vídeo com um objeto externo.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>stream</strong> : AbstractVideoStream</p>
+<blockquote>
+<div><p>Objeto de entrada de vídeo que herda de AbstractVideoStream.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.run" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Detecta pessoas em um vídeo.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.start" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Executa o código principal em uma nova thread.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>self</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.stop">
+<code class="sig-name descname">stop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.DetectorPessoasVideo.stop" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Finaliza a thread.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="lib.pessoas_lib.detector_pessoas_video.ModoDeteccao">
+<em class="property">class </em><code class="sig-prename descclassname">lib.pessoas_lib.detector_pessoas_video.</code><code class="sig-name descname">ModoDeteccao</code><span class="sig-paren">(</span><em class="sig-param">detector_movimento</em>, <em class="sig-param">max_tempo_sem_deteccao</em>, <em class="sig-param">max_tempo_parado</em>, <em class="sig-param">usar_rastreamento</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.ModoDeteccao" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Base: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Escolhe o modo de detecção de um loop em DeteccaoPessoasVideo.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>detector_movimento</strong> : imagelib.detector_movimento.DetectorMovimento</p>
+<blockquote>
+<div><p>Objeto que detecta movimento em um vídeo. Assume-se que já 
+esteja configurado e iniciado.</p>
+</div></blockquote>
+<p><strong>max_tempo_sem_deteccao</strong> : float</p>
+<blockquote>
+<div><p>Tempo máximo que se pode ficar usando métodos mais leves de
+detecção, ao invés do principal. Em casos em que o detector seja
+leve, o valor pode ser 0 (i.e. sempre detectar).
+Deve ser positivo ou zero.</p>
+</div></blockquote>
+<p><strong>max_tempo_parado</strong> : float</p>
+<blockquote>
+<div><p>Tempo máximo que se pode ficar sem usar algum método de 
+detecção, nos casos em que o frame basicamente não se moveu.
+Deve ser positivo ou zero.</p>
+</div></blockquote>
+<p><strong>usar_rastreamento</strong> : bool</p>
+<blockquote>
+<div><p>Se for verdadeiro, o detector só será usado uma vez a cada
+período de tempo, e um rastreador será empregado para
+localizar as pessoas detectadas até o detector ser empregado
+de novo.</p>
+</div></blockquote>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.pessoas_lib.detector_pessoas_video.ModoDeteccao.atualiza_modo" title="lib.pessoas_lib.detector_pessoas_video.ModoDeteccao.atualiza_modo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">atualiza_modo</span></code></a>(frame)</p></td>
+<td><p>Atualiza o modo no qual a detecção se encontra.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.pessoas_lib.detector_pessoas_video.ModoDeteccao.mudou_modo" title="lib.pessoas_lib.detector_pessoas_video.ModoDeteccao.mudou_modo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mudou_modo</span></code></a>()</p></td>
+<td><p>Retorna se o modo mudou ou não desde a última atualização Returns ——– bool</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="lib.pessoas_lib.detector_pessoas_video.ModoDeteccao.atualiza_modo">
+<code class="sig-name descname">atualiza_modo</code><span class="sig-paren">(</span><em class="sig-param">frame</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.ModoDeteccao.atualiza_modo" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Atualiza o modo no qual a detecção se encontra.
+Parameters
+———–
+frame : numpy.ndarray</p>
+<blockquote>
+<div><p>Frame do vídeo, que será usado na decisão do modo.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>str</dt><dd><p>Modo decidido.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.pessoas_lib.detector_pessoas_video.ModoDeteccao.mudou_modo">
+<code class="sig-name descname">mudou_modo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.detector_pessoas_video.ModoDeteccao.mudou_modo" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Retorna se o modo mudou ou não desde a última atualização
+Returns
+——–
+bool</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-lib.pessoas_lib.pessoas_historico">
+<span id="lib-pessoas-lib-pessoas-historico-module"></span><h2>lib.pessoas_lib.pessoas_historico module<a class="headerlink" href="#module-lib.pessoas_lib.pessoas_historico" title="Link permanente para este título">¶</a></h2>
+<dl class="class">
+<dt id="lib.pessoas_lib.pessoas_historico.PessoasHistorico">
+<em class="property">class </em><code class="sig-prename descclassname">lib.pessoas_lib.pessoas_historico.</code><code class="sig-name descname">PessoasHistorico</code><span class="sig-paren">(</span><em class="sig-param">max_historico=20</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.pessoas_historico.PessoasHistorico" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Base: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Grava estatísticas de pessoas em um período de tempo.</p>
+<p>Cada período é considerado uma iteração e os resultados de cada
+iteração, finalizadas em ‘finaliza_pessoa()’, são guardados em
+um históricod de capacidade ‘max_historico’.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>max_historico</strong> : int, optional</p>
+<blockquote>
+<div><p>Máximo de iterações guardadas. (Padrão=20)</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong></p>
+<blockquote>
+<div><p>Se max_historico não for ‘int’ ou for menor que zero</p>
+</div></blockquote>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.pessoas_lib.pessoas_historico.PessoasHistorico.atualiza_periodo" title="lib.pessoas_lib.pessoas_historico.PessoasHistorico.atualiza_periodo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">atualiza_periodo</span></code></a>(valor)</p></td>
+<td><p>Adiciona valores para a iteração atual.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#lib.pessoas_lib.pessoas_historico.PessoasHistorico.finaliza_periodo" title="lib.pessoas_lib.pessoas_historico.PessoasHistorico.finaliza_periodo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">finaliza_periodo</span></code></a>()</p></td>
+<td><p>Pega dados da iteração atual e inicia uma nova.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#lib.pessoas_lib.pessoas_historico.PessoasHistorico.pega_tempo_decorrido" title="lib.pessoas_lib.pessoas_historico.PessoasHistorico.pega_tempo_decorrido"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pega_tempo_decorrido</span></code></a>()</p></td>
+<td><p>Retorna o tempo decorrido desde que a iteração atual começou.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="lib.pessoas_lib.pessoas_historico.PessoasHistorico.atualiza_periodo">
+<code class="sig-name descname">atualiza_periodo</code><span class="sig-paren">(</span><em class="sig-param">valor</em><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.pessoas_historico.PessoasHistorico.atualiza_periodo" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Adiciona valores para a iteração atual.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>valor</strong> : float</p>
+<blockquote>
+<div><p>Valor a ser adicionado.</p>
+</div></blockquote>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>self</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.pessoas_lib.pessoas_historico.PessoasHistorico.finaliza_periodo">
+<code class="sig-name descname">finaliza_periodo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.pessoas_historico.PessoasHistorico.finaliza_periodo" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Pega dados da iteração atual e inicia uma nova.</p>
+<p>Os valores de retorno se referem apenas à iteração atual.</p>
+<dl class="field-list">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>media</strong> : float</p>
+<blockquote>
+<div><p>Média ponderada dos valores com o intervalo de tempo.</p>
+</div></blockquote>
+<p><strong>max_valor</strong> : float</p>
+<blockquote>
+<div><p>Valor máximo recebido.</p>
+</div></blockquote>
+<p><strong>min_valor</strong> : float</p>
+<blockquote>
+<div><p>Valor mínimo recebido.</p>
+</div></blockquote>
+<p><strong>tempo_decorrido</strong> : float</p>
+<blockquote>
+<div><p>Tempo total decorrido.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lib.pessoas_lib.pessoas_historico.PessoasHistorico.pega_tempo_decorrido">
+<code class="sig-name descname">pega_tempo_decorrido</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lib.pessoas_lib.pessoas_historico.PessoasHistorico.pega_tempo_decorrido" title="Link permanente para esta definição">¶</a></dt>
+<dd><p>Retorna o tempo decorrido desde que a iteração atual começou.</p>
+<dl class="field-list">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>float</p>
+<blockquote>
+<div><p>Tempo decorrido.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-lib.pessoas_lib">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lib.pessoas_lib" title="Link permanente para este título">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Busca rápida</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Ir" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navegação</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="Índice Geral"
+             >índice</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Índice de Módulos Python"
+             >módulos</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">documentação Detector de Pessoas em Vídeos </a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, LCC.
+      Criado usando <a href="http://sphinx-doc.org/">Sphinx</a> 2.1.0.
+    </div>
+  </body>
+</html>

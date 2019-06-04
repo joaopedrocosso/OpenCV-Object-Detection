@@ -44,7 +44,8 @@ class AbstractVideoStream(ABC):
 
 	@abstractmethod
 	def pega_dimensoes(self):
-		'''Retorna as dimensões dos frames do vídeo
+		'''Retorna as dimensões dos frames do vídeo.
+		
 		Returns
 		--------
 		(int, int)
