@@ -7,3 +7,4 @@ detector-old.py
 *.pyc
 /env
 /docs
+/.vscode
