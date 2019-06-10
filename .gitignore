@@ -5,3 +5,5 @@ ex.py
 detector-old.py
 .env
 *.pyc
+/env
+/docs

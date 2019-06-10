@@ -1,6 +1,7 @@
 import argparse
 import time
 
+from videolib.fileVideoStream import FileVideoStream
 from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas, DEFAULT_PRECISAO_DETECCAO
 from pessoas_lib.detector_pessoas_video import DetectorPessoasVideo
 from imagelib import ktools
@@ -11,10 +12,12 @@ def main():
 
     detector = (
         DetectorPessoasVideo(**detector_init_args)
-        .configura_video(**cam_args)
+        #.configura_video(**cam_args)
         .configura_detector(**modelo_args)
-        .start()
+        #.start()
     )
+    detector.recebe_video(FileVideoStream('../detector-itens/videos/03.mp4'))
+    detector.start()
 
     print('\nExecutando reconhecimento de pessoas.')
             

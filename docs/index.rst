@@ -1,14 +1,18 @@
-.. Detector de Pessoas em Vídeos documentation master file, created by
-   sphinx-quickstart on Tue Jun  4 14:17:13 2019.
+.. Detector de Pessoas em Vídeo documentation master file, created by
+   sphinx-quickstart on Mon Jun 10 12:55:37 2019.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Documentação do Detector de Pessoas em Vídeos do LCC.
-=========================================================
+Welcome to Detector de Pessoas em Vídeo's documentation!
+========================================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+.. automodule:: detector.py
+	:members:
+
 
 
 Indices and tables

@@ -97,10 +97,8 @@ class VideoStreamCV(AbstractVideoStream, Thread):
 		'''
 		if self.stopped:
 			raise StreamStoppedError('Leitura já parada.')
-		
 		if self.atualiza_frames_auto:
 			return self.frame
-		
 		try:
 			return self._update_once()
 		except (StreamStoppedError, StreamClosedError):
@@ -139,4 +137,5 @@ class VideoStreamCV(AbstractVideoStream, Thread):
 			self.stop()
 			raise StreamClosedError('Não foi possível ler frame do stream. Stream parado.')
 		self.frame = frame
+
 		return self.frame

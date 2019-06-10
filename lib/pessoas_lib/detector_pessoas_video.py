@@ -3,8 +3,8 @@ import cv2 as cv
 from threading import Thread
 
 from imagelib import ktools
-from imagelib.detector_movimento import DetectorMovimento
-from imagelib.rastreador import Rastreador
+from imagelib.detector_movimento_cv import DetectorMovimentoCV as DetectorMovimento
+from imagelib.rastreadores.rastreador_cv import RastreadorCV as Rastreador
 from videolib.videoStream import VideoStream
 from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas
 from pessoas_lib.pessoas_historico import PessoasHistorico
@@ -127,7 +127,6 @@ class DetectorPessoasVideo(Thread):
         ---------
         usa_video_externo : Para receber um leitor de vídeo de fora.
         '''
-
         try:
             self.stream = VideoStream(tipo, **keywords)
         except (ImportError, CannotOpenStreamError):
@@ -220,11 +219,10 @@ class DetectorPessoasVideo(Thread):
         )
         rastreador = Rastreador()
         controla_periodo_loop = LoopPeriodControl(PERIODO_MINIMO)
-
+        
         while not self.stopped:
-
+            
             tempo_comeco_iteracao = time.time()
-
             try:
                 frame = self.stream.read()
             except (StreamClosedError, StreamStoppedError) as e:
@@ -238,7 +236,7 @@ class DetectorPessoasVideo(Thread):
             # Decide se o loop estará no modo 'detectando', 
             # 'rastreando' ou 'parado'.
             modo = modo_deteccao.atualiza_modo(frame)
-
+            
             if modo == 'detectando':
                 try:
                     _, caixas, pesos = self.detectorPessoas.detecta_pessoas(

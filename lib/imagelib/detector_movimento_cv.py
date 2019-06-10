@@ -7,7 +7,7 @@ from videolib.abstractVideoStream import AbstractVideoStream
 from videolib.exceptions import StreamClosedError, StreamStoppedError
 from imagelib import ktools
 
-class DetectorMovimento(Thread):
+class DetectorMovimentoCV(Thread):
 
     '''Detecta movimento em um vídeo.
 

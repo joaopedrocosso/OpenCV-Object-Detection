@@ -1,6 +1,6 @@
 import cv2 as cv
 
-class Rastreador:
+class RastreadorCV:
 	
 	'''Rastreia objetos em um vídeo.
 
