@@ -1,5 +1,6 @@
-from threading import Thread 
 import cv2 as cv
+import threading
+from threading import Thread 
 
 from . import auxiliares
 from .abstractVideoStream import AbstractVideoStream
@@ -41,11 +42,14 @@ class VideoStreamCV(AbstractVideoStream, Thread):
 		self.dimensoes_frame = (self.stream.get(cv.CAP_PROP_FRAME_WIDTH),
 								self.stream.get(cv.CAP_PROP_FRAME_HEIGHT))
 		
-		# frame inicializado com uma imagem preta
 		self.frame = ktools.black_image(*self.dimensoes_frame)
-		#Inicializando a variavel que indica a parada da thread
+		
 		self.stopped = False
 		self.atualiza_frames_auto = atualiza_frames_auto
+
+		# Só usado se 'atualiza_frames_auto' for False.
+		self.threads_que_usaram_o_frame_atual = set()
+		self.lock = threading.Lock()
 
 	def start(self):
 		'''
@@ -99,9 +103,11 @@ class VideoStreamCV(AbstractVideoStream, Thread):
 			raise StreamStoppedError('Leitura já parada.')
 		if self.atualiza_frames_auto:
 			return self.frame
+
 		try:
-			return self._update_once()
+			return self._read_compartilhado()
 		except (StreamStoppedError, StreamClosedError):
+			self.stop()
 			raise
 
 	def stop(self):
@@ -109,6 +115,19 @@ class VideoStreamCV(AbstractVideoStream, Thread):
 		self.stopped = True
 		if not self.atualiza_frames_auto:
 			self.stream.release()
+
+
+	def _read_compartilhado(self):
+		thread_atual = threading.current_thread().name
+		with self.lock:
+			if thread_atual in self.threads_que_usaram_o_frame_atual:
+				self.threads_que_usaram_o_frame_atual = set()
+				try:
+					self._update_once()
+				except (StreamClosedError, StreamStoppedError):
+					raise
+			self.threads_que_usaram_o_frame_atual.add(thread_atual)
+		return self.frame
 
 	def _update_once(self):
 		'''Pega um frame do stream.

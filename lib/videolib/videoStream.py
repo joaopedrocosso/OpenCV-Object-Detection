@@ -46,7 +46,6 @@ class VideoStream(AbstractVideoStream):
 		CannotOpenStreamError
 			Se não for possível abrir o stream.
 		'''
-		
 		if tipo == 'picamera':
 			from .piVideoStream import PiVideoStream
 			self.stream = PiVideoStream(keywords['resolucao'], keywords['fps'])

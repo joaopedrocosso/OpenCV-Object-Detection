@@ -56,7 +56,7 @@ class DetectorPessoasVideo(Thread):
 
     def __init__(self, mostrar_caixas=False, mostrar_precisao=False,
                  max_tempo_sem_deteccao=5.0, max_tempo_parado=60.0,
-                 max_largura_frame=700, usar_rastreamento=False):
+                 max_largura_frame=700, usar_rastreamento=True):
 
         super().__init__()
 
@@ -404,8 +404,13 @@ class ModoDeteccao:
         parado_demais = time.time()-self.tempo_em_que_parou >= self.max_tempo_parado
         sem_detectar_demais = (
             time.time()-self.tempo_ultima_deteccao >= self.max_tempo_sem_deteccao)
-        
-        print(teve_movimento, parado_demais, sem_detectar_demais)
+    
+        print(
+            'Teve movimento? \t{}\n'
+            'Parado demais? \t\t{}\n'
+            'Sem detectar demais? \t{}\n\n'
+            .format(teve_movimento, parado_demais, sem_detectar_demais)
+        )
         if self.modo_anterior == 'detectando':
             if not teve_movimento:
                 self.modo = 'parado'

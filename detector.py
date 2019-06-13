@@ -12,12 +12,10 @@ def main():
 
     detector = (
         DetectorPessoasVideo(**detector_init_args)
-        #.configura_video(**cam_args)
+        .configura_video(**cam_args)
         .configura_detector(**modelo_args)
-        #.start()
+        .start()
     )
-    detector.recebe_video(FileVideoStream('../detector-itens/videos/03.mp4'))
-    detector.start()
 
     print('\nExecutando reconhecimento de pessoas.')
             
