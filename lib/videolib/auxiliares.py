@@ -5,7 +5,7 @@ def adiciona_autenticacao_url(url, login, senha):
 
 	'''Retorna uma url no formato porta://login:senha@endereço.
 
-	Parâmetros
+	Parameters
 	----------
 	url : str
 		URL ou endereço ip desejado.
@@ -14,7 +14,7 @@ def adiciona_autenticacao_url(url, login, senha):
 	senha : str
 		Senha.
 
-	Retorna
+	Returns
 	--------
 	str
 		Endereço final.

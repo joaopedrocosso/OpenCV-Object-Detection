@@ -1,5 +1,6 @@
 import argparse
 import time
+from datetime import datetime
 
 from videolib.fileVideoStream import FileVideoStream
 from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas, DEFAULT_PRECISAO_DETECCAO
@@ -8,7 +9,7 @@ from imagelib import ktools
 from toolslib import ptools
 
 def main():
-    cam_args, modelo_args, detector_init_args, mostrar_video = pega_argumentos()
+    cam_args, modelo_args, detector_init_args, video_info, json_info = pega_argumentos()
 
     detector = (
         DetectorPessoasVideo(**detector_init_args)
@@ -18,14 +19,18 @@ def main():
     )
 
     print('\nExecutando reconhecimento de pessoas.')
-            
+
+    tempo = time.time()
 
     while not detector.stopped:
-        if mostrar_video:
+        if video_info['mostrar_video']:
             k = ktools.show_image(detector.pega_frame(), title='Detector',
                                   wait_time=1, close_window=False)
             if chr(k) == 'q':
                 break
+            if time.time()-tempo >= json_info['tempo_atualizacao_json']:
+                cria_json_pessoa(*detector.pega_dados_periodo(), json_info['destino_json'])
+                tempo = time.time()
             time.sleep(0.5)
     detector.stop()
     ktools.destroy_all_windows()
@@ -34,7 +39,7 @@ def main():
 
 
 def cria_json_pessoa(media_pessoas, max_pessoas, min_pessoas, tempo_total,
-                     frame, destino_json):
+                     destino_json, frame=None):
     '''Cria um JSON com os dados de pessoas.
     
     Parameters
@@ -47,10 +52,10 @@ def cria_json_pessoa(media_pessoas, max_pessoas, min_pessoas, tempo_total,
         Número mínimo de pessoas registradas.
     tempo_total : float
         Tempo total desde o registro da primeira pessoa na média.
-    frame : numpy.ndarray
-        Imagem do último frame lido.
     destino_json : str
         Onde guardar o JSON que será criado.
+    frame : numpy.ndarray, optional
+        Imagem do último frame lido. (Padrão=None)
     '''
 
     #print('\ncriando JSON...')
@@ -58,20 +63,22 @@ def cria_json_pessoa(media_pessoas, max_pessoas, min_pessoas, tempo_total,
         'MediaPessoas':media_pessoas,
         'MaximoPessoas':max_pessoas,
         'MinimoPessoas':min_pessoas,
-        'TempoTotal':'{:.2f}'.format(tempo_total)
+        'TempoTotal':'{:.2f}'.format(tempo_total),
+        'HorarioAnalise':str(datetime.now())
     }
 
+    texto_dict['UltimoFrameCapturado'] = \
+        ptools.criaImagemString(frame) if frame is not None else ''
+
     try:
-        ptools.criarJSON(texto_dict, frame, destino_json)
+        ptools.criarJSON(texto_dict, destino_json)
     except Exception:
-        #print('Nao foi possivel criar JSON.')
+        print('Nao foi possivel criar JSON.')
         pass
     else:
-        #print('JSON criado com sucesso. {}'
-        #.format(datetime.datetime.now().strftime('%c')))
+        print('JSON criado com sucesso. {}'
+              .format(datetime.now().strftime('%c')))
         pass
-
-    #print()
 
 
 
@@ -129,7 +136,18 @@ def processa_argumentos(args):
         'mostrar_precisao':args.mostrar_precisao,
     }
 
-    return cam_args, modelo_args, detector_init_args, args.mostrar_video
+    video_info = {
+        'mostrar_video':args.mostrar_video,
+        'mostrar_caixas':args.mostrar_caixas,
+        'mostrar_precisao':args.mostrar_precisao
+    }
+
+    json_info = {
+        'destino_json':args.destino_json,
+        'tempo_atualizacao_json':args.tempo_atualizacao_json
+    }
+
+    return cam_args, modelo_args, detector_init_args, video_info, json_info
 
 
 def checa_argumentos():
@@ -160,7 +178,7 @@ def checa_argumentos():
     # JSON
     parser.add_argument('--destino-json', default=JSON_DEST_PATH,
                         help='Onde o JSON contendo o output do programa sera guardado')
-    parser.add_argument('--atualizacao-json', default=TEMPO_ATUALIZACAO_JSON, type=int,
+    parser.add_argument('--tempo-atualizacao-json', default=TEMPO_ATUALIZACAO_JSON, type=int,
                         help='Tempo de atualizacao do JSON (em segundos)')
 
     # Video
@@ -171,6 +189,7 @@ def checa_argumentos():
                         help='Mostrar caixas em volta das pessoas no vídeo.')
     parser.add_argument('--mostrar-precisao', action='store_true',
                         help='Mostrar precisão acima das caixas no vídeo.')
+
     parser.add_argument('--precisao-deteccao', type=float,
                         default=DEFAULT_PRECISAO_DETECCAO,
                         help='Precisao da deteccao de pessoas [0.0, 1.0]')

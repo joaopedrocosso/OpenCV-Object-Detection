@@ -1,4 +1,4 @@
-import cv2
+import cv2 as cv
 import json
 import base64
 
@@ -10,31 +10,21 @@ def criarJSON(dados, frame, path="dados.json"):
 	Parameters
 	-----------
 	dados : dict
-		Texto a colocar no JSON.
-	frame : numpy.ndarray
-		Imagem a ser colocada no JSON.
+		Campos do JSON.
 	path : str, optional
 		Diretório onde o JSON será salvo.
 	'''
-
-	dados = dados.copy()
-
-	horarioDaAnalise = str(datetime.now())
-	frameString = criaFrameString(frame)
-	
-	dados['UltimoFrameCapturado'] = frameString
-	dados['HorarioAnalise'] = horarioDaAnalise
 
 	with open(path, "w") as f:
 		json.dump(dados,f)
 
 
-def criaFrameString(frame):
+def criaImagemString(imagem):
 	'''Transforma uma imagem em uma string base64.
 	
 	Parameters
 	-----------
-	frame : numpy.ndarray
+	imagem : numpy.ndarray
 		Imagem a ser convertida para string.
 
 	Returns
@@ -43,10 +33,10 @@ def criaFrameString(frame):
 		Imagem convertida em string base64.
 	'''
 
-	if frame is not None:
-		_,buffer = cv2.imencode('.jpg', frame)
-		frameString = base64.b64encode(buffer).decode('utf-8')
+	if imagem is not None:
+		_,buffer = cv.imencode('.jpg', framem)
+		imagemString = base64.b64encode(buffer).decode('utf-8')
 	else:
-		frameString = ''
+		imagemString = ''
 
-	return frameString
+	return imagemString

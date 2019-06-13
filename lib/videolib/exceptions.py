@@ -2,7 +2,7 @@ class VideoStreamError(Exception):
 	
 	'''Exceção genérica de erros em leitores de vídeo.
 
-	Parâmetros
+	Parameters
 	-----------
 	message : str, opcional
 		Mensagem a imprimir. (Padrão='')
@@ -18,7 +18,7 @@ class CannotOpenStreamError(VideoStreamError):
 
 	'''Exceção para quando não é possível abrir um stream.
 
-	Parâmetros
+	Parameters
 	-----------
 	message : str, opcional
 		Mensagem a imprimir. (Padrão='')
@@ -32,7 +32,7 @@ class StreamClosedError(VideoStreamError):
 
 	'''Exceção para quando o stream já foi fechado.
 
-	Parâmetros
+	Parameters
 	-----------
 	message : str, opcional
 		Mensagem a imprimir. (Padrão='')
@@ -46,7 +46,7 @@ class StreamStoppedError(VideoStreamError):
 
 	'''Exceção para quando o stream já foi parado.
 
-	Parâmetros
+	Parameters
 	-----------
 	message : str, opcional
 		Mensagem a imprimir. (Padrão='')

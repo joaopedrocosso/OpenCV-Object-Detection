@@ -405,12 +405,12 @@ class ModoDeteccao:
         sem_detectar_demais = (
             time.time()-self.tempo_ultima_deteccao >= self.max_tempo_sem_deteccao)
     
-        print(
-            'Teve movimento? \t{}\n'
-            'Parado demais? \t\t{}\n'
-            'Sem detectar demais? \t{}\n\n'
-            .format(teve_movimento, parado_demais, sem_detectar_demais)
-        )
+        # print(
+        #     'Teve movimento? \t{}\n'
+        #     'Parado demais? \t\t{}\n'
+        #     'Sem detectar demais? \t{}\n\n'
+        #     .format(teve_movimento, parado_demais, sem_detectar_demais)
+        # )
         if self.modo_anterior == 'detectando':
             if not teve_movimento:
                 self.modo = 'parado'

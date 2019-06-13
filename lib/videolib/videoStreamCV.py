@@ -118,6 +118,24 @@ class VideoStreamCV(AbstractVideoStream, Thread):
 
 
 	def _read_compartilhado(self):
+		'''
+		Lê um frame novo do arquivo, se a thread que chamou o método 
+		já leu o último frame guardado, ou retorna o frame atual, se
+		a thread ainda não o leu.
+
+		Returns
+		--------
+		frame : numpy.ndarray
+			Um frame.
+		
+		Raises
+		-------
+		StreamClosedError
+			Se a fonte está inacessível ou se não foi possível ler um
+			frame da fonte.
+		StreamStoppedError
+			Se a leitura já foi parada.
+		'''
 		thread_atual = threading.current_thread().name
 		with self.lock:
 			if thread_atual in self.threads_que_usaram_o_frame_atual:
