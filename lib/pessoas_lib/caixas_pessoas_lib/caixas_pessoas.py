@@ -114,7 +114,6 @@ class CaixasPessoas:
                 )
             # Levanta ValueError
             self._atualizar_caixas_novas(caixas, pesos, pos_original)
-
         return self.pega_pessoas()
 
 
@@ -150,7 +149,6 @@ class CaixasPessoas:
         ValueError
             Se algum dos parâmetros não bater as especificações.
         '''
-
         # Passa a origem para o centro.
         caixas = [caixa_tools.muda_origem_caixa(*c, pos_original=pos_original)
                   for c in caixas]
@@ -209,7 +207,7 @@ class CaixasPessoas:
 
             if len(caixas_usadas) < len(caixas):
                 caixas_nao_usadas = (set(range(len(caixas)))
-                                    .difference(caixas)) 
+                                    .difference(caixas_usadas)) 
                 # Levanta ValueError.
                 self._registra_pessoas(
                     [c for i, c in enumerate(caixas)

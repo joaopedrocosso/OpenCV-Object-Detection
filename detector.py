@@ -9,6 +9,7 @@ from imagelib import ktools
 from toolslib import ptools
 
 def main():
+
     cam_args, modelo_args, detector_init_args, video_info, json_info = pega_argumentos()
 
     detector = (
@@ -21,7 +22,7 @@ def main():
     print('\nExecutando reconhecimento de pessoas.')
 
     tempo = time.time()
-
+    
     while not detector.stopped:
         if video_info['mostrar_video']:
             k = ktools.show_image(detector.pega_frame(), title='Detector',
@@ -58,7 +59,7 @@ def cria_json_pessoa(media_pessoas, max_pessoas, min_pessoas, tempo_total,
         Imagem do último frame lido. (Padrão=None)
     '''
 
-    #print('\ncriando JSON...')
+    # print('\ncriando JSON...')
     texto_dict = {
         'MediaPessoas':media_pessoas,
         'MaximoPessoas':max_pessoas,
@@ -73,26 +74,68 @@ def cria_json_pessoa(media_pessoas, max_pessoas, min_pessoas, tempo_total,
     try:
         ptools.criarJSON(texto_dict, destino_json)
     except Exception:
-        print('Nao foi possivel criar JSON.')
+        # print('Nao foi possivel criar JSON.')
         pass
     else:
-        print('JSON criado com sucesso. {}'
-              .format(datetime.now().strftime('%c')))
+        # print('JSON criado com sucesso. {}'
+        #       .format(datetime.now().strftime('%c')))
         pass
 
 
 
 def pega_argumentos():
+    '''
+    Pega e processa alimentos.
 
-    return processa_argumentos(checa_argumentos())
+    Se algum dos argumentos recebidos não seguir as especificações, o
+    programa é fechado.
 
-def processa_argumentos(args):
+    Returns
+    --------
+    (dict, dict, dict, dict, dict)
+        Valores retormados pelas funções processa_argumentos_camera(), 
+        processa_argumentos_modelo(), processa_argumentos_detector(),
+        processa_argumentos_video(), processa_argumentos_json().
+    '''
+
+    args = checa_argumentos()
+    cam_args = processa_argumentos_camera(args)
+    modelo_args = processa_argumentos_modelo(args)
+    detector_init_args = processa_argumentos_detector(args)
+    video_info = processa_argumentos_video(args)
+    json_info = processa_argumentos_json(args)
+    return cam_args, modelo_args, detector_init_args, video_info, json_info
+
+def processa_argumentos_camera(args):
+    '''Processa or argumentos relacionados à entrada de vídeo.
+
+    Parameters
+    -----------
+    args
+        Argumentos recebidos.
+    
+    Returns
+    --------
+    detector_init_info : dict
+        Valores do dicionário dependem do tipo de entrada escolhido.
+
+        Se for webcam:
+            {'idCam': (int) id da câmera, 'tipo_camera': 'webcam'}
+
+        Se for arquivo:
+            {'arquivo': (str) 'caminho/para/arquivo', 'tipo_camera': 'arquivo'}
+
+        Se for ipcamera:
+            {(itens do json)..., 'tipo_camera': 'ipcamera'}
+
+        Se for a câmera da nvidia:
+            {(itens do json)..., 'tipo_camera': 'nvidia_cam'}
+    '''
 
     JSON_PICAMERA_PATH = 'json/config-picamera.json'
     JSON_IPCAMERA_PATH = 'json/config-ipcamera.json'
     JSON_NVIDIA_CAM_PATH = 'json/config-nvidia.json'
 
-    # Checa se o usuario quer ler de fontes configuradas em JSONs
     if args.webcam is None and args.arquivo_video is None:
         json_path = ''
         if args.ipcamera:
@@ -119,38 +162,111 @@ def processa_argumentos(args):
     elif args.arquivo_video is not None:
         cam_args = {'arquivo': args.arquivo_video}
         tipo_camera = 'arquivo'
+    
+    cam_args['tipo'] = tipo_camera
+
+    return cam_args
+
+def processa_argumentos_modelo(args):
+    '''Processa or argumentos relacionados ao modelo usado pelo detector.
+
+    Parameters
+    -----------
+    args
+        Argumentos recebidos.
+    
+    Returns
+    --------
+    modelo_args : {str:str, str:str, str:float}
+        Diretório do modelo a ser usado pelo detector, seu tipo e a 
+        precisão da detecção.
+    '''
 
     # Checa o modelo do detector (padrao=YOLO)
     if args.modelo_ssd is not None:
         dir_modelo = args.modelo_ssd
         tipo_modelo = 'ssd'
-    elif args.modelo_yolo is not None:
+    else:#elif args.modelo_yolo is not None:
         dir_modelo = args.modelo_yolo
         tipo_modelo = 'yolo'
-
-    cam_args['tipo'] = tipo_camera
+    
     modelo_args = {'dir_modelo':dir_modelo, 'tipo_modelo':tipo_modelo,
                    'precisao_deteccao':args.precisao_deteccao}
+    return modelo_args
+
+def processa_argumentos_detector(args):
+    '''Processa or argumentos relacionados à inicialização do detector.
+
+    Parameters
+    -----------
+    args
+        Argumentos recebidos.
+    
+    Returns
+    --------
+    detector_init_args : {str:bool, str:bool}
+        Flags para mostrar as caixas em torno das pessoas detectadas e
+        a probabilidade da caixa representar uma pessoa.
+    '''
     detector_init_args = {
         'mostrar_caixas':args.mostrar_caixas,
         'mostrar_precisao':args.mostrar_precisao,
     }
+    return detector_init_args
 
+def processa_argumentos_video(args):
+    '''Processa or argumentos relacionados à entrada de vídeo.
+
+    Parameters
+    -----------
+    args
+        Argumentos recebidos.
+    
+    Returns
+    --------
+    video_info : {str:bool, str:bool, str:bool}
+        Flags para abrir uma janela com o vídeo, mostrar caixas em 
+        torno das pessoas detectadas e a probabilidade da caixa 
+        representar uma pessoa.
+    '''
     video_info = {
         'mostrar_video':args.mostrar_video,
         'mostrar_caixas':args.mostrar_caixas,
         'mostrar_precisao':args.mostrar_precisao
     }
+    return video_info
 
+def processa_argumentos_json(args):
+    '''Processa or argumentos relacionados ao JSON.
+
+    Parameters
+    -----------
+    args
+        Argumentos recebidos.
+    
+    Returns
+    --------
+    json_info : {str:str, str:int}
+        Destino do JSON e tempo de atualização do JSON.
+    '''
     json_info = {
         'destino_json':args.destino_json,
         'tempo_atualizacao_json':args.tempo_atualizacao_json
     }
-
-    return cam_args, modelo_args, detector_init_args, video_info, json_info
+    return json_info
 
 
 def checa_argumentos():
+    '''
+    Pega os argumentos do terminal e os organiza de forma estruturada.
+
+    Fecha o programa caso algum critério não tenha sido atendido.
+    
+    Returns
+    --------
+    argparse.Namespace
+        Argumentos recebidos.
+    '''
 
     TEMPO_ATUALIZACAO_JSON = 60.0 # segundos
     JSON_DEST_PATH = 'json/dados.json'

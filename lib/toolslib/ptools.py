@@ -4,7 +4,7 @@ import base64
 
 from datetime import datetime
 
-def criarJSON(dados, frame, path="dados.json"):
+def criarJSON(dados, path="dados.json"):
 	'''Cria um JSON com uma imagem.
 	
 	Parameters

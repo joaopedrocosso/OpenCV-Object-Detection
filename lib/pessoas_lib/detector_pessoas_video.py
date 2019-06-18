@@ -56,7 +56,7 @@ class DetectorPessoasVideo(Thread):
 
     def __init__(self, mostrar_caixas=False, mostrar_precisao=False,
                  max_tempo_sem_deteccao=5.0, max_tempo_parado=60.0,
-                 max_largura_frame=700, usar_rastreamento=True):
+                 max_largura_frame=700, usar_rastreamento=False):
 
         super().__init__()
 
@@ -256,8 +256,7 @@ class DetectorPessoasVideo(Thread):
                 pesos = []
             else: #modo == 'parado':
                 caixas, pesos = [], []
-                
-                    
+
             # Se a iteração for muito lenta, reiniciar o registro.
             if time.time()-tempo_comeco_iteracao > MAX_TEMPO_ENTRE_REGISTROS:
                 self.pessoas_registradas.reiniciar()
@@ -279,7 +278,7 @@ class DetectorPessoasVideo(Thread):
         self.stop()
 
 
-    def pega_pessoas(self):
+    def pega_quantidade_pessoas(self):
         '''Retorna o número de pessoas registradas no momento.
         
         Returns
@@ -303,6 +302,7 @@ class DetectorPessoasVideo(Thread):
             return self.frame
         else:
             return ktools.black_image(*self.stream.pega_dimensoes())
+
 
     def pega_dados_periodo(self):
         '''Retorna dados coletados desde a última chamada (ou início).

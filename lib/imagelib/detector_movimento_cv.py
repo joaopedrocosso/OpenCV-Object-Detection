@@ -39,6 +39,7 @@ class DetectorMovimentoCV(Thread):
         self._houve_mudanca = False
         self.stopped = False
         self.stream = None
+        self.porcentagem_ultimo_movimento = 0.0
 
     def recebe_video(self, stream):
         if not isinstance(stream, AbstractVideoStream):
@@ -110,8 +111,18 @@ class DetectorMovimentoCV(Thread):
         '''
 
         porcentagem_mudanca = self._aplicar_mascara(frame)
+        self.porcentagem_ultimo_movimento = porcentagem_mudanca
         #print('>> {} || {}'.format(porcentagem_mudanca, mudanca_minima))
         return (porcentagem_mudanca >= self.mudanca_minima)
+    
+    def pega_porcentagem_ultimo_movimento(self):
+        '''Retorna a porcentagem de mudança do último movimento.
+        
+        Returns
+        --------
+        float
+        '''
+        return self.porcentagem_ultimo_movimento
 
     def _aplicar_mascara(self, frame):
         '''Retorna a taxa de mudança no vídeo.
