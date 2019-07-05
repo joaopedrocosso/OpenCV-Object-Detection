@@ -1,10 +1,12 @@
 import argparse
 import time
+import json
 from datetime import datetime
 
 from videolib.fileVideoStream import FileVideoStream
 from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas, DEFAULT_PRECISAO_DETECCAO
 from pessoas_lib.detector_pessoas_video import DetectorPessoasVideo
+from mqtt_lib.mqtt_publisher import MQTTPublisher
 from imagelib import ktools
 from toolslib import ptools
 
@@ -19,6 +21,10 @@ def main():
         .start()
     )
 
+    publicador = MQTTPublisher(hostname='postman.cloudmqtt.com', port=12909,
+                               username='soizdkgg', password='2dxd4P_lG-PG')
+    publicador.adicionar_topico('detector/camera-1')
+
     print('\nExecutando reconhecimento de pessoas.')
 
     tempo = time.time()
@@ -30,7 +36,7 @@ def main():
             if chr(k) == 'q':
                 break
             if time.time()-tempo >= json_info['tempo_atualizacao_json']:
-                cria_json_pessoa(*detector.pega_dados_periodo(), json_info['destino_json'])
+                publicador.publish(cria_json_str(*detector.pega_dados_periodo()))
                 tempo = time.time()
             time.sleep(0.5)
     detector.stop()
@@ -39,8 +45,7 @@ def main():
 
 
 
-def cria_json_pessoa(media_pessoas, max_pessoas, min_pessoas, tempo_total,
-                     destino_json, frame=None):
+def cria_json_str(media_pessoas, max_pessoas, min_pessoas, tempo_total, frame=None):
     '''Cria um JSON com os dados de pessoas.
     
     Parameters
@@ -60,27 +65,18 @@ def cria_json_pessoa(media_pessoas, max_pessoas, min_pessoas, tempo_total,
     '''
 
     # print('\ncriando JSON...')
-    texto_dict = {
-        'MediaPessoas':media_pessoas,
+    json_dict = {
+        'MediaPessoas':'{:.2f}'.format(media_pessoas),
         'MaximoPessoas':max_pessoas,
         'MinimoPessoas':min_pessoas,
         'TempoTotal':'{:.2f}'.format(tempo_total),
         'HorarioAnalise':str(datetime.now())
     }
 
-    texto_dict['UltimoFrameCapturado'] = \
+    json_dict['UltimoFrameCapturado'] = \
         ptools.criaImagemString(frame) if frame is not None else ''
 
-    try:
-        ptools.criarJSON(texto_dict, destino_json)
-    except Exception:
-        # print('Nao foi possivel criar JSON.')
-        pass
-    else:
-        # print('JSON criado com sucesso. {}'
-        #       .format(datetime.now().strftime('%c')))
-        pass
-
+    return json.dumps(json_dict)
 
 
 def pega_argumentos():
