@@ -21,7 +21,7 @@ def main():
         .start()
     )
 
-    publicador = MQTTPublisher(hostname='postman.cloudmqtt.com', port=12909,
+    publicador = MQTTPublisher(hostname='postman.cloudmqtt.com', porta=12909,
                                username='soizdkgg', password='2dxd4P_lG-PG')
     publicador.adicionar_topico('detector/camera-1')
 
