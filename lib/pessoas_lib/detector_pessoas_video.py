@@ -59,7 +59,7 @@ class DetectorPessoasVideo(Thread):
                  max_largura_frame=700, usar_rastreamento=False):
 
         super().__init__()
-
+        
         self.mostrar_caixas = mostrar_caixas
         self.mostrar_precisao = mostrar_precisao
         self.usar_rastreamento = usar_rastreamento
@@ -371,14 +371,19 @@ class ModoDeteccao:
         período de tempo, e um rastreador será empregado para
         localizar as pessoas detectadas até o detector ser empregado
         de novo.
+    max_tempo_sem_atualizar_modo : int, optional
+        Tempo máximo entre duas atualizações de modo para que se possa
+        usar o rastreamento de pessoas. (Padrão=1)
     '''
 
     def __init__(self, detector_movimento, max_tempo_sem_deteccao, 
-                 max_tempo_parado, usar_rastreamento):
+                 max_tempo_parado, usar_rastreamento, 
+                 max_tempo_sem_atualizar_modo=1):
 
         self.detector_movimento = detector_movimento
         self.max_tempo_sem_deteccao = max_tempo_sem_deteccao
         self.max_tempo_parado = max_tempo_parado
+        self.max_tempo_sem_atualizar_modo = max_tempo_sem_atualizar_modo
         self.usar_rastreamento = usar_rastreamento
 
         self.tempo_em_que_parou = time.time()-self.max_tempo_parado
@@ -386,6 +391,7 @@ class ModoDeteccao:
 
         self.modo = ''
         self.modo_anterior = ''
+        self.tempo_ultima_checagem = time.time()
     
     def atualiza_modo(self, frame):
         '''Atualiza o modo no qual a detecção se encontra.
@@ -399,11 +405,13 @@ class ModoDeteccao:
             Modo decidido.
         '''
         self.modo_anterior = self.modo
+        self.checagem_atual = time.time()
 
         teve_movimento = self.detector_movimento.houve_mudanca()
         parado_demais = time.time()-self.tempo_em_que_parou >= self.max_tempo_parado
-        sem_detectar_demais = (
-            time.time()-self.tempo_ultima_deteccao >= self.max_tempo_sem_deteccao)
+        sem_detectar_demais = \
+            time.time()-self.tempo_ultima_deteccao >= self.max_tempo_sem_deteccao
+        max_tempo_checagem_excedido = self.tempo_ultima_checagem-self.checagem_atual > self.max_tempo_sem_atualizar_modo
     
         # print(
         #     'Teve movimento? \t{}\n'
@@ -424,8 +432,9 @@ class ModoDeteccao:
             else:
                 self.modo = 'parado'
         elif self.modo_anterior == 'rastreando':
-            if not teve_movimento or sem_detectar_demais:
+            if not teve_movimento or sem_detectar_demais or max_tempo_checagem_excedido:
                 self.modo = 'detectando'
+        
         else:
             self.modo = 'detectando'
         
@@ -434,6 +443,7 @@ class ModoDeteccao:
         elif self.modo == 'detectando':
             self.tempo_ultima_deteccao = time.time()
         
+        self.tempo_ultima_checagem = time.time()
         return self.modo
 
     def mudou_modo(self):
