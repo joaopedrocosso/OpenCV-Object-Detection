@@ -422,7 +422,7 @@ class ModoDeteccao:
         if self.modo_anterior == 'detectando':
             if not teve_movimento:
                 self.modo = 'parado'
-            elif not self.usar_rastreamento:
+            elif not self.usar_rastreamento or max_tempo_checagem_excedido:
                 self.modo = 'detectando'
             else:
                 self.modo = 'rastreando'
