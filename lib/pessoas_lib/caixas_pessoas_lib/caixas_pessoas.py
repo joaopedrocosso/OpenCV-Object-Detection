@@ -166,7 +166,7 @@ class CaixasPessoas:
         else:
             pessoas_ids = list(self.pessoas.keys())
             pessoas_centroides = [
-                p.pega_coordenadas() for p in self.pessoas.values()]
+                p[:2] for p in self.pega_pessoas(pos_final='centro', retorna_peso=False)]
 
             # Cria matriz de distâncias pessoas x caixas.
             distancias = distance.cdist(
