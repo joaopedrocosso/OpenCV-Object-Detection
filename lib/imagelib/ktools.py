@@ -255,7 +255,16 @@ def write(image, text, x, y, font=cv.FONT_HERSHEY_SIMPLEX, font_scale=0.8,
 		If set to true, the text will be outlined. (Default=False)
 	outline_color : tuple of int, optional
 		Color of the outline. (Default=(0x00, 0x00, 0x00))
+
+	Raises
+	-------
+	ValueError
+		If 'text' can't be converted to a string.
 	'''
+	try:
+		text = str(text)
+	except ValueError:
+		raise ValueError("'text' must be a string or an object that can be converted to one.")
 	if outline:
 		cv.putText(image, text, (x, y), font, font_scale, outline_color, thickness+5)
 	cv.putText(image, text, (x, y), font, font_scale, color, thickness)
