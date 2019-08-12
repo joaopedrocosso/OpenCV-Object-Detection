@@ -58,6 +58,11 @@ class CaixasPessoas:
         self.id_contador = 0
         self.pessoas_confirmadas = 0
 
+        # Cópia de self.pessoas, a fim de evitar conflitos de concorrência.
+        # Guarda as coordenadas e pesos das pessoas em tuplas da forma:
+        # [((int, int, int, int), float), ...]
+        self.pessoas_externo = []
+
 
     def atualizar(self, caixas=None, pesos=None, pos_original='cima-esquerda',
                   caixas_paradas=False):
@@ -114,6 +119,9 @@ class CaixasPessoas:
                 )
             # Levanta ValueError
             self._atualizar_caixas_novas(caixas, pesos, pos_original)
+        
+        self._copia_pessoas_uso_externo()
+
         return self.pega_pessoas()
 
 
@@ -291,23 +299,35 @@ class CaixasPessoas:
             o 'pos_final' não estiver dentro dos valores especificados.
          '''
 
+        pessoas_externo = self.pessoas_externo
         pessoas_retorno = []
         pesos_retorno = []
-        for pessoa in self.pessoas.values():
-            if not pessoa.esta_confirmada():
-                continue
-            caixa = pessoa.pega_caixa()
+        for pessoa in pessoas_externo:
+            caixa = pessoa[0]
             caixa = caixa_tools.muda_origem_caixa(
                 *caixa, pos_original='centro', pos_final=pos_final)
             pessoas_retorno.append(caixa)
             if retorna_peso:
-                pesos_retorno.append(pessoa.pega_peso())
+                pesos_retorno.append(pessoa[1])
 
         if retorna_peso:
             return pessoas_retorno, pesos_retorno
         else:
             return pessoas_retorno
 
+
+    def _copia_pessoas_uso_externo(self):
+        '''
+        Copia as coordenadas das pessoas para uma lista, com o fim de
+        não causar problemas de concorrência.
+        '''
+        pessoas_externo = []
+        for pessoa in self.pessoas.values():
+            if not pessoa.esta_confirmada():
+                continue
+            pessoas_externo.append(pessoa.pega_caixa_com_peso())
+        
+        self.pessoas_externo = pessoas_externo
 
     def _registra_pessoas(self, caixas, peso):
         '''Registra novas caixas que representam pessoas.

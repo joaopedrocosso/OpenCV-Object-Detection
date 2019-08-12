@@ -23,13 +23,6 @@ class DetectorPessoasVideo(Thread):
 
     Parameters
     -----------
-    mostrar_caixas : bool, optional.
-        Se o frame guardado deve conter as caixas em volta das pessoas
-        (Padrão=False)
-    mostrar_precisao : bool, optional.
-        Se a precisão deve ser mostrada em cima da caixa. Se
-        'mostrar_caixas' for 'False', a precisão não é mostrada.
-        (Padrão=False)
     max_tempo_sem_deteccao : float, optional
         Tempo máximo que se pode ficar usando métodos mais leves de
         detecção, ao invés do principal. Em casos em que o detector seja
@@ -54,14 +47,11 @@ class DetectorPessoasVideo(Thread):
         Se um dos argumentos não atender às especificações.
     '''
 
-    def __init__(self, mostrar_caixas=False, mostrar_precisao=False,
-                 max_tempo_sem_deteccao=5.0, max_tempo_parado=60.0,
+    def __init__(self, max_tempo_sem_deteccao=5.0, max_tempo_parado=60.0,
                  max_largura_frame=700, usar_rastreamento=False):
 
         super().__init__()
         
-        self.mostrar_caixas = mostrar_caixas
-        self.mostrar_precisao = mostrar_precisao
         self.usar_rastreamento = usar_rastreamento
         if max_tempo_sem_deteccao < 0:
             raise ValueError(
@@ -84,6 +74,8 @@ class DetectorPessoasVideo(Thread):
         self.detectorPessoas = None
         self.stopped = False
         self.stream_externo = False
+
+        self.modo = ''
 
     def configura_video(self, tipo, **keywords):
 
@@ -125,7 +117,7 @@ class DetectorPessoasVideo(Thread):
 
         See Also
         ---------
-        usa_video_externo : Para receber um leitor de vídeo de fora.
+        recebe_video : Para receber um leitor de vídeo de fora.
         '''
         try:
             self.stream = VideoStream(tipo, **keywords)
@@ -262,13 +254,13 @@ class DetectorPessoasVideo(Thread):
                 self.pessoas_registradas.reiniciar()
 
             caixas, pesos = self.pessoas_registradas.atualizar(
-                caixas, pesos, caixas_paradas=(modo=='parado'))
+                caixas, pesos, caixas_paradas=(modo=='parado')
+            )
+            self.frame = frame.copy()
+            self.modo = modo
 
             # Salva o numero de pessoas registradas neste ciclo.
             self.pessoas_historico.atualiza_periodo(len(caixas))
-
-            self._atualiza_frame(frame, caixas, pesos, modo)
-
             # Período do loop >= 'PERIODO_MINIMO'.
             controla_periodo_loop.force_minimum_loop_period()
 
@@ -287,9 +279,22 @@ class DetectorPessoasVideo(Thread):
         '''
         return len(self.pessoas_registradas)
 
-    def pega_frame(self):
+    def pega_frame(self, mostrar_caixas=False, mostrar_precisao=False, mostrar_modo=False):
         '''Retorna o último frame analizado.
         
+        Parameters
+        -----------
+        mostrar_caixas : bool, optional
+            Se as caixas que representam as pessoas devem ser 
+            desenhadas na tela. (Padrão=False)
+        mostrar_precisao : bool, optional
+            Se a precisão de detecção deve ser desenhada em cima das
+            caixas. Se 'mostrar_caixas' for falso esta opção também
+            será. (Padrão=False)
+        mostrar_modo : bool,, optional
+            Se o modo de detecção da última iteração deve ser escrito.
+            (Padrão=False)
+
         Returns
         --------
         numpy.ndarray
@@ -298,10 +303,22 @@ class DetectorPessoasVideo(Thread):
             vídeo.
         '''
 
-        if self.frame is not None:
-            return self.frame
-        else:
+        if self.frame is None:
             return ktools.black_image(*self.stream.pega_dimensoes())
+        
+        frame = self.frame.copy()
+
+        if mostrar_modo:
+            ktools.write(frame, self.modo, x=10, y=frame.shape[0]-10, outline=True)
+
+        if not mostrar_caixas:
+            return frame
+        
+        caixas, pesos = self.pessoas_registradas.pega_pessoas()
+        frame = ktools.draw_boxes(
+            frame, boxes=caixas, infos=pesos, write_infos=mostrar_precisao)
+        
+        return frame
 
 
     def pega_dados_periodo(self):
@@ -319,32 +336,6 @@ class DetectorPessoasVideo(Thread):
             Tempo total decorrido.
         '''
         return self.pessoas_historico.finaliza_periodo()
-    
-    def _atualiza_frame(self, frame, caixas, pesos, modo):
-        '''
-        Guarda o frame mais recente do vídeo com informações relevantes.
-
-        Parameters
-        -----------
-        frame : numpy.ndarray
-            Frame a ser guardado.
-        caixas : [(int, int, int, int), ...]
-            Caixas a serem desenhadas no frame, se desejado.
-        pesos : [float, ...]
-            Probabilidade de cada caixa representar uma pessoa, que 
-            aparecerá em cima da caixa, se desejado.
-        modo : str
-            Modo de detecção em que o loop está, no momento, que será
-            escrito no frame.
-        '''
-        if not self.mostrar_caixas:
-            novo_frame = frame
-        else:
-            novo_frame = ktools.draw_boxes(frame, boxes=caixas, infos=pesos,
-                                           write_infos=self.mostrar_precisao)
-        ktools.write(novo_frame, modo, x=10, y=novo_frame.shape[0]-10,
-                     outline=True)
-        self.frame = novo_frame
 
 
 

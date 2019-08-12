@@ -12,10 +12,10 @@ from toolslib import ptools
 
 def main():
 
-    cam_args, modelo_args, detector_init_args, video_info, json_info = pega_argumentos()
+    cam_args, modelo_args, visualizacao_frames_args, video_info, json_info = pega_argumentos()
 
     detector = (
-        DetectorPessoasVideo(**detector_init_args)
+        DetectorPessoasVideo()
         .configura_video(**cam_args)
         .configura_detector(**modelo_args)
         .start()
@@ -31,17 +31,17 @@ def main():
     
     while not detector.stopped:
         if video_info['mostrar_video']:
-            k = ktools.show_image(detector.pega_frame(), title='Detector',
-                                  wait_time=1, close_window=False)
+            frame = detector.pega_frame(**visualizacao_frames_args)
+            k = ktools.show_image(frame, title='Detector', wait_time=1,
+                                  close_window=False)
             if chr(k) == 'q':
                 break
             if time.time()-tempo >= json_info['tempo_atualizacao_json']:
                 publicador.publish(cria_json_str(*detector.pega_dados_periodo()))
                 tempo = time.time()
-            time.sleep(0.5)
+            time.sleep(0.7)
     detector.stop()
     ktools.destroy_all_windows()
-
 
 
 
@@ -97,10 +97,10 @@ def pega_argumentos():
     args = checa_argumentos()
     cam_args = processa_argumentos_camera(args)
     modelo_args = processa_argumentos_modelo(args)
-    detector_init_args = processa_argumentos_detector(args)
+    visualizacao_frames_args = processa_visualizacao_frames(args)
     video_info = processa_argumentos_video(args)
     json_info = processa_argumentos_json(args)
-    return cam_args, modelo_args, detector_init_args, video_info, json_info
+    return cam_args, modelo_args, visualizacao_frames_args, video_info, json_info
 
 def processa_argumentos_camera(args):
     '''Processa or argumentos relacionados à entrada de vídeo.
@@ -190,8 +190,8 @@ def processa_argumentos_modelo(args):
                    'precisao_deteccao':args.precisao_deteccao}
     return modelo_args
 
-def processa_argumentos_detector(args):
-    '''Processa or argumentos relacionados à inicialização do detector.
+def processa_visualizacao_frames(args):
+    '''Processa or argumentos relacionados à visualização dos frames.
 
     Parameters
     -----------
@@ -200,15 +200,16 @@ def processa_argumentos_detector(args):
     
     Returns
     --------
-    detector_init_args : {str:bool, str:bool}
+    visualizacao_frames_args : {str:bool, str:bool}
         Flags para mostrar as caixas em torno das pessoas detectadas e
         a probabilidade da caixa representar uma pessoa.
     '''
-    detector_init_args = {
+    visualizacao_frames_args = {
         'mostrar_caixas':args.mostrar_caixas,
         'mostrar_precisao':args.mostrar_precisao,
+        'mostrar_modo':True
     }
-    return detector_init_args
+    return visualizacao_frames_args
 
 def processa_argumentos_video(args):
     '''Processa or argumentos relacionados à entrada de vídeo.
