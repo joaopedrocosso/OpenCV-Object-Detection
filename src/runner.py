@@ -128,9 +128,9 @@ def processa_argumentos_camera(args):
             {(itens do json)..., 'tipo_camera': 'nvidia_cam'}
     '''
 
-    JSON_PICAMERA_PATH = 'json/config-picamera.json'
-    JSON_IPCAMERA_PATH = 'json/config-ipcamera.json'
-    JSON_NVIDIA_CAM_PATH = 'json/config-nvidia.json'
+    #JSON_PICAMERA_PATH = 'data/config-picamera.json'
+    JSON_IPCAMERA_PATH = 'data/config-ipcamera.json'
+    JSON_NVIDIA_CAM_PATH = 'data/config-nvidia.json'
 
     if args.webcam is None and args.arquivo_video is None:
         json_path = ''
@@ -266,7 +266,7 @@ def checa_argumentos():
     '''
 
     TEMPO_ATUALIZACAO_JSON = 60.0 # segundos
-    JSON_DEST_PATH = 'json/dados.json'
+    JSON_DEST_PATH = 'data/out.json'
 
     parser = argparse.ArgumentParser(
         description='Detecta pessoas em video e conta quantas tem em um periodo de tempo.')
