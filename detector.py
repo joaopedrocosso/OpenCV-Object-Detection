@@ -228,8 +228,8 @@ def processa_argumentos_video(args):
     '''
     video_info = {
         'mostrar_video':args.mostrar_video,
-        'mostrar_caixas':args.mostrar_caixas,
-        'mostrar_precisao':args.mostrar_precisao
+        'salvar_em_arquivo':(args.salvar_video!=''),
+        'arquivo_onde_salvar':args.salvar_video
     }
     return video_info
 
@@ -302,6 +302,8 @@ def checa_argumentos():
                         help='Mostrar caixas em volta das pessoas no vídeo.')
     parser.add_argument('--mostrar-precisao', action='store_true',
                         help='Mostrar precisão acima das caixas no vídeo.')
+    parser.add_argument('--salvar-video', default='', type=str,
+                        help='Salvar frames em um arquivo de vídeo.')
 
     parser.add_argument('--precisao-deteccao', type=float,
                         default=DEFAULT_PRECISAO_DETECCAO,
