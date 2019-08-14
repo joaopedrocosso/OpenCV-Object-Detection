@@ -1,10 +1,11 @@
 **/Websocket exemplo com JSON
 **/detector-itens
 /temp
+/env
+/docs
+/.vscode
 ex.py
 detector-old.py
 .env
 *.pyc
-/env
-/docs
-/.vscode
+*.pyo

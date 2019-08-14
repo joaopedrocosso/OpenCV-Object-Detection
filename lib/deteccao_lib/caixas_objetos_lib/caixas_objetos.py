@@ -5,23 +5,23 @@
 import numpy as np
 from scipy.spatial import distance
 
-from .caixa_pessoa import CaixaPessoa
+from .caixa_objeto import CaixaObjeto
 from imagelib import caixa_tools
 
-class CaixasPessoas:
+class CaixasObjetos:
 
-    '''Registra caixas que representam pessoas em um vídeo.
+    '''Registra caixas que representam objetos em um vídeo.
 
     Parameters
     -----------
     min_frames_para_confirmar : int, optional
-        Número mínimo de frames para uma caixa ser aceita como pessoa. 
-        (>= 0) (Padrão=2)
-    max_tempo_desaparecida : int, optional
+        Número mínimo de frames para uma caixa ser confirmada como um
+        objeto e não um falso positivo. (>= 0) (Padrão=2)
+    max_tempo_desaparecido : int, optional
         Tempo máximo que uma caixa pode sumir do vídeo antes de ser
         descartada do registro. (>= 0) (Padrão=0)
     precisao_minima : float, optional
-        Probabilidade mínima da caixa ser uma pessoa para que seja
+        Probabilidade mínima da caixa ser um objeto para que seja
         aceita no registro. (em [0.0, 1.0]) (Padrão=0.0)
     
     Raises
@@ -30,17 +30,17 @@ class CaixasPessoas:
         Se os parâmetros não seguirem as especificações.
     '''
 
-    def __init__(self, min_frames_para_confirmar=0, max_tempo_desaparecida=0,
+    def __init__(self, min_frames_para_confirmar=0, max_tempo_desaparecido=0,
                  precisao_minima=0.0):
-        # self.pessoas, self.id_contador, self.pessoas_confirmadas
+        # self.objetos, self.id_contador, self.objetos_confirmados
         self.reiniciar()
     
-        # Levanta ValueError. Checa max_tempo_desaparecida e
+        # Levanta ValueError. Checa max_tempo_desaparecido e
         # min_frames_para_confirmar.
-        CaixaPessoa(100, 100, 1, 1, None, min_frames_para_confirmar,
-                    max_tempo_desaparecida)
+        CaixaObjeto(100, 100, 1, 1, None, min_frames_para_confirmar,
+                    max_tempo_desaparecido)
         self.min_frames_para_confirmar = int(min_frames_para_confirmar)
-        self.max_tempo_desaparecida = int(max_tempo_desaparecida)
+        self.max_tempo_desaparecido = int(max_tempo_desaparecido)
 
         try:
             self.precisao_minima = float(precisao_minima)
@@ -54,19 +54,19 @@ class CaixasPessoas:
 
     def reiniciar(self):
         '''Reinicia as caixas para zero.'''
-        self.pessoas = {}
+        self.objetos = {}
         self.id_contador = 0
-        self.pessoas_confirmadas = 0
+        self.objetos_confirmados = 0
 
-        # Cópia de self.pessoas, a fim de evitar conflitos de concorrência.
-        # Guarda as coordenadas e pesos das pessoas em tuplas da forma:
+        # Cópia de self.objetos, a fim de evitar conflitos de concorrência.
+        # Guarda as coordenadas e pesos dos objetos em tuplas da forma:
         # [((int, int, int, int), float), ...]
-        self.pessoas_externo = []
+        self.objetos_externo = []
 
 
     def atualizar(self, caixas=None, pesos=None, pos_original='cima-esquerda',
                   caixas_paradas=False):
-        '''Atualiza lista de pessoas.
+        '''Atualiza o registro de objetos.
 
         Parameters
         -----------
@@ -74,7 +74,7 @@ class CaixasPessoas:
             Caixas (x, y, w, h). x >= -w, y >= -h, w,h > 0.
             Desnecessário se 'caixas_paradas'=True
         pesos : [float, ...], optional
-            Probabilidades de cada caixa representar uma pessoa. Deve
+            Probabilidades de cada caixa representar um objeto. Deve
             estar entre 0.0 e 1.0, inclusive.
             Desnecessário se 'caixas_paradas'=True
         pos_original : str, optional
@@ -98,9 +98,9 @@ class CaixasPessoas:
         Returns
         --------
         caixas : [(int, int, int, int), ...]
-            Todas as caixas registradas como pessoas.
+            Todas as caixas registradas e confirmadas como objetos.
         pesos : [float, ...]
-            Probabilidade das caixas representarem pessoas.
+            Probabilidade das caixas representarem objetos.
 
         Raises
         -------
@@ -120,15 +120,15 @@ class CaixasPessoas:
             # Levanta ValueError
             self._atualizar_caixas_novas(caixas, pesos, pos_original)
         
-        self._copia_pessoas_uso_externo()
+        self._copia_objetos_uso_externo()
 
-        return self.pega_pessoas()
+        return self.pega_objetos()
 
 
     def _atualizar_caixas_novas(self, caixas, pesos, pos_original):
         '''
-        Atualiza a lista de pessoas, comparando as pessoas registradas
-        com as caixas novas.
+        Atualiza o registro de objetos, comparando os objetos 
+        registrados com as caixas novas.
 
         Deve ser chamado pelo método 'atualizar'.
 
@@ -137,7 +137,7 @@ class CaixasPessoas:
         caixas : [(int, int, int, int), ...]
             Caixas (x, y, w, h). x >= -w, y >= -h, w,h > 0.
         pesos : [float, ...]
-            Probabilidades de cada caixa representar uma pessoa. Devem
+            Probabilidades de cada caixa representar um objeto. Devem
             estar entre 0.0 e 1.0, inclusive, ou serem None.
         pos_original : str, optional
             Posição na qual a origem da caixa se encontra. Opções
@@ -166,49 +166,49 @@ class CaixasPessoas:
 
         if len(caixas) == 0:
             self._aumentar_desaparecimento()
-        elif len(self.pessoas) == 0:
+        elif len(self.objetos) == 0:
             self.reiniciar()
             # Levanta ValueError.
-            self._registra_pessoas(caixas, pesos)
+            self._registra_objetos(caixas, pesos)
 
         else:
-            pessoas_ids = list(self.pessoas.keys())
-            pessoas_centroides = [
-                p[:2] for p in self.pega_pessoas(pos_final='centro', retorna_peso=False)]
+            objetos_ids = list(self.objetos.keys())
+            objetos_centroides = [
+                o[:2] for o in self.pega_objetos(pos_final='centro', retorna_peso=False)]
 
-            # Cria matriz de distâncias pessoas x caixas.
+            # Cria matriz de distâncias objetos x caixas.
             distancias = distance.cdist(
-                pessoas_centroides, [c[:2] for c in caixas])
+                objetos_centroides, [c[:2] for c in caixas])
 
             # Ordena as coordenadas da matriz de forma que os itens da matriz
             # distancias fiquem crescentes.
-            # Para cada coordenada (p, c), p se refere à linha pessoa[p] e
+            # Para cada coordenada (o, c), o se refere à linha objeto[o] e
             # c se refere à coluna caixa[c].
             dist_ordenadas_1d = distancias.argsort(axis=None, kind='mergesort')
             coordenadas_distancia_crescente = np.vstack(
                     np.unravel_index(dist_ordenadas_1d, distancias.shape)).T
 
-            pessoas_usadas = set()
+            objetos_usados = set()
             caixas_usadas = set()
 
-            for p, c in coordenadas_distancia_crescente:
+            for o, c in coordenadas_distancia_crescente:
 
-                if p in pessoas_usadas or c in caixas_usadas:
+                if o in objetos_usados or c in caixas_usadas:
                     continue
                 (x, y, w, h), peso = caixas[c], pesos[c]
-                pessoa = self.pessoas[pessoas_ids[p]]
-                w_pessoa, h_pessoa = pessoa.pega_dimensoes()
+                objeto = self.objetos[objetos_ids[o]]
+                w_objeto, h_objeto = objeto.pega_dimensoes()
 
                 # Se a distância for maior que a diagonal da maior caixa, ignorar.
-                if distancias[p, c] > 2*max((w**2+h**2)**0.5,
-                                            (w_pessoa**2+h_pessoa**2)**0.5):
+                if distancias[o, c] > 2*max((w**2+h**2)**0.5,
+                                            (w_objeto**2+h_objeto**2)**0.5):
                     continue
-                pessoa.atualizar(x, y, w, h, peso)
+                objeto.atualizar(x, y, w, h, peso)
                 
-                pessoas_usadas.add(p)
+                objetos_usados.add(o)
                 caixas_usadas.add(c)
 
-                if (len(pessoas_usadas) == len(pessoas_ids)
+                if (len(objetos_usados) == len(objetos_ids)
                     or len(caixas_usadas) == len(caixas)):
                     #
                     break
@@ -217,55 +217,55 @@ class CaixasPessoas:
                 caixas_nao_usadas = (set(range(len(caixas)))
                                     .difference(caixas_usadas)) 
                 # Levanta ValueError.
-                self._registra_pessoas(
+                self._registra_objetos(
                     [c for i, c in enumerate(caixas)
                      if i in caixas_nao_usadas],
                     [peso for i, peso in enumerate(pesos)
                      if i in caixas_nao_usadas])
             
-            if len(pessoas_usadas) < len(pessoas_ids):
-                pessoas_nao_usadas = (set(range(len(pessoas_ids)))
-                                      .difference(pessoas_usadas))
+            if len(objetos_usados) < len(objetos_ids):
+                objetos_nao_usados = (set(range(len(objetos_ids)))
+                                      .difference(objetos_usados))
                 self._aumentar_desaparecimento(
-                    [pessoas_ids[p] for p in pessoas_nao_usadas])
+                    [objetos_ids[o] for o in objetos_nao_usados])
 
 
     def _atualizar_repetir_iteracao(self):
         '''Repete o que foi feito na iteração anterior'''
-        pessoas_atualizadas = set()
-        for chave, pessoa in list(self.pessoas.items()):
-            if not pessoa.esta_desaparecida():
-                pessoa.atualizar(*pessoa.pega_caixa(), pessoa.pega_peso())
-                pessoas_atualizadas.add(chave)
+        objetos_atualizadas = set()
+        for chave, objeto in list(self.objetos.items()):
+            if not objeto.esta_desaparecido():
+                objeto.atualizar(*objeto.pega_caixa(), objeto.pega_peso())
+                objetos_atualizadas.add(chave)
 
-        pessoas_desaparecidas = (set(list(self.pessoas.keys()))
-                                 .difference(pessoas_atualizadas))
-        self._aumentar_desaparecimento(pessoas_desaparecidas)
+        objetos_desaparecidas = (set(list(self.objetos.keys()))
+                                 .difference(objetos_atualizadas))
+        self._aumentar_desaparecimento(objetos_desaparecidas)
         
 
     def _aumentar_desaparecimento(self, ids=None):
-        '''Aumenta o desaparecimento de pessoas.
+        '''Aumenta o desaparecimento de objetos.
 
         Parameters
         -----------
         ids : iterable of int, optional
-            Chaves das pessoas que terão seus desaparecimentos
-            aumentados. Se não fornecido, todas as pessoas terão
+            Chaves das objetos que terão seus desaparecimentos
+            aumentados. Se não fornecido, todos os objetos terão
             seu desaparecimento aumentado.
         '''
 
         if ids is None:
-            ids = list(self.pessoas.keys())
+            ids = list(self.objetos.keys())
         for chave in ids:
-            pessoa = self.pessoas[chave]
-            pessoa.aumenta_tempo_desaparecida()
-            if pessoa.atingiu_limite_desaparecimento():
-                self._retira_pessoa(chave)
+            objeto = self.objetos[chave]
+            objeto.aumenta_tempo_desaparecido()
+            if objeto.atingiu_limite_desaparecimento():
+                self._retira_objeto(chave)
                 
 
-    def pega_pessoas(self, pos_final='cima-esquerda', retorna_peso=True):
+    def pega_objetos(self, pos_final='cima-esquerda', retorna_peso=True):
 
-        '''Retorna as caixas equivalentes às pessoas.
+        '''Retorna as caixas equivalentes às objetos.
 
         Parameters
         -----------
@@ -282,14 +282,14 @@ class CaixasPessoas:
             'baixo-direita'.
         retorna_peso : bool, optional
             Se verdadeiro, retorna a probabilidade das caixas
-            representarem pessoas junto às caixas. (Padrão=True)
+            representarem objetos junto às caixas. (Padrão=True)
 
         Returns
         --------
         caixas : [(int, int, int, int), ...]
             Caixas equivalentes, no formato (xf, yf, w, h).
         pesos : [float, ...], optional
-            Probabilidade das caixas representarem pessoas. Só é
+            Probabilidade das caixas representarem objetos. Só é
             retornado se 'retorna_peso' for verdadeiro.
 
         Raises
@@ -299,45 +299,45 @@ class CaixasPessoas:
             o 'pos_final' não estiver dentro dos valores especificados.
          '''
 
-        pessoas_externo = self.pessoas_externo
-        pessoas_retorno = []
+        objetos_externo = self.objetos_externo
+        objetos_retorno = []
         pesos_retorno = []
-        for pessoa in pessoas_externo:
-            caixa = pessoa[0]
+        for objeto in objetos_externo:
+            caixa = objeto[0]
             caixa = caixa_tools.muda_origem_caixa(
                 *caixa, pos_original='centro', pos_final=pos_final)
-            pessoas_retorno.append(caixa)
+            objetos_retorno.append(caixa)
             if retorna_peso:
-                pesos_retorno.append(pessoa[1])
+                pesos_retorno.append(objeto[1])
 
         if retorna_peso:
-            return pessoas_retorno, pesos_retorno
+            return objetos_retorno, pesos_retorno
         else:
-            return pessoas_retorno
+            return objetos_retorno
 
 
-    def _copia_pessoas_uso_externo(self):
+    def _copia_objetos_uso_externo(self):
         '''
-        Copia as coordenadas das pessoas para uma lista, com o fim de
+        Copia as coordenadas dos objetos para uma lista, com o fim de
         não causar problemas de concorrência.
         '''
-        pessoas_externo = []
-        for pessoa in self.pessoas.values():
-            if not pessoa.esta_confirmada():
+        objetos_externo = []
+        for objeto in self.objetos.values():
+            if not objeto.esta_confirmado():
                 continue
-            pessoas_externo.append(pessoa.pega_caixa_com_peso())
+            objetos_externo.append(objeto.pega_caixa_com_peso())
         
-        self.pessoas_externo = pessoas_externo
+        self.objetos_externo = objetos_externo
 
-    def _registra_pessoas(self, caixas, peso):
-        '''Registra novas caixas que representam pessoas.
+    def _registra_objetos(self, caixas, peso):
+        '''Registra novas caixas que representam objetos.
 
         Parameters
         -----------
         caixas : [(int, int, int, int), ...]
             Caixas (x, y, w, h). x >= -w, y >= -h, w,h > 0.
         pesos : [float, ...]
-            Probabilidades de cada caixa representar uma pessoa. Devem
+            Probabilidades de cada caixa representar um objeto. Devem
             estar entre 0.0 e 1.0, inclusive, ou serem None.
 
         Raises
@@ -346,10 +346,10 @@ class CaixasPessoas:
             Se os valores de caixas ou de peso forem inválidos.
         '''
         for caixa, peso in zip(caixas, peso):
-            self._registra_pessoa(*caixa, peso)
+            self._registra_objeto(*caixa, peso)
 
-    def _registra_pessoa(self, x, y, w, h, peso=None):
-        '''Registra nova caixa que representa uma pessoa.
+    def _registra_objeto(self, x, y, w, h, peso=None):
+        '''Registra nova caixa que representa uma objeto.
 
         Parameters
         -----------
@@ -358,7 +358,7 @@ class CaixasPessoas:
         w, h : int
             Largura e altura da caixa. Devem ser maiores que 0.
         peso : float
-            Probabilidade da caixa representar, de fato, uma pessoa.
+            Probabilidade da caixa representar, de fato, um objeto.
             Devem estar entre 0.0 e 1.0 incluso.
 
         Raises
@@ -366,18 +366,18 @@ class CaixasPessoas:
         ValueError
             Se os argumentos não seguirem as restrições.
         '''
-        self.pessoas[self.id_contador] = CaixaPessoa(
-            x, y, w, h, peso, self.min_frames_para_confirmar, self.max_tempo_desaparecida
+        self.objetos[self.id_contador] = CaixaObjeto(
+            x, y, w, h, peso, self.min_frames_para_confirmar, self.max_tempo_desaparecido
         )
         self.id_contador += 1
 
-    def _retira_pessoa(self, id):
-        '''Retira uma pessoa do registro de pessoas.
+    def _retira_objeto(self, id):
+        '''Retira um objeto do registro de objetos.
 
         Parameters
         -----------
         id : int
-            ID da pessoa.
+            ID do objeto.
 
         Raises
         -------
@@ -385,7 +385,7 @@ class CaixasPessoas:
             Se o ID for inválido.
         '''
         try:
-            del self.pessoas[id]
+            del self.objetos[id]
         except KeyError:
             raise KeyError('ID inválido.')
     
@@ -397,9 +397,9 @@ class CaixasPessoas:
         Parameters
         -----------
         caixas : [(int, int, int, int), ...]
-            Caixas que representam pessoas.
+            Caixas que representam objetos.
         pesos : [float, ...]
-            Probabilidades de cada caixa representar uma pessoa. Podem
+            Probabilidades de cada caixa representar um objeto. Podem
             ser None.
         
         Returns
@@ -428,13 +428,13 @@ class CaixasPessoas:
 
 
     def __len__(self):
-        '''Retorna o número de pessoas registradas.
+        '''Retorna o número de objetos registrados.
 
         Returns
         --------
         int
         '''
-        return len(self.pessoas)
+        return len(self.objetos)
 
     def __str__(self):
         '''Representação em string do objeto.
@@ -443,5 +443,5 @@ class CaixasPessoas:
         -------
         str
         '''
-        return ('Pessoas: {}\n' 'Pessoas confirmadas: {}'
-                .format(len(self), self.pessoas_confirmadas))
+        return ('Objetos: {}\n' 'Objetos confirmadas: {}'
+                .format(len(self), self.objetos_confirmados))

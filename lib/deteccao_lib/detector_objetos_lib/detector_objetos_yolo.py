@@ -18,12 +18,12 @@ class DetectorObjetosYolo(BaseDetectorObjetos):
 	yolo_path : str
 		Destino do modelo desejado.
 	precisao_minima : float, optional
-		Quão precisa a detecção deve ser. Deve estar entre 0.0 e
-		1.0 incl. (Padrão=Mesmo que o DetectorPessoasBase)
+		Quão precisa a detecção deve ser. Deve estar entre 0.0 e 1.0
+		incl. (Padrão=0.5)
 	supressao_caixas : float, optional
-		Quão próximas as detecções de pessoas devem estar para
-		serem consideradas as mesmas. Deve estar entre 0.0 e 1.0
-		incl. (Padrão=Mesmo que o DetectorPessoasBase)
+		Quão próximas as detecções de objetos devem estar para
+		serem consideradas o mesmo objeto. Deve estar entre 0.0 e 1.0
+		incl. (Padrão=0.5)
 
 	Raises
 	--------
@@ -71,7 +71,7 @@ class DetectorObjetosYolo(BaseDetectorObjetos):
 		'''
 
 		dados_relevantes = self._analisa_imagem(img)
-		caixas_precisoes_rotulos = self._seleciona_pessoas(img, dados_relevantes)
+		caixas_precisoes_rotulos = self._seleciona_objetos(img, dados_relevantes)
 		return caixas_precisoes_rotulos
 
 	def _analisa_imagem(self, img):
@@ -92,7 +92,7 @@ class DetectorObjetosYolo(BaseDetectorObjetos):
 		return self.net.forward(self.ln)
 
 
-	def _seleciona_pessoas(self, img, dados_relevantes):
+	def _seleciona_objetos(self, img, dados_relevantes):
 		'''Seleciona os objetos desejados em uma imagem.
 		
 		Parameters
@@ -113,7 +113,7 @@ class DetectorObjetosYolo(BaseDetectorObjetos):
 
 		img_h, img_w = img.shape[:2]
 
-		caixas_precisoes_rotulos = {}
+		caixas_precisoes_rotulos = {rotulo:([], []) for rotulo in self.rotulos_a_usar}
 
 		for output in dados_relevantes:
 			for detection in output:
@@ -123,7 +123,7 @@ class DetectorObjetosYolo(BaseDetectorObjetos):
 				precisao = scores[classID]
 				id_string = self.todos_rotulos[classID]
 
-				# Nao registra se nao for pessoa.
+				# Nao registra se nao for objeto.
 				if id_string not in self.rotulos_a_usar:
 					continue
 
@@ -137,8 +137,6 @@ class DetectorObjetosYolo(BaseDetectorObjetos):
 				x = int(centro_x - (w/2))
 				y = int(centro_y - (h/2))
 
-				if id_string not in caixas_precisoes_rotulos:
-					caixas_precisoes_rotulos[id_string] = ([], [])
 				caixas_precisoes_rotulos[id_string][0].append([x, y, int(w), int(h)])
 				caixas_precisoes_rotulos[id_string][1].append(float(precisao))
 

@@ -5,9 +5,9 @@ import os
 import cv2 as cv
 import numpy as np
 
-from .detector_pessoas_base import BaseDetectorPessoas, DEFAULT_PRECISAO_DETECCAO, DEFAULT_SUPRESSAO_DETECCAO
+from .detector_objetos_base import BaseDetectorObjetos, DEFAULT_PRECISAO_DETECCAO, DEFAULT_SUPRESSAO_DETECCAO
 
-class DetectorPessoasSSD(BaseDetectorPessoas):
+class DetectorObjetosSSD(BaseDetectorPessoas):
 
 	'''Detecta pessoas usando um modelo SSD.
 
@@ -36,9 +36,30 @@ class DetectorPessoasSSD(BaseDetectorPessoas):
 
 		super().__init__(precisao_minima, supressao_caixas)
 
-		prototxt = os.path.join(mobile_ssd_path, DetectorPessoasSSD._RESINA_NET_ARQUIVO_PROTOTXT)
-		caffemodel = os.path.join(mobile_ssd_path, DetectorPessoasSSD._RESINA_NET_ARQUIVO_MODEL)
+		prototxt = os.path.join(mobile_ssd_path, DetectorObjetosSSD._RESINA_NET_ARQUIVO_PROTOTXT)
+		caffemodel = os.path.join(mobile_ssd_path, DetectorObjetosSSD._RESINA_NET_ARQUIVO_MODEL)
 		self.net = cv.dnn.readNetFromCaffe(prototxt, caffemodel)
+
+	def detectar(self, img):
+		'''Detecta objetos em uma imagem.
+
+		Parameters
+		-----------
+		img : numpy.ndarray
+			Imagem a ser analizada.
+		
+		Returns
+		--------
+		caixas_precisoes_rotulos : {'rotulo':([(int, int, int, int), ...], [float, ...]), ...}
+			Dicionário de tuplas para cada rótulo. Cada rótulo 
+			disponível contém uma array de coordenadas (caixas) dos
+			objetos e outra com suas respectivas probabilidades de 
+			serem esse objeto.
+		'''
+
+		dados_relevantes = self._analisa_imagem(img)
+		caixas_precisoes_rotulos = self._seleciona_pessoas(img, dados_relevantes)
+		return caixas_precisoes_rotulos
 
 	def _analisa_imagem(self, img):
 		'''Analiza uma imagem e retorna dados relevantes

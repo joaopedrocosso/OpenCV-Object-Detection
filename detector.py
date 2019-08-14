@@ -4,8 +4,8 @@ import json
 from datetime import datetime
 
 from videolib.fileVideoStream import FileVideoStream
-from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas, DEFAULT_PRECISAO_DETECCAO
-from pessoas_lib.detector_pessoas_video import DetectorPessoasVideo
+from deteccao_lib.detector_objetos_lib.detector_pessoas import DetectorPessoas, DEFAULT_PRECISAO_DETECCAO
+from deteccao_lib.detector_pessoas_video import DetectorPessoasVideo
 from mqtt_lib.mqtt_publisher import MQTTPublisher
 from imagelib import ktools
 from toolslib import ptools

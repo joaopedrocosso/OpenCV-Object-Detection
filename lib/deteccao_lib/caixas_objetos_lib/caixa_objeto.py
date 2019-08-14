@@ -2,34 +2,34 @@ import collections
 
 from imagelib.caixa_com_peso import CaixaComPeso
 
-class CaixaPessoa(CaixaComPeso):
+class CaixaObjeto(CaixaComPeso):
 
-    '''Guarda informações relacionadas a uma pessoa detectada em uma imagem.
+    '''Guarda informações relacionadas a um objeto detectado em uma imagem.
 
-    Este objeto guarda uma caixa onde uma pessoa está localizada e a 
-    probabilidade dela ser, de fato, uma pessoa.
+    Esta classe guarda uma caixa onde um objeto está localizado e a 
+    probabilidade dele ser o tipo de objeto que se espera.
 
-    Para evitar falsos positivos, a pessoa só é confirmada depois de 
-    aparecer por n frames. Depois de confirmada, ela só é desconfirmada 
-    (ou morta) após desaparecer por n frames.
+    Para evitar falsos positivos, o objeto só é confirmado depois de 
+    aparecer por n frames. Depois de confirmado, ele só é desconfirmado 
+    (ou morto) após desaparecer por n frames.
 
     Parameters
     -----------
     x, y: int
-        Coordenadas do centro da caixa onde a pessoa está.
+        Coordenadas do centro da caixa onde o objeo está.
         ('x', 'y' >= -'w', -'h')
     w, h : int
         Largura e altura da caixa. ('w', 'h' > 0)
     peso : float, optional
-        Probabilidade, se houver, de a pessoa ser, de fato, uma pessoa.
+        Probabilidade do objeto ser do tipo esperado.
         Deve estar em [0.0, 1.0] ou ser 'None'. (Padrão=None)
     min_frames_para_confirmar : int, optional
-        Número mínimo de frames para a pessoa registrada ser confirmada
-        como pessoa. Serve para remover falsos positivos. (>= 0)
+        Número mínimo de frames para o objeto registrado ser confirmado.
+        Serve para remover falsos positivos. (>= 0)
         (Padrão=0)
-    max_tempo_desaparecida : int, optional
-        Número máximo de frames que a pessoa pode desaparecer antes de 
-        ser removida. (>= 0) e (Padrão=5)
+    max_tempo_desaparecido : int, optional
+        Número máximo de frames em que o objeto pode desaparecer antes de 
+        ser removido. (>= 0) e (Padrão=5)
 
     Raises
     -------
@@ -38,7 +38,7 @@ class CaixaPessoa(CaixaComPeso):
     '''
     
     def __init__(self, x, y, w, h, peso=None, min_frames_para_confirmar=0,
-                 max_tempo_desaparecida=0):
+                 max_tempo_desaparecido=0):
 
         # Levanta ValueError
         super().__init__(x, y, w, h, peso)
@@ -52,25 +52,25 @@ class CaixaPessoa(CaixaComPeso):
                 "não-negativo.")
 
         try:
-            self.max_tempo_desaparecida = int(max_tempo_desaparecida)
-            if self.max_tempo_desaparecida < 0:
+            self.max_tempo_desaparecido = int(max_tempo_desaparecido)
+            if self.max_tempo_desaparecido < 0:
                 raise ValueError
         except ValueError:
             raise ValueError(
-                "'max_tempo_desaparecida' deve ser um número não "
+                "'max_tempo_desaparecido' deve ser um número não "
                 "negativo.")
 
         self.rastros = collections.deque(maxlen=100)
-        self.tempo_desaparecida = 0
-        self.viva = True
+        self.tempo_desaparecido = 0
+        self.vivo = True
 
-        self.pessoa_confirmada = (self.min_frames_para_confirmar == 0)
+        self.objeto_confirmado = (self.min_frames_para_confirmar == 0)
         self.frames_desde_criacao = 0
         
     
     def atualizar(self, x, y, w, h, peso=None):
 
-        '''Atualiza as informações da pessoa.
+        '''Atualiza as informações do objeto.
 
         Parameters
         -----------
@@ -88,7 +88,7 @@ class CaixaPessoa(CaixaComPeso):
             Se um dos parâmetros não estiver dentro do especificado.
         '''
 
-        if not self.viva:
+        if not self.vivo:
             return
         
         x_antigo, y_antigo = self.x, self.y
@@ -98,57 +98,57 @@ class CaixaPessoa(CaixaComPeso):
     
         self.rastros.append((x_antigo, y_antigo))
     
-        self.frames_desde_criacao += 1 + self.tempo_desaparecida
-        self.tempo_desaparecida = 0
+        self.frames_desde_criacao += 1 + self.tempo_desaparecido
+        self.tempo_desaparecido = 0
 
-        if not self.pessoa_confirmada and self.frames_desde_criacao >= self.min_frames_para_confirmar:
-            self.pessoa_confirmada = True
+        if not self.objeto_confirmado and self.frames_desde_criacao >= self.min_frames_para_confirmar:
+            self.objeto_confirmado = True
 
 
-    def aumenta_tempo_desaparecida(self):
+    def aumenta_tempo_desaparecido(self):
 
         '''
-        Aumenta tempo de desaparecimento e mata a pessoa, se continua 
-        desaparecida há muito tempo.
+        Aumenta tempo de desaparecimento e mata o objeto, se continuar 
+        desaparecido por muito tempo.
         '''
-        if not self.viva:
+        if not self.vivo:
             return
 
-        self.tempo_desaparecida += 1
-        if self.tempo_desaparecida > self.max_tempo_desaparecida:
-            self.viva = False
+        self.tempo_desaparecido += 1
+        if self.tempo_desaparecido > self.max_tempo_desaparecido:
+            self.vivo = False
 
 
     def atingiu_limite_desaparecimento(self):
-        '''Retorna se a pessoa já desapareceu há muito tempo, ou não.
+        '''Retorna se o objeto já desapareceu há muito tempo, ou não.
 
         Returns
         -------
         bool
         '''
-        return not self.viva
+        return not self.vivo
 
-    def esta_confirmada(self):
-        '''Retorna se a caixa já foi confirmada como pessoa.
+    def esta_confirmado(self):
+        '''Retorna se a caixa já foi confirmada como um objeto.
 
         Returns
         -------
         bool
         '''
-        return self.pessoa_confirmada
+        return self.objeto_confirmado
 
-    def esta_desaparecida(self):
-        '''Retorna se a pessoa está desaparecida.
+    def esta_desaparecido(self):
+        '''Retorna se o objeto está desaparecido.
 
         Returns
         --------
         bool
         '''
-        return self.tempo_desaparecida > 0
+        return self.tempo_desaparecido > 0
 
 
     def pega_rastros(self):
-        '''Retorna um iterador sobre os rastros da pessoa.
+        '''Retorna um iterador sobre os rastros do objeto.
 
         Returns
         --------
@@ -158,7 +158,7 @@ class CaixaPessoa(CaixaComPeso):
 
 
     def __str__(self):
-        '''Representação em string do objeto.
+        '''Representação em string da instância.
         
         Returns
         -------
@@ -167,6 +167,6 @@ class CaixaPessoa(CaixaComPeso):
 
         return '{}, {} e {}'.format(
             super().__str__(),
-            'viva' if self.viva else 'morta',
-            'confirmada' if self.pessoa_confirmada else 'nao confirmada'
+            'vivo' if self.vivo else 'morto',
+            'confirmado' if self.objeto_confirmado else 'não confirmado'
         )

@@ -3,12 +3,12 @@ import cv2 as cv
 from threading import Thread
 
 from imagelib import ktools
-from imagelib.detector_movimento_cv import DetectorMovimentoCV as DetectorMovimento
 from imagelib.rastreadores.rastreador_cv import RastreadorCV as Rastreador
 from videolib.videoStream import VideoStream
-from pessoas_lib.detector_pessoas_lib.detector_pessoas import DetectorPessoas
-from pessoas_lib.pessoas_historico import PessoasHistorico
-from pessoas_lib.caixas_pessoas_lib.caixas_pessoas import CaixasPessoas
+from deteccao_lib.detector_movimento_cv import DetectorMovimentoCV as DetectorMovimento
+from deteccao_lib.detector_objetos_lib.detector_pessoas import DetectorPessoas
+from deteccao_lib.pessoas_historico import PessoasHistorico
+from deteccao_lib.caixas_objetos_lib.caixas_objetos import CaixasObjetos
 from videolib.abstractVideoStream import AbstractVideoStream
 from videolib.exceptions import CannotOpenStreamError, StreamClosedError, StreamStoppedError
 from toolslib.ktools import LoopPeriodControl
@@ -67,7 +67,7 @@ class DetectorPessoasVideo(Thread):
         self.max_largura_frame = max_largura_frame
 
         self.pessoas_historico = PessoasHistorico()
-        self.pessoas_registradas = CaixasPessoas()
+        self.pessoas_registradas = CaixasObjetos()
 
         self.frame = None
         self.stream = None
@@ -153,7 +153,7 @@ class DetectorPessoasVideo(Thread):
         -----------
         dir_modelo : str
             Destino do modelo desejado.
-        tipo_modelo : {'yolo', 'sdd'}, optional
+        tipo_modelo : {'yolo'}, optional
             Tipo do modelo.
         precisao_deteccao: float
             Quão precisa a detecção deve ser. Deve estar entre
@@ -231,8 +231,7 @@ class DetectorPessoasVideo(Thread):
             
             if modo == 'detectando':
                 try:
-                    _, caixas, pesos = self.detectorPessoas.detecta_pessoas(
-                        frame, desenha_retangulos=False)
+                    caixas, pesos = self.detectorPessoas.detectar(frame)
                 except Exception as e:
                     print('Erro de detecção:\n\t[{}]: {}'
                         .format(type(e).__name__, str(e)))
@@ -242,7 +241,7 @@ class DetectorPessoasVideo(Thread):
                     rastreador.reiniciar()
                     rastreador.adiciona_rastreadores(
                         frame,
-                        self.pessoas_registradas.pega_pessoas(retorna_peso=False)
+                        self.pessoas_registradas.pega_objetos(retorna_peso=False)
                     )
                 caixas = rastreador.atualiza(frame)
                 pesos = []
@@ -314,7 +313,7 @@ class DetectorPessoasVideo(Thread):
         if not mostrar_caixas:
             return frame
         
-        caixas, pesos = self.pessoas_registradas.pega_pessoas()
+        caixas, pesos = self.pessoas_registradas.pega_objetos()
         frame = ktools.draw_boxes(
             frame, boxes=caixas, infos=pesos, write_infos=mostrar_precisao)
         
