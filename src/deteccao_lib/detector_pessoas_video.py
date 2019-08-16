@@ -223,7 +223,7 @@ class DetectorPessoasVideo(Thread):
 
             # Redimensiona imagem para diminuir os gastos de detecção 
             # de movimento.
-            frame = ktools.resize(frame, min(self.max_largura_frame, frame.shape[1]))
+            frame = self._frame_tamanho_maximo(frame)
 
             # Decide se o loop estará no modo 'detectando', 
             # 'rastreando' ou 'parado'.
@@ -303,7 +303,9 @@ class DetectorPessoasVideo(Thread):
         '''
 
         if self.frame is None:
-            return ktools.black_image(*self.stream.pega_dimensoes())
+            return self._frame_tamanho_maximo(
+                ktools.black_image(*self.stream.pega_dimensoes())
+            )
         
         frame = self.frame.copy()
 
@@ -335,6 +337,9 @@ class DetectorPessoasVideo(Thread):
             Tempo total decorrido.
         '''
         return self.pessoas_historico.finaliza_periodo()
+    
+    def _frame_tamanho_maximo(self, frame):
+        return ktools.resize(frame, min(self.max_largura_frame, frame.shape[1]))
 
 
 

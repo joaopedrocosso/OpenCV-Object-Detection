@@ -179,7 +179,7 @@ def processa_argumentos_modelo(args):
     '''
 
     # Checa o modelo do detector (padrao=YOLO)
-    if args.modelo_ssd is not None:
+    if False:#args.modelo_ssd is not None:
         dir_modelo = args.modelo_ssd
         tipo_modelo = 'ssd'
     else:#elif args.modelo_yolo is not None:
