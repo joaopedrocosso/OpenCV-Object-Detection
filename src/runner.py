@@ -4,8 +4,8 @@ import json
 from datetime import datetime
 
 from videolib.fileVideoStream import FileVideoStream
-from deteccao_lib.detector_objetos_lib.detector_pessoas import DetectorPessoas, DEFAULT_PRECISAO_DETECCAO
-from deteccao_lib.detector_pessoas_video import DetectorPessoasVideo
+from deteccao_pessoas_lib.detector_pessoas import DEFAULT_PRECISAO_DETECCAO
+from deteccao_pessoas_lib.detector_pessoas_video import DetectorPessoasVideo
 from mqtt_lib.mqtt_publisher import MQTTPublisher
 from imagelib import ktools
 from toolslib import ptools
@@ -278,7 +278,7 @@ def checa_argumentos():
                               help='Carrega dados do JSON expecifico')
     camera_group.add_argument('--nvidia-cam', action='store_true',
                               help='Carrega arquivo da camera da nvidia')
-    camera_group.add_argument('--webcam', type=int,
+    camera_group.add_argument('--webcam', #type=int,
                               help='Carrega webcam de numero "x"')
     camera_group.add_argument('--arquivo-video', help='Carrega arquivo em ARQUIVO')
 
@@ -311,8 +311,8 @@ def checa_argumentos():
 
     args = parser.parse_args()
 
-    if args.webcam is not None and args.webcam < 0:
-        parser.error('Index da webcam deve ser >= 0.')
+    # if args.webcam is not None and args.webcam < 0:
+    #     parser.error('Index da webcam deve ser >= 0.')
 
     return args
 

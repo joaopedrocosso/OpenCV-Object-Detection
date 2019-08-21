@@ -1,6 +1,7 @@
 import os
 import sys
-sys.path.append(os.path.abspath('../src'))
+src_pasta = os.path.join(os.path.dirname(__file__), '../src')
+sys.path.append(src_pasta)
 
 import runner
 

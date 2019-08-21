@@ -30,7 +30,7 @@ class CaixasObjetos:
         Se os parâmetros não seguirem as especificações.
     '''
 
-    def __init__(self, min_frames_para_confirmar=0, max_tempo_desaparecido=0,
+    def __init__(self, min_frames_para_confirmar=0, max_tempo_desaparecido=3,
                  precisao_minima=0.0):
         # self.objetos, self.id_contador, self.objetos_confirmados
         self.reiniciar()

@@ -5,10 +5,10 @@ from threading import Thread
 from imagelib import ktools
 from imagelib.rastreadores.rastreador_cv import RastreadorCV as Rastreador
 from videolib.videoStream import VideoStream
-from deteccao_lib.detector_movimento_cv import DetectorMovimentoCV as DetectorMovimento
-from deteccao_lib.detector_objetos_lib.detector_pessoas import DetectorPessoas
-from deteccao_lib.pessoas_historico import PessoasHistorico
-from deteccao_lib.caixas_objetos_lib.caixas_objetos import CaixasObjetos
+from deteccao_objetos_lib.detector_movimento_cv import DetectorMovimentoCV as DetectorMovimento
+from deteccao_pessoas_lib.detector_pessoas import DetectorPessoas
+from deteccao_objetos_lib.caixas_objetos_lib.caixas_objetos import CaixasObjetos
+from deteccao_pessoas_lib.pessoas_historico import PessoasHistorico
 from videolib.abstractVideoStream import AbstractVideoStream
 from videolib.exceptions import CannotOpenStreamError, StreamClosedError, StreamStoppedError
 from toolslib.ktools import LoopPeriodControl
@@ -47,7 +47,7 @@ class DetectorPessoasVideo(Thread):
         Se um dos argumentos não atender às especificações.
     '''
 
-    def __init__(self, max_tempo_sem_deteccao=5.0, max_tempo_parado=60.0,
+    def __init__(self, max_tempo_sem_deteccao=10.0, max_tempo_parado=10.0,
                  max_largura_frame=700, usar_rastreamento=False):
 
         super().__init__()
@@ -422,7 +422,7 @@ class ModoDeteccao:
             else:
                 self.modo = 'rastreando'
         elif self.modo_anterior == 'parado':
-            if teve_movimento or parado_demais:
+            if teve_movimento or parado_demais or sem_detectar_demais:
                 self.modo = 'detectando'
             else:
                 self.modo = 'parado'

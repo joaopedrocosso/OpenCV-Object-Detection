@@ -1,6 +1,6 @@
 import os
 
-from .detector_objetos_yolo import DetectorObjetosYolo
+from deteccao_objetos_lib.detector_objetos_lib.detector_objetos_yolo import DetectorObjetosYolo
 
 DEFAULT_PRECISAO_DETECCAO = 0.4
 DEFAULT_SUPRESSAO_DETECCAO = 0.3
