@@ -30,7 +30,7 @@ class CaixasObjetos:
         Se os parâmetros não seguirem as especificações.
     '''
 
-    def __init__(self, min_frames_para_confirmar=0, max_tempo_desaparecido=3,
+    def __init__(self, min_frames_para_confirmar=1, max_tempo_desaparecido=1,
                  precisao_minima=0.0):
         # self.objetos, self.id_contador, self.objetos_confirmados
         self.reiniciar()
@@ -174,7 +174,7 @@ class CaixasObjetos:
         else:
             objetos_ids = list(self.objetos.keys())
             objetos_centroides = [
-                o[:2] for o in self.pega_objetos(pos_final='centro', retorna_peso=False)]
+                o[:2] for o, p in self._copia_objetos_uso_interno()]
 
             # Cria matriz de distâncias objetos x caixas.
             distancias = distance.cdist(
@@ -321,13 +321,39 @@ class CaixasObjetos:
         Copia as coordenadas dos objetos para uma lista, com o fim de
         não causar problemas de concorrência.
         '''
-        objetos_externo = []
+        self.objetos_externo = self._copia_objetos(False)
+    
+    def _copia_objetos_uso_interno(self):
+        '''
+        Copia as coordenadas dos objetos para uma lista, incluindo os
+        'não-confirmados', e a retorna.
+
+        Returns
+        --------
+        [((int, int, int, int), float), ...]
+        '''
+        return self._copia_objetos(True)
+    
+    def _copia_objetos(self, inclui_nao_confirmados):
+        '''
+        Copia as coordenadas dos objetos para uma lista e a retorna.
+
+        Parameters
+        -----------
+        inclui_nao_confirmados : bool
+            Se os valores não confirmados devem ser inclusos.
+
+        Returns
+        --------
+        [((int, int, int, int), float), ...]
+        '''
+        objetos = []
         for objeto in self.objetos.values():
-            if not objeto.esta_confirmado():
+            if not objeto.esta_confirmado() and not inclui_nao_confirmados:
                 continue
-            objetos_externo.append(objeto.pega_caixa_com_peso())
-        
-        self.objetos_externo = objetos_externo
+            objetos.append(objeto.pega_caixa_com_peso())
+        return objetos
+
 
     def _registra_objetos(self, caixas, peso):
         '''Registra novas caixas que representam objetos.

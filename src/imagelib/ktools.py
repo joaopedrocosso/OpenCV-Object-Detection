@@ -193,7 +193,7 @@ def draw_boxes(image, boxes, infos=[], overwrite_original=False,
 		# Draws rectangle and text.
 		cv.rectangle(image, (x, y), (x + w, y + h), (0, 0, 0xFF), 2)
 		if write_infos:
-			write(image, info, x=x, y=y-5, font_scale=0.5)
+			write(image, info, x=x, y=y-5, font_scale=0.5, outline=True)
 
 	return image
 

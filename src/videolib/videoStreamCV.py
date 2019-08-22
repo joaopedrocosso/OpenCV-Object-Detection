@@ -50,6 +50,10 @@ class VideoStreamCV(AbstractVideoStream, Thread):
 		# Só usado se 'atualiza_frames_auto' for False.
 		self.threads_que_usaram_o_frame_atual = set()
 		self.lock = threading.Lock()
+	
+	def restart(self):
+		pass
+		
 
 	def start(self):
 		'''

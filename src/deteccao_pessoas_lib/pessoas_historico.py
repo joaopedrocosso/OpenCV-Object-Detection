@@ -92,8 +92,10 @@ class PessoasHistorico:
         tempo_decorrido : float
             Tempo total decorrido.
         '''
-
-        media = self.soma_ponderada/self.tempo_decorrido
+        if self.tempo_decorrido != 0:
+            media = self.soma_ponderada/self.tempo_decorrido
+        else:
+            media = 0.0
         self.historico.append((media, self.max_atual, self.min_atual,
                                self.tempo_decorrido))
         self._inicia_novo_periodo()

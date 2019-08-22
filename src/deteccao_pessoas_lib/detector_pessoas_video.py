@@ -71,7 +71,7 @@ class DetectorPessoasVideo(Thread):
 
         self.frame = None
         self.stream = None
-        self.detectorPessoas = None
+        self.detector_pessoas = None
         self.stopped = False
         self.stream_externo = False
 
@@ -167,7 +167,7 @@ class DetectorPessoasVideo(Thread):
         '''
 
         try:
-            self.detectorPessoas = DetectorPessoas(
+            self.detector_pessoas = DetectorPessoas(
                 dir_modelo, tipo_modelo=tipo_modelo, precisao=precisao_deteccao)
         except Exception:
             raise
@@ -194,7 +194,7 @@ class DetectorPessoasVideo(Thread):
         MAX_TEMPO_ENTRE_REGISTROS = 1.0 #segundo
         PERIODO_MINIMO = 0.7 #segundo
 
-        if self.stream is None or self.detectorPessoas is None:
+        if self.stream is None or self.detector_pessoas is None:
             print('Erro: stream ou detector de pessoas não configurado.')
             return
         self.stream.start()
@@ -212,14 +212,21 @@ class DetectorPessoasVideo(Thread):
         rastreador = Rastreador()
         controla_periodo_loop = LoopPeriodControl(PERIODO_MINIMO)
         
+        ERRO_LEITURA_MAXIMO = 3
+        erro_leitura_counter = 0
         while not self.stopped:
             
             tempo_comeco_iteracao = time.time()
             try:
                 frame = self.stream.read()
             except (StreamClosedError, StreamStoppedError) as e:
+                if erro_leitura_counter < ERRO_LEITURA_MAXIMO:
+                    #Adicionar método de reiniciar vídeo.
+                    erro_leitura_counter += 1
+                    continue
                 print('Não foi possível ler frame.')
                 break
+            erro_leitura_counter = 0
 
             # Redimensiona imagem para diminuir os gastos de detecção 
             # de movimento.
@@ -231,7 +238,7 @@ class DetectorPessoasVideo(Thread):
             
             if modo == 'detectando':
                 try:
-                    caixas, pesos = self.detectorPessoas.detectar(frame)
+                    caixas, pesos = self.detector_pessoas.detectar(frame)
                 except Exception as e:
                     print('Erro de detecção:\n\t[{}]: {}'
                         .format(type(e).__name__, str(e)))
@@ -309,15 +316,11 @@ class DetectorPessoasVideo(Thread):
         
         frame = self.frame.copy()
 
+        if mostrar_caixas:
+            caixas, pesos = self.pessoas_registradas.pega_objetos()
+            frame = self._desenha_caixas(frame, caixas, pesos, mostrar_precisao)
         if mostrar_modo:
             ktools.write(frame, self.modo, x=10, y=frame.shape[0]-10, outline=True)
-
-        if not mostrar_caixas:
-            return frame
-        
-        caixas, pesos = self.pessoas_registradas.pega_objetos()
-        frame = ktools.draw_boxes(
-            frame, boxes=caixas, infos=pesos, write_infos=mostrar_precisao)
         
         return frame
 
@@ -340,6 +343,11 @@ class DetectorPessoasVideo(Thread):
     
     def _frame_tamanho_maximo(self, frame):
         return ktools.resize(frame, min(self.max_largura_frame, frame.shape[1]))
+    
+    def _desenha_caixas(self, frame, caixas, pesos, mostrar_precisao):
+        pesos = ['{:.3f}'.format(p) for p in pesos]
+        return ktools.draw_boxes(
+            frame, boxes=caixas, infos=pesos, write_infos=mostrar_precisao)
 
 
 

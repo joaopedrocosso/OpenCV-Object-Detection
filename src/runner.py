@@ -23,7 +23,9 @@ def main():
 
     publicador = MQTTPublisher(hostname='postman.cloudmqtt.com', porta=12909,
                                username='soizdkgg', password='2dxd4P_lG-PG')
-    publicador.adicionar_topico('detector/camera-1')
+
+    import random
+    publicador.adicionar_topico('detector/camera-'+str(random.randint(10, 1500)))
 
     print('\nExecutando reconhecimento de pessoas.')
 

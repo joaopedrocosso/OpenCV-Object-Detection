@@ -24,7 +24,7 @@ class DetectorMovimentoCV(Thread):
         Período mínimo por deteccção de movimento. (> 0.0) (Padrão=0.5)
     '''
 
-    def __init__(self, detecta_sombras=True, mudanca_minima=0.001,
+    def __init__(self, detecta_sombras=True, mudanca_minima=0.0005,
                  periodo_minimo=0.0, max_largura_frame=700):
 
         super().__init__()
