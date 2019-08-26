@@ -1,7 +1,7 @@
 '''Módulo de funções auxiliares para os leitores de vídeo.'''
 
 
-def adiciona_autenticacao_url(url, login, senha):
+def adiciona_autenticacao_url(url, login, senha, porta):
 
 	'''Retorna uma url no formato porta://login:senha@endereço.
 

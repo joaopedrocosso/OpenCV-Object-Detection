@@ -12,4 +12,6 @@ if len(sys.argv) >= 2:
 
 comandos_adicionais = ' '.join(sys.argv[2:])
 
-executa_demo('--webcam ' + 'rtsp://LCC:6023-FL%40b@152.92.234.55:554/h264/ch{channel}/main/av_stream'.format(channel=channel) + ' ' + comandos_adicionais)
+executa_demo(
+    '--ipcamera ' + 'rtsp://LCC:6023-FL%40b@152.92.234.55:554/h264/ch{channel}/main/av_stream'.format(channel=channel)
+    + ' ' + '--topico-mqtt detector/camera-{:02d}'.format(channel) + ' ' + comandos_adicionais)

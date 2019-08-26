@@ -20,8 +20,8 @@ class VideoStream(AbstractVideoStream):
 			Se for 'picamera', os atributos 'resolucao' e 'fps' devem
 			ser fornecidos.
 
-			Se for 'ipcamera', os atributos 'cameaURL', 'login' e
-			'senha' devem ser fornecidos.
+			Se for 'ipcamera', s atributo 'cameraURL' deve ser
+			fornecido.
 
 			Se for 'webcam', o atributo 'idCam' deve ser fornecido.
 			Se for 'arquivo', o atributo 'arquivo' deve ser fornecido.
@@ -32,10 +32,6 @@ class VideoStream(AbstractVideoStream):
 			Frames por segundo.
 		cameraURL : str, optional
 			Url ou IP da câmera.
-		login : str, optional
-			Login da câmera.
-		senha : str, optional
-			Senha da câmera.
 		idCam : int, optional
 			Número da câmera. (padrão=0)
 		arquivo : str
@@ -50,7 +46,7 @@ class VideoStream(AbstractVideoStream):
 			from .piVideoStream import PiVideoStream
 			self.stream = PiVideoStream(keywords['resolucao'], keywords['fps'])
 		elif tipo == 'ipcamera':
-			self.stream = IPVideoStream(keywords['cameraURL'], keywords['login'], keywords['senha'])
+			self.stream = IPVideoStream(keywords['cameraURL'])
 		elif tipo == 'webcam':
 			if 'idCam' not in keywords:
 				keywords['idCam'] = 0

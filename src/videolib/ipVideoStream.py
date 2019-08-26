@@ -18,5 +18,5 @@ class IPVideoStream(VideoStreamCV):
         Se não for possível abrir o stream.
     '''
     
-    def __init__(self, src, login, senha):
-        super().__init__(src, login, senha)
+    def __init__(self, src):
+        super().__init__(src)

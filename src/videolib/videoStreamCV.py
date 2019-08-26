@@ -29,12 +29,10 @@ class VideoStreamCV(AbstractVideoStream, Thread):
 		Se não for possível abrir o stream.
 	'''
 
-	def __init__(self, src=0, login=None, senha=None, atualiza_frames_auto=True):
+	def __init__(self, src=0, atualiza_frames_auto=True):
 
 		super().__init__()
-		
-		if login is not None and senha is not None:
-			src = auxiliares.adiciona_autenticacao_url(src, login, senha)
+
 		self.stream = cv.VideoCapture(src)
 		if not self.stream.isOpened():
 			raise CannotOpenStreamError('Não foi possível abrir vídeo da webcam.')

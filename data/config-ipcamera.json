@@ -1,5 +1,3 @@
 {
-	"cameraURL":"http://10.1.23.52/img/video.mjpeg",
-	"login":"admin",
-	"senha":"admin"
+	"cameraURL":"http://admin:admin@10.1.23.52/img/video.mjpeg"
 }

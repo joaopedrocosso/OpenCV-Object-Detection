@@ -1,6 +1,7 @@
 import argparse
 import time
 import json
+import random
 from datetime import datetime
 
 from videolib.fileVideoStream import FileVideoStream
@@ -12,7 +13,7 @@ from toolslib import ptools
 
 def main():
 
-    cam_args, modelo_args, visualizacao_frames_args, video_info, json_info = pega_argumentos()
+    cam_args, modelo_args, visualizacao_frames_args, video_info, resultados_info = pega_argumentos()
 
     detector = (
         DetectorPessoasVideo()
@@ -24,8 +25,7 @@ def main():
     publicador = MQTTPublisher(hostname='postman.cloudmqtt.com', porta=12909,
                                username='soizdkgg', password='2dxd4P_lG-PG')
 
-    import random
-    publicador.adicionar_topico('detector/camera-'+str(random.randint(10, 1500)))
+    publicador.adicionar_topico(resultados_info['topico_mqtt'])
 
     print('\nExecutando reconhecimento de pessoas.')
 
@@ -38,7 +38,7 @@ def main():
                                   close_window=False)
             if chr(k) == 'q':
                 break
-            if time.time()-tempo >= json_info['tempo_atualizacao_json']:
+            if time.time()-tempo >= resultados_info['tempo_atualizacao_resultados']:
                 publicador.publish(cria_json_str(*detector.pega_dados_periodo()))
                 tempo = time.time()
             time.sleep(0.7)
@@ -93,7 +93,7 @@ def pega_argumentos():
     (dict, dict, dict, dict, dict)
         Valores retormados pelas funções processa_argumentos_camera(), 
         processa_argumentos_modelo(), processa_argumentos_detector(),
-        processa_argumentos_video(), processa_argumentos_json().
+        processa_argumentos_video(), processa_argumentos_resultados().
     '''
 
     args = checa_argumentos()
@@ -101,8 +101,8 @@ def pega_argumentos():
     modelo_args = processa_argumentos_modelo(args)
     visualizacao_frames_args = processa_visualizacao_frames(args)
     video_info = processa_argumentos_video(args)
-    json_info = processa_argumentos_json(args)
-    return cam_args, modelo_args, visualizacao_frames_args, video_info, json_info
+    resultados_info = processa_argumentos_resultados(args)
+    return cam_args, modelo_args, visualizacao_frames_args, video_info, resultados_info
 
 def processa_argumentos_camera(args):
     '''Processa or argumentos relacionados à entrada de vídeo.
@@ -131,23 +131,16 @@ def processa_argumentos_camera(args):
     '''
 
     #JSON_PICAMERA_PATH = 'data/config-picamera.json'
-    JSON_IPCAMERA_PATH = 'data/config-ipcamera.json'
+    #JSON_IPCAMERA_PATH = 'data/config-ipcamera.json'
     JSON_NVIDIA_CAM_PATH = 'data/config-nvidia.json'
 
-    if args.webcam is None and args.arquivo_video is None:
-        json_path = ''
-        if args.ipcamera:
-            json_path = JSON_IPCAMERA_PATH
-            tipo_camera = 'ipcamera'
-        elif args.nvidia_cam:
-            json_path = JSON_NVIDIA_CAM_PATH
-            tipo_camera = 'nvidia'
+    if args.nvidia_cam:
+        tipo_camera = 'nvidia'
         '''if args.picamera:
             json_path = JSON_PICAMERA_PATH
             tipo_camera = VideoStream.Tipo.PICAMERA'''
-
         try:
-            cam_args = json.load(open(json_path))
+            cam_args = json.load(open(JSON_NVIDIA_CAM_PATH))
         except (json.JSONDecodeError, OSError) as e:
             mensagem = 'Nao foi possivel carregar JSON' if isinstance(e, OSError) else 'JSON invalido'
             print('{}. Trocando para webcam...'.format(mensagem))
@@ -157,6 +150,9 @@ def processa_argumentos_camera(args):
     if args.webcam is not None:
         cam_args = {'idCam': args.webcam}
         tipo_camera = 'webcam'
+    elif args.ipcamera is not None:
+        cam_args = {'cameraURL': args.ipcamera}
+        tipo_camera = 'ipcamera'
     elif args.arquivo_video is not None:
         cam_args = {'arquivo': args.arquivo_video}
         tipo_camera = 'arquivo'
@@ -235,8 +231,8 @@ def processa_argumentos_video(args):
     }
     return video_info
 
-def processa_argumentos_json(args):
-    '''Processa or argumentos relacionados ao JSON.
+def processa_argumentos_resultados(args):
+    '''Processa or argumentos relacionados aos resultados e sua transmissão.
 
     Parameters
     -----------
@@ -245,14 +241,15 @@ def processa_argumentos_json(args):
     
     Returns
     --------
-    json_info : {str:str, str:int}
-        Destino do JSON e tempo de atualização do JSON.
+    resultados_info : {str:int}
+        Informação relacionada aos dados.
     '''
-    json_info = {
-        'destino_json':args.destino_json,
-        'tempo_atualizacao_json':args.tempo_atualizacao_json
+    resultados_info = {
+        'topico_mqtt':args.topico_mqtt if args.topico_mqtt != '' \
+            else 'detector/camera-'+str(random.randint(10, 1500)),
+        'tempo_atualizacao_resultados':args.tempo_atualizacao_resultados
     }
-    return json_info
+    return resultados_info
 
 
 def checa_argumentos():
@@ -267,8 +264,8 @@ def checa_argumentos():
         Argumentos recebidos.
     '''
 
-    TEMPO_ATUALIZACAO_JSON = 60.0 # segundos
-    JSON_DEST_PATH = 'data/out.json'
+    TEMPO_ATUALIZACAO_RESULTADOS = 60.0 # segundos
+    #JSON_DEST_PATH = 'data/out.json'
 
     parser = argparse.ArgumentParser(
         description='Detecta pessoas em video e conta quantas tem em um periodo de tempo.')
@@ -276,11 +273,11 @@ def checa_argumentos():
     # Camera
     camera_group = parser.add_mutually_exclusive_group(required=True)
     #camera_group.add_argument('--picamera', help='Carrega dados do JSON expecifico.', action='store_true')
-    camera_group.add_argument('--ipcamera', action='store_true',
-                              help='Carrega dados do JSON expecifico')
+    camera_group.add_argument('--ipcamera', type=str,
+                              help='Conecta ao endereço específico.')
     camera_group.add_argument('--nvidia-cam', action='store_true',
                               help='Carrega arquivo da camera da nvidia')
-    camera_group.add_argument('--webcam', #type=int,
+    camera_group.add_argument('--webcam', type=int,
                               help='Carrega webcam de numero "x"')
     camera_group.add_argument('--arquivo-video', help='Carrega arquivo em ARQUIVO')
 
@@ -291,10 +288,14 @@ def checa_argumentos():
     modelo_group.add_argument('--modelo-ssd', help='Diretorio modelos ssd')
 
     # JSON
-    parser.add_argument('--destino-json', default=JSON_DEST_PATH,
-                        help='Onde o JSON contendo o output do programa sera guardado')
-    parser.add_argument('--tempo-atualizacao-json', default=TEMPO_ATUALIZACAO_JSON, type=int,
-                        help='Tempo de atualizacao do JSON (em segundos)')
+    # parser.add_argument('--destino-json', default=JSON_DEST_PATH,
+    #                     help='Onde o JSON contendo o output do programa sera guardado')
+    parser.add_argument('--topico-mqtt', default='', type=str,
+                        help='Caso os dados sejam salvos em um servidor mqtt, '
+                             'este será o seu tópico. '
+                             '(Padrão=detector/camera-<número aleatório>)')
+    parser.add_argument('--tempo-atualizacao-resultados', default=TEMPO_ATUALIZACAO_RESULTADOS, type=int,
+                        help='Tempo de atualizacao dos resultados a um destino (em segundos)')
 
     # Video
     #parser.add_argument('--output-video', help='Diretorio para salvar video.')

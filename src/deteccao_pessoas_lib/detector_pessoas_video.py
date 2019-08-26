@@ -1,6 +1,7 @@
 import time
 import cv2 as cv
 from threading import Thread
+from collections import deque
 
 from imagelib import ktools
 from imagelib.rastreadores.rastreador_cv import RastreadorCV as Rastreador
@@ -392,9 +393,10 @@ class ModoDeteccao:
         self.tempo_em_que_parou = time.time()-self.max_tempo_parado
         self.tempo_ultima_deteccao = time.time()-self.max_tempo_sem_deteccao
 
-        self.modo = ''
-        self.modo_anterior = ''
         self.tempo_ultima_checagem = time.time()
+
+        self.status_modo = deque(['', ''], maxlen=2)
+        self.status_movimento = deque([True, True], maxlen=2)
     
     def atualiza_modo(self, frame):
         '''Atualiza o modo no qual a detecção se encontra.
@@ -407,8 +409,10 @@ class ModoDeteccao:
         str
             Modo decidido.
         '''
-        self.modo_anterior = self.modo
         self.checagem_atual = time.time()
+
+        ultimo_modo = self.status_modo[0]
+        ultimo_movimento = self.status_movimento[0]
 
         teve_movimento = self.detector_movimento.houve_mudanca()
         parado_demais = time.time()-self.tempo_em_que_parou >= self.max_tempo_parado
@@ -422,32 +426,38 @@ class ModoDeteccao:
         #     'Sem detectar demais? \t{}\n\n'
         #     .format(teve_movimento, parado_demais, sem_detectar_demais)
         # )
-        if self.modo_anterior == 'detectando':
-            if not teve_movimento:
-                self.modo = 'parado'
-            elif not self.usar_rastreamento or max_tempo_checagem_excedido:
-                self.modo = 'detectando'
+        if ultimo_modo == 'detectando':
+            if not teve_movimento and not ultimo_movimento:
+                modo = 'parado'
+            elif self.usar_rastreamento and ultimo_modo == 'detectando' \
+                and not self.mudou_modo():
+                #
+                modo = 'rastreando'
             else:
-                self.modo = 'rastreando'
-        elif self.modo_anterior == 'parado':
+                modo = 'detectando'
+            
+        elif ultimo_modo == 'parado':
             if teve_movimento or parado_demais or sem_detectar_demais:
-                self.modo = 'detectando'
+                modo = 'detectando'
             else:
-                self.modo = 'parado'
-        elif self.modo_anterior == 'rastreando':
-            if not teve_movimento or sem_detectar_demais or max_tempo_checagem_excedido:
-                self.modo = 'detectando'
-        
+                modo = 'parado'
+        elif ultimo_modo == 'rastreando':
+            if (not teve_movimento and not ultimo_movimento) \
+                or sem_detectar_demais or max_tempo_checagem_excedido:
+                #
+                modo = 'detectando'
         else:
-            self.modo = 'detectando'
+            modo = 'detectando'
         
-        if self.modo == 'parado' and self.modo_anterior != 'parado':
+        if modo == 'parado' and ultimo_modo != 'parado':
             self.tempo_em_que_parou = time.time()
-        elif self.modo == 'detectando':
+        elif modo == 'detectando':
             self.tempo_ultima_deteccao = time.time()
         
         self.tempo_ultima_checagem = time.time()
-        return self.modo
+        self.status_modo.appendleft(modo)
+        self.status_movimento.appendleft(teve_movimento)
+        return modo
 
     def mudou_modo(self):
         '''Retorna se o modo mudou ou não desde a última atualização
@@ -455,4 +465,4 @@ class ModoDeteccao:
         --------
         bool
         '''
-        return self.modo != self.modo_anterior
+        return self.status_modo[0] != self.status_modo[1]
