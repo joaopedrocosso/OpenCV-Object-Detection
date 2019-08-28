@@ -1,4 +1,5 @@
 from paho.mqtt import publish
+from .mqtt_exceptions import ConeccaoError
 
 class MQTTPublisher:
 
@@ -36,7 +37,10 @@ class MQTTPublisher:
         '''
         auth = {'username':self.username, 'password':self.password}
         for topico in self.topicos:
-            publish.single(topico, mensagem, hostname=self.hostname, qos=0, auth=auth, port=self.porta)
+            try:
+                publish.single(topico, mensagem, hostname=self.hostname, qos=0, auth=auth, port=self.porta)
+            except:
+                raise ConeccaoError('Não foi possível conectar com o servidor.')
     
     def esvazia_topicos(self):
         '''Esvazia o registro de tópicos.'''

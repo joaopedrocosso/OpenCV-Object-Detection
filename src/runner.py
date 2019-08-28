@@ -38,6 +38,10 @@ def main():
                                   close_window=False)
             if chr(k) == 'q':
                 break
+            elif chr(k) == 'p':
+                visualizacao_frames_args['mostrar_precisao'] = \
+                    not visualizacao_frames_args['mostrar_precisao']
+
             if time.time()-tempo >= resultados_info['tempo_atualizacao_resultados']:
                 publicador.publish(cria_json_str(*detector.pega_dados_periodo()))
                 tempo = time.time()
