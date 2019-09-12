@@ -78,34 +78,40 @@ class DetectorPessoasVideo(Thread):
 
         self.modo = ''
 
-    def configura_video(self, tipo, **keywords):
+    def configura_video(self, tipo, tempo_dormir=2.0, **keywords):
 
         '''Configura a entrada de vídeo internamente.
 
         Parameters
         -----------
         tipo : {'picamera', 'ipcamera', 'webcam', 'arquivo'}
-        resolucao : (int, int)
-            Se 'picamera' foi escolhido.
-            Tupla que representa a resolução do vídeo. Ex.: (320, 240).
-        fps : int
-            Se 'picamera' foi escolhido.
-            Frames por segundo.
-        cameraURL : str
-            Se 'ipcamera' foi escolhido.
-            Url da câmera.
-        login: str
-            Se 'ipcamera' foi escolhido.
-            Login da câmera.
-        senha: str
-            Se 'ipcamera' foi escolhido.
-            Senha da câmera.
-        idCam : str or int
-            Se 'webcam' foi escolhido.
-            Número da câmera. (padrão=0)
-        arquivo : str
-            Se 'arquivo' foi escolhido.
-            Caminho ao arquivo.
+            Tipo da câmera.
+        tempo_dormir : float, optional
+            Tempo passado para 'time.sleep()'. Usado para permirir que
+            a câmera tenha tempo de começar a enviar os frames.
+        
+        **kwargs
+            resolucao : (int, int), optional
+                Se 'picamera' foi escolhido.
+                Tupla que representa a resolução do vídeo. Ex.: (320, 240).
+            fps : int, optional
+                Se 'picamera' foi escolhido.
+                Frames por segundo.
+            cameraURL : str, optional
+                Se 'ipcamera' foi escolhido.
+                Url da câmera.
+            login: str, optional
+                Se 'ipcamera' foi escolhido.
+                Login da câmera.
+            senha: str, optional
+                Se 'ipcamera' foi escolhido.
+                Senha da câmera.
+            idCam : str or int, optional
+                Se 'webcam' foi escolhido.
+                Número da câmera. (padrão=0)
+            arquivo : str, optional
+                Se 'arquivo' foi escolhido.
+                Caminho ao arquivo.
 
         Returns
         -------
@@ -127,7 +133,8 @@ class DetectorPessoasVideo(Thread):
         self.stream_externo = False
 
         # Para dar tempo de inicializar a câmera.
-        time.sleep(2.0)
+        if tempo_dormir > 0:
+            time.sleep(tempo_dormir)
 
         return self
 
@@ -308,12 +315,17 @@ class DetectorPessoasVideo(Thread):
             Frame a ser retornado. Antes de qualquer frame ser lido
             da fonte, retorna uma imagem preta de mesmas dimensões do
             vídeo.
+        
+        Raises
+        ------
+        RuntimeError
+            Se o stream ainda não foi inicializado, pois é preciso ter
+            a resolução do stream para poder gerar o frame preto.
         '''
 
         if self.frame is None:
-            return self._frame_tamanho_maximo(
-                ktools.black_image(*self.stream.pega_dimensoes())
-            )
+            # Levanta RuntimeError
+            return self.pega_frame_preto()
         
         frame = self.frame.copy()
 
@@ -325,6 +337,27 @@ class DetectorPessoasVideo(Thread):
         
         return frame
 
+    def pega_frame_preto(self):
+        '''Retorna um frame preto do tamanho da câmera.
+        
+        Returns
+        --------
+        numpy.ndarray
+            Imagem preta na mesma resolução do vídeo ou da resolução
+            máxima.
+        
+        Raises
+        ------
+        RuntimeError
+            Se o stream ainda não foi inicializado, pois é preciso ter
+            a resolução do stream para poder gerar o frame preto.
+        '''
+
+        if self.stream is None:
+            raise RuntimeError('Stream ainda não foi inicializado.')
+        return self._frame_tamanho_maximo(
+                ktools.black_image(*self.stream.pega_dimensoes())
+            )
 
     def pega_dados_periodo(self):
         '''Retorna dados coletados desde a última chamada (ou início).

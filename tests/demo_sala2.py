@@ -1,8 +1,12 @@
 import os
+import sys
 
 src_folder = '../src'
 extras_folder = '../../detector-itens'
-runner_path = src_folder+'/runner.py'
+runner_path = src_folder+'/runner_cameras.py'
+
+def main():
+    executa_demo(' '.join(sys.argv[1:]))
 
 def executa_demo(comandos_extras=''):
     os.system('export PYTHONPATH=${PYTHONPATH}:'+src_folder)
@@ -15,3 +19,6 @@ def executa_demo(comandos_extras=''):
     string_runner += ' '+comandos_extras
     
     os.system(string_runner)
+
+if __name__ == '__main__':
+    main()

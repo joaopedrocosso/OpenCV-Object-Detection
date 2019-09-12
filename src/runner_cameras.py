@@ -2,6 +2,7 @@ import argparse
 import time
 import json
 import random
+import string
 from datetime import datetime
 
 from videolib.fileVideoStream import FileVideoStream
@@ -13,7 +14,38 @@ from toolslib import ptools
 
 def main():
 
-    cam_args, modelo_args, visualizacao_frames_args, video_info, resultados_info = pega_argumentos()
+    camera, modelo_args, visualizacao_frames_args, video_info, resultados_info = pega_argumentos()
+
+    print('\nIniciando reconhecimento de pessoas.')
+
+    while True:
+        retorno = detecta_na_camera(
+            camera, modelo_args, visualizacao_frames_args, video_info,
+            resultados_info)
+        if retorno == 'q':
+            break
+        else: # retorno == nova_camera
+            camera = retorno
+            print('\nMudando para a câmera {camera}.'.format(camera=camera))
+    
+    ktools.destroy_all_windows()
+
+    print('\nEncerrando o programa.')
+
+def detecta_na_camera(numero_camera, modelo_args, visualizacao_frames_args,
+                      video_info, resultados_info):
+    '''Detecta pessoas em uma câmera específica.
+
+    Returns
+    -------
+    int or str
+        Número da próxima câmera a ser usada, ou 'q', para encerrar o 
+        programa.
+    '''
+    url_camera = \
+        'rtsp://LCC:6023-FL%40b@152.92.234.55:554/h264/ch{channel}/main/av_stream' \
+        .format(channel=numero_camera)
+    cam_args = {'cameraURL': url_camera, 'tipo': 'ipcamera'}
 
     detector = (
         DetectorPessoasVideo()
@@ -25,22 +57,25 @@ def main():
     publicador = MQTTPublisher(hostname='postman.cloudmqtt.com', porta=12909,
                                username='soizdkgg', password='2dxd4P_lG-PG')
 
-    publicador.adicionar_topico(resultados_info['topico_mqtt'])
-
-    print('\nExecutando reconhecimento de pessoas.')
-
+    publicador.adicionar_topico('detector/camera-{}'.format(numero_camera))
     tempo = time.time()
-    
+
+    retorno = None
     while not detector.stopped:
         if video_info['mostrar_video']:
             frame = detector.pega_frame(**visualizacao_frames_args)
             k = ktools.show_image(frame, title='Detector', wait_time=1,
                                   close_window=False)
-            if chr(k) == 'q':
-                break
-            elif chr(k) == 'p':
+            k = chr(k)
+            if k == 'p':
                 visualizacao_frames_args['mostrar_precisao'] = \
                     not visualizacao_frames_args['mostrar_precisao']
+            elif k == 'q':
+                retorno = 'q'
+                break
+            elif k in string.digits[1:8+1] and k != str(numero_camera):
+                retorno = int(k)
+                break      
 
             if time.time()-tempo >= resultados_info['tempo_atualizacao_resultados']:
                 try:
@@ -49,9 +84,13 @@ def main():
                     print('Erro ao enviar os dados ao broker.')
                 tempo = time.time()
             time.sleep(0.7)
-    detector.stop()
-    ktools.destroy_all_windows()
 
+    # Tela não fica preta só com uma chamada. Então, fazemos 3.
+    for _ in range(3):
+        ktools.show_image(detector.pega_frame_preto(), title='Detector', wait_time=1, close_window=False)
+    detector.stop()
+
+    return retorno
 
 
 def cria_json_str(media_pessoas, max_pessoas, min_pessoas, tempo_total, frame=None):
@@ -97,19 +136,19 @@ def pega_argumentos():
 
     Returns
     --------
-    (dict, dict, dict, dict, dict)
+    (int, dict, dict, dict, dict)
         Valores retormados pelas funções processa_argumentos_camera(), 
         processa_argumentos_modelo(), processa_argumentos_detector(),
         processa_argumentos_video(), processa_argumentos_resultados().
     '''
 
     args = checa_argumentos()
-    cam_args = processa_argumentos_camera(args)
+    camera = processa_argumentos_camera(args)
     modelo_args = processa_argumentos_modelo(args)
     visualizacao_frames_args = processa_visualizacao_frames(args)
     video_info = processa_argumentos_video(args)
     resultados_info = processa_argumentos_resultados(args)
-    return cam_args, modelo_args, visualizacao_frames_args, video_info, resultados_info
+    return camera, modelo_args, visualizacao_frames_args, video_info, resultados_info
 
 def processa_argumentos_camera(args):
     '''Processa or argumentos relacionados à entrada de vídeo.
@@ -121,52 +160,11 @@ def processa_argumentos_camera(args):
     
     Returns
     --------
-    detector_init_info : dict
-        Valores do dicionário dependem do tipo de entrada escolhido.
-
-        Se for webcam:
-            {'idCam': (int) id da câmera, 'tipo': 'webcam'}
-
-        Se for arquivo:
-            {'arquivo': (str) 'caminho/para/arquivo', 'tipo': 'arquivo'}
-
-        Se for ipcamera:
-            {'cameraURL': (str) url da câmera, 'tipo': 'ipcamera'}
-
-        Se for a câmera da nvidia:
-            {(itens do json)..., 'tipo': 'nvidia_cam'}
+    int
+        Número da câmera
     '''
 
-    #JSON_PICAMERA_PATH = 'data/config-picamera.json'
-    #JSON_IPCAMERA_PATH = 'data/config-ipcamera.json'
-    JSON_NVIDIA_CAM_PATH = 'data/config-nvidia.json'
-
-    if args.nvidia_cam:
-        tipo_camera = 'nvidia'
-        '''if args.picamera:
-            json_path = JSON_PICAMERA_PATH
-            tipo_camera = VideoStream.Tipo.PICAMERA'''
-        try:
-            cam_args = json.load(open(JSON_NVIDIA_CAM_PATH))
-        except (json.JSONDecodeError, OSError) as e:
-            mensagem = 'Nao foi possivel carregar JSON' if isinstance(e, OSError) else 'JSON invalido'
-            print('{}. Trocando para webcam...'.format(mensagem))
-            args.webcam = 0
-
-    # Checa outras fontes, caso contrario.
-    if args.webcam is not None:
-        cam_args = {'idCam': args.webcam}
-        tipo_camera = 'webcam'
-    elif args.ipcamera is not None:
-        cam_args = {'cameraURL': args.ipcamera}
-        tipo_camera = 'ipcamera'
-    elif args.arquivo_video is not None:
-        cam_args = {'arquivo': args.arquivo_video}
-        tipo_camera = 'arquivo'
-    
-    cam_args['tipo'] = tipo_camera
-
-    return cam_args
+    return args.camera
 
 def processa_argumentos_modelo(args):
     '''Processa or argumentos relacionados ao modelo usado pelo detector.
@@ -252,8 +250,6 @@ def processa_argumentos_resultados(args):
         Informação relacionada aos dados.
     '''
     resultados_info = {
-        'topico_mqtt':args.topico_mqtt if args.topico_mqtt != '' \
-            else 'detector/camera-'+str(random.randint(10, 1500)),
         'tempo_atualizacao_resultados':args.tempo_atualizacao_resultados
     }
     return resultados_info
@@ -278,15 +274,9 @@ def checa_argumentos():
         description='Detecta pessoas em video e conta quantas tem em um periodo de tempo.')
     
     # Camera
-    camera_group = parser.add_mutually_exclusive_group(required=True)
-    #camera_group.add_argument('--picamera', help='Carrega dados do JSON expecifico.', action='store_true')
-    camera_group.add_argument('--ipcamera', type=str,
-                              help='Conecta ao endereço específico.')
-    camera_group.add_argument('--nvidia-cam', action='store_true',
-                              help='Carrega arquivo da camera da nvidia')
-    camera_group.add_argument('--webcam', type=int,
-                              help='Carrega webcam de numero "x"')
-    camera_group.add_argument('--arquivo-video', help='Carrega arquivo em ARQUIVO')
+    parser.add_argument('--camera', default=1, type=int, choices=range(1, 8+1),
+                        metavar='[1-8]',
+                        help='Escolhe a câmera que se quer visualizar inicialmente')
 
 
     # Modelo
@@ -297,10 +287,6 @@ def checa_argumentos():
     # JSON
     # parser.add_argument('--destino-json', default=JSON_DEST_PATH,
     #                     help='Onde o JSON contendo o output do programa sera guardado')
-    parser.add_argument('--topico-mqtt', default='', type=str,
-                        help='Caso os dados sejam salvos em um servidor mqtt, '
-                             'este será o seu tópico. '
-                             '(Padrão=detector/camera-<número aleatório>)')
     parser.add_argument('--tempo-atualizacao-resultados', default=TEMPO_ATUALIZACAO_RESULTADOS, type=int,
                         help='Tempo de atualizacao dos resultados a um destino (em segundos)')
 
