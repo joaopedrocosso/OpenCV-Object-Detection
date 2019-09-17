@@ -37,6 +37,7 @@ class DetectorPessoasVideo(Thread):
         Se o frame do vídeo for maior que este valor, ele será
         redimensionado. Deve ser positivo. (Padrão=700)
     usar_rastreamento : bool, optional
+        ATENÇÃO: Em testes.
         Se for verdadeiro, o detector só será usado uma vez a cada
         período de tempo, e um rastreador será empregado para
         localizar as pessoas detectadas até o detector ser empregado
@@ -254,11 +255,13 @@ class DetectorPessoasVideo(Thread):
             elif modo == 'rastreando':
                 if modo_deteccao.mudou_modo():
                     rastreador.reiniciar()
+
                     rastreador.adiciona_rastreadores(
                         frame,
                         self.pessoas_registradas.pega_objetos(retorna_peso=False)
                     )
                 caixas = rastreador.atualiza(frame)
+                print(caixas)
                 pesos = []
             else: #modo == 'parado':
                 caixas, pesos = [], []
@@ -479,6 +482,8 @@ class ModoDeteccao:
                 or sem_detectar_demais or max_tempo_checagem_excedido:
                 #
                 modo = 'detectando'
+            else:
+                modo = 'rastreando'
         else:
             modo = 'detectando'
         

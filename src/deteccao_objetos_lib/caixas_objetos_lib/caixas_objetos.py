@@ -308,7 +308,7 @@ class CaixasObjetos:
                 *caixa, pos_original='centro', pos_final=pos_final)
             objetos_retorno.append(caixa)
             if retorna_peso:
-                pesos_retorno.append(objeto[1])
+                pesos_retorno.append(objeto[1] if type(objeto[1]) in [float, int] else 1.000)
 
         if retorna_peso:
             return objetos_retorno, pesos_retorno

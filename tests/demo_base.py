@@ -1,4 +1,10 @@
 import os
+import sys
+
+def main():
+    comandos_extras = ' '.join(sys.argv[1:])
+    executa_demo(comandos_extras)
+
 
 src_folder = '../src'
 extras_folder = '../../detector-itens'
@@ -15,3 +21,6 @@ def executa_demo(comandos_extras=''):
     string_runner += ' '+comandos_extras
     
     os.system(string_runner)
+
+if __name__ == '__main__':
+    main()
