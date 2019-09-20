@@ -70,6 +70,9 @@ def detecta_na_camera(numero_camera, modelo_args, visualizacao_frames_args,
             if k == 'p':
                 visualizacao_frames_args['mostrar_precisao'] = \
                     not visualizacao_frames_args['mostrar_precisao']
+            if k == 'c':
+                visualizacao_frames_args['mostrar_caixas'] = \
+                    not visualizacao_frames_args['mostrar_caixas']
             elif k == 'q':
                 retorno = 'q'
                 break

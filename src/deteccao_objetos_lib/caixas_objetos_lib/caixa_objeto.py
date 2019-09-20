@@ -115,7 +115,7 @@ class CaixaObjeto(CaixaComPeso):
             return
 
         self.tempo_desaparecido += 1
-        if self.tempo_desaparecido > self.max_tempo_desaparecido:
+        if self.tempo_desaparecido >= self.max_tempo_desaparecido:
             self.vivo = False
 
 
