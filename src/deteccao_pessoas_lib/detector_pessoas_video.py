@@ -4,7 +4,6 @@ from threading import Thread
 from collections import deque
 
 from imagelib import ktools
-from imagelib.rastreadores.rastreador_cv import RastreadorCV as Rastreador
 from videolib.videoStream import VideoStream
 from deteccao_objetos_lib.detector_movimento_cv import DetectorMovimentoCV as DetectorMovimento
 from deteccao_pessoas_lib.detector_pessoas import DetectorPessoas
@@ -28,20 +27,10 @@ class DetectorPessoasVideo(Thread):
         Tempo máximo que se pode ficar usando métodos mais leves de
         detecção, ao invés do principal. Em casos em que o detector seja
         leve, o valor pode ser 0 (i.e. sempre detectar).
-        Deve ser positivo ou zero. (Padrão=5)
-    max_tempo_parado : float, optional
-        Tempo máximo que se pode ficar sem usar algum método de 
-        detecção, nos casos em que o frame basicamente não se moveu.
-        Deve ser positivo ou zero. (Padrão=60)
+        Deve ser positivo ou zero. (Padrão=10)
     max_largura_frame : int, optional
         Se o frame do vídeo for maior que este valor, ele será
         redimensionado. Deve ser positivo. (Padrão=700)
-    usar_rastreamento : bool, optional
-        ATENÇÃO: Em testes.
-        Se for verdadeiro, o detector só será usado uma vez a cada
-        período de tempo, e um rastreador será empregado para
-        localizar as pessoas detectadas até o detector ser empregado
-        de novo. (Padrão=False)
 
     Raises
     ------
@@ -49,23 +38,17 @@ class DetectorPessoasVideo(Thread):
         Se um dos argumentos não atender às especificações.
     '''
 
-    def __init__(self, max_tempo_sem_deteccao=10.0, max_tempo_parado=10.0,
-                 max_largura_frame=700, usar_rastreamento=False):
+    def __init__(self, max_tempo_sem_deteccao=10.0, max_largura_frame=700):
 
         super().__init__()
         
-        self.usar_rastreamento = usar_rastreamento
         if max_tempo_sem_deteccao < 0:
             raise ValueError(
                 "'max_tempo_sem_deteccao' deve ser um número positivo.")
-        if max_tempo_parado <= 0:
-            raise ValueError(
-                "'max_tempo_parado' deve ser um número positivo ou zero.")
         if max_largura_frame <= 0:
             raise ValueError(
                 "'max_largura_frame' deve ser um número positivo ou zero.")
         self.max_tempo_sem_deteccao = max_tempo_sem_deteccao
-        self.max_tempo_parado = max_tempo_parado
         self.max_largura_frame = max_largura_frame
 
         self.pessoas_historico = PessoasHistorico()
@@ -215,10 +198,8 @@ class DetectorPessoasVideo(Thread):
             .start()
         )
         modo_deteccao = ModoDeteccao(
-            detector_movimento, self.max_tempo_sem_deteccao,
-            self.max_tempo_parado, self.usar_rastreamento
+            detector_movimento, self.max_tempo_sem_deteccao
         )
-        rastreador = Rastreador()
         controla_periodo_loop = LoopPeriodControl(PERIODO_MINIMO)
         
         ERRO_LEITURA_MAXIMO = 3
@@ -241,9 +222,8 @@ class DetectorPessoasVideo(Thread):
             # de movimento.
             frame = self._frame_tamanho_maximo(frame)
 
-            # Decide se o loop estará no modo 'detectando', 
-            # 'rastreando' ou 'parado'.
-            modo = modo_deteccao.atualiza_modo(frame)
+            # Decide se o loop estará no modo 'detectando' ou 'parado'.
+            modo = modo_deteccao.atualiza_modo()
             
             if modo == 'detectando':
                 try:
@@ -252,17 +232,6 @@ class DetectorPessoasVideo(Thread):
                     print('Erro de detecção:\n\t[{}]: {}'
                         .format(type(e).__name__, str(e)))
                     break
-            elif modo == 'rastreando':
-                if modo_deteccao.mudou_modo():
-                    rastreador.reiniciar()
-
-                    rastreador.adiciona_rastreadores(
-                        frame,
-                        self.pessoas_registradas.pega_objetos(retorna_peso=False)
-                    )
-                caixas = rastreador.atualiza(frame)
-                print(caixas)
-                pesos = []
             else: #modo == 'parado':
                 caixas, pesos = [], []
 
@@ -379,7 +348,11 @@ class DetectorPessoasVideo(Thread):
         return self.pessoas_historico.finaliza_periodo()
     
     def _frame_tamanho_maximo(self, frame):
-        return ktools.resize(frame, min(self.max_largura_frame, frame.shape[1]))
+        '''Redimensiona o frame para a largura máxima, se necessário.'''
+        if frame.shape[1] > self.max_largura_frame:
+            return ktools.resize(frame, self.max_largura_frame)
+        else:
+            return frame.copy()
     
     def _desenha_caixas(self, frame, caixas, pesos, mostrar_precisao):
         pesos = ['{:.3f}'.format(p) for p in pesos]
@@ -402,105 +375,126 @@ class ModoDeteccao:
         detecção, ao invés do principal. Em casos em que o detector seja
         leve, o valor pode ser 0 (i.e. sempre detectar).
         Deve ser positivo ou zero.
-    max_tempo_parado : float
-        Tempo máximo que se pode ficar sem usar algum método de 
-        detecção, nos casos em que o frame basicamente não se moveu.
-        Deve ser positivo ou zero.
-    usar_rastreamento : bool
-        Se for verdadeiro, o detector só será usado uma vez a cada
-        período de tempo, e um rastreador será empregado para
-        localizar as pessoas detectadas até o detector ser empregado
-        de novo.
-    max_tempo_sem_atualizar_modo : int, optional
-        Tempo máximo entre duas atualizações de modo para que se possa
-        usar o rastreamento de pessoas. (Padrão=1)
     '''
 
-    def __init__(self, detector_movimento, max_tempo_sem_deteccao, 
-                 max_tempo_parado, usar_rastreamento, 
-                 max_tempo_sem_atualizar_modo=1):
+    def __init__(self, detector_movimento, max_tempo_sem_deteccao):
 
         self.detector_movimento = detector_movimento
         self.max_tempo_sem_deteccao = max_tempo_sem_deteccao
-        self.max_tempo_parado = max_tempo_parado
-        self.max_tempo_sem_atualizar_modo = max_tempo_sem_atualizar_modo
-        self.usar_rastreamento = usar_rastreamento
 
-        self.tempo_em_que_parou = time.time()-self.max_tempo_parado
         self.tempo_ultima_deteccao = time.time()-self.max_tempo_sem_deteccao
 
-        self.tempo_ultima_checagem = time.time()
-
-        self.status_modo = deque(['', ''], maxlen=2)
-        self.status_movimento = deque([True, True], maxlen=2)
+        self.historico_modo = Historico(['', ''], limite=2)
     
-    def atualiza_modo(self, frame):
+    def atualiza_modo(self):
         '''Atualiza o modo no qual a detecção se encontra.
-        Parameters
-        -----------
-        frame : numpy.ndarray
-            Frame do vídeo, que será usado na decisão do modo.
+
         Returns
         --------
-        str
-            Modo decidido.
+        novo_modo : str
         '''
         self.checagem_atual = time.time()
 
-        ultimo_modo = self.status_modo[0]
-        ultimo_movimento = self.status_movimento[0]
+        penultimo_modo, ultimo_modo = self.historico_modo.pega_historico()
 
         teve_movimento = self.detector_movimento.houve_mudanca()
-        parado_demais = time.time()-self.tempo_em_que_parou >= self.max_tempo_parado
-        sem_detectar_demais = \
-            time.time()-self.tempo_ultima_deteccao >= self.max_tempo_sem_deteccao
-        max_tempo_checagem_excedido = self.tempo_ultima_checagem-self.checagem_atual > self.max_tempo_sem_atualizar_modo
-    
-        # print(
-        #     'Teve movimento? \t{}\n'
-        #     'Parado demais? \t\t{}\n'
-        #     'Sem detectar demais? \t{}\n\n'
-        #     .format(teve_movimento, parado_demais, sem_detectar_demais)
-        # )
+        sem_detectar_demais = self._esta_sem_detectar_demais()
+
         if ultimo_modo == 'detectando':
-            if not teve_movimento and not ultimo_movimento:
-                modo = 'parado'
-            elif self.usar_rastreamento and ultimo_modo == 'detectando' \
-                and not self.mudou_modo():
-                #
-                modo = 'rastreando'
+            if not teve_movimento and penultimo_modo == 'detectando':
+                novo_modo = 'parado'
             else:
-                modo = 'detectando'
+                novo_modo = 'detectando'
             
         elif ultimo_modo == 'parado':
-            if teve_movimento or parado_demais or sem_detectar_demais:
-                modo = 'detectando'
+            if teve_movimento or sem_detectar_demais:
+                novo_modo = 'detectando'
             else:
-                modo = 'parado'
-        elif ultimo_modo == 'rastreando':
-            if (not teve_movimento and not ultimo_movimento) \
-                or sem_detectar_demais or max_tempo_checagem_excedido:
-                #
-                modo = 'detectando'
-            else:
-                modo = 'rastreando'
+                novo_modo = 'parado'
         else:
-            modo = 'detectando'
+            novo_modo = 'detectando'
         
-        if modo == 'parado' and ultimo_modo != 'parado':
-            self.tempo_em_que_parou = time.time()
-        elif modo == 'detectando':
+        if novo_modo == 'detectando':
             self.tempo_ultima_deteccao = time.time()
-        
-        self.tempo_ultima_checagem = time.time()
-        self.status_modo.appendleft(modo)
-        self.status_movimento.appendleft(teve_movimento)
-        return modo
+
+        self.historico_modo.adiciona(novo_modo)
+        return novo_modo
 
     def mudou_modo(self):
-        '''Retorna se o modo mudou ou não desde a última atualização
+        '''Retorna se o modo mudou ou não desde a última atualização.
+
         Returns
         --------
         bool
         '''
-        return self.status_modo[0] != self.status_modo[1]
+        penultimo_modo, ultimo_modo = self.historico_modo.pega_historico()
+        return penultimo_modo != ultimo_modo
+    
+    def _esta_sem_detectar_demais(self):
+        '''Retorna se o tempo sem detecção já passou do limite.'''
+        return time.time()-self.tempo_ultima_deteccao >= self.max_tempo_sem_deteccao
+
+
+
+class Historico:
+
+    '''Cria um histórico com um número máximo de valores.
+
+    Parameters
+    ----------
+    valores_iniciais : iterable, optional
+        Valores iniciais da lista. Caso não seja fornecido, o histórico
+        começará vazio.
+    limite : int, optional
+        O limite de elementos do histórico. Caso não seja fornecido ou
+        seja None, o histórico será ilimitado.
+
+    Raises
+    ------
+    ValueError
+        Se o limite não for positivo.
+    TypeError
+        Se os parâmetros não tiverem os tipos corretos.
+
+    '''
+
+    def __init__(self, valores_iniciais=[], limite=None):
+        # Levanta exceções.
+        self._checa_parametros_init(valores_iniciais, limite)
+        
+        self.historico = deque(iterable=valores_iniciais, maxlen=limite)
+    
+    def adiciona(self, elemento):
+        '''Adiciona novo elemento ao histórico.
+
+        Parameters
+        ----------
+        elemento : object
+            Novo elemento.
+        '''
+        self.historico.append(elemento)
+
+    def pega_historico(self):
+        '''Pega histórico completo.
+
+        Returns
+        -------
+        iterator
+        '''
+        return iter(self)
+
+    def __iter__(self):
+        return iter(self.historico)
+    
+    def _checa_parametros_init(self, valores_iniciais, limite):
+        '''Checa parâmetros da __init__ e levanta as exceções apropriadas.'''
+        try:
+            iter(valores_iniciais)
+        except TypeError:
+            raise TypeError("'valores_iniciais' não é iterável.")
+        try:
+            limite = int(limite)
+        except ValueError:
+            raise TypeError("'limite' deve ser inteiro ou convertível.")
+        if limite <= 0:
+            raise ValueError("'limite' deve ser positivo.")
