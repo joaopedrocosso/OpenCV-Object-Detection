@@ -54,8 +54,12 @@ def detecta_na_camera(numero_camera, modelo_args, visualizacao_frames_args,
         .start()
     )
 
-    publicador = MQTTPublisher(hostname='postman.cloudmqtt.com', porta=12909,
-                               username='soizdkgg', password='2dxd4P_lG-PG')
+
+    publicador = MQTTPublisher(hostname='m23.cloudmqtt.com', porta=17327,
+                               username='onhjohpw', password='xxgqm7vK59r0')
+
+ #   publicador = MQTTPublisher(hostname='postman.cloudmqtt.com', porta=12909,
+ #                              username='soizdkgg', password='2dxd4P_lG-PG')
 
     publicador.adicionar_topico('detector/camera-{}'.format(numero_camera))
     tempo = time.time()
@@ -125,7 +129,7 @@ def cria_json_str(media_pessoas, max_pessoas, min_pessoas, tempo_total, frame=No
     }
 
     json_dict['UltimoFrameCapturado'] = \
-        ptools.criaImagemString(frame) if frame is not None else ''
+        ptools.criaImagemString(frame)# if frame is not None else ''
 
     return json.dumps(json_dict)
 

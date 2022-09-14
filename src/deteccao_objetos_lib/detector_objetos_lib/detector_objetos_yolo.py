@@ -48,9 +48,18 @@ class DetectorObjetosYolo(BaseDetectorObjetos):
 		with open(coco_labels_path, 'r') as coco_labels:
 			self.todos_rotulos = coco_labels.read().strip().split("\n")
 		self.rotulos_a_usar = rotulos
-
-		self.ln = self.net.getLayerNames()
+		'''
+		Variáveis adicionadas:
+		'''
+		ln = self.net.getLayerNames()
+		self.ln = []
+		'''
+		Código Anterior:
 		self.ln = [self.ln[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
+		Código modificado: 
+		'''
+		for i in self.net.getUnconnectedOutLayers():
+			(self.ln).append(ln[i - 1])
 
 
 	def detectar(self, img):

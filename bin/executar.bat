@@ -1,0 +1,1 @@
+python3 detector.py --modelo-yolo ../../detector-itens/modelo-yolo --topico-mqtt v1/devices/me/telemetry --tempo-atualizacao-resultados 5 --webcam 0 --mostrar-video --mostrar-caixas
